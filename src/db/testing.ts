@@ -6,9 +6,10 @@ import { db } from "./client";
  * How a suite starts from nothing.
  *
  * One connection for the whole run — the client is a module-level singleton —
- * and every suite truncates in `beforeEach`. Test files run one at a time (`fileParallelism` is
- * off in vitest.config.mts) because they share this database, so a truncation
- * in one file would otherwise land in the middle of another.
+ * and every suite truncates in `beforeEach`. Integration files run one at a time
+ * (`fileParallelism` is off on that Vitest project) because they share this
+ * database, so a truncation in one file would otherwise land in the middle of
+ * another.
  *
  * Takes no arguments on purpose: `beforeEach(resetDatabase)` hands the callback
  * vitest's test context, and a `db` parameter would silently receive it.

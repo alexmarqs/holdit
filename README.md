@@ -28,14 +28,15 @@ deployment that lost its `DATABASE_URL` would otherwise present a demo wall as a
 one — a failure that looks exactly like success.
 
 ```bash
-pnpm test          # needs the container up: four suites run against real Postgres
+pnpm test              # unit tests; no database
+pnpm test:integration  # needs the container: four suites against real Postgres
 pnpm typecheck
-pnpm lint          # biome; `pnpm lint:fix` writes fixes
-pnpm build         # prerenders the wall, so it needs the database too
+pnpm lint              # biome; `pnpm lint:fix` writes fixes
+pnpm build             # prerenders the wall, so it needs the database too
 ```
 
-`pnpm test` points itself at `scripts/docker-compose.yaml`'s database and truncates between tests,
-ignoring `DATABASE_URL` so a real one can never be emptied. Override with
+`pnpm test:integration` points itself at `scripts/docker-compose.yaml`'s database and truncates
+between tests, ignoring `DATABASE_URL` so a real one can never be emptied. Override with
 `TEST_DATABASE_URL` if you need somewhere else.
 
 ## Testing payments

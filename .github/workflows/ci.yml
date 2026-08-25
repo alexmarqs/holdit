@@ -1,0 +1,48 @@
+# Lint, typecheck, unit tests, then Postgres-backed integration tests and a
+# prerendered build. Unit tests do not need a database. Integration tests use
+# the same Compose file as `pnpm db:local` — their globalSetup migrates
+# `holdit_test` but does not start a container. GitHub-hosted runners already
+# have Docker; there is no extra "setup docker" step.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      # Dev database for migrate / seed / the prerendered homepage.
+      # Integration tests ignore this and use `holdit_test` (see vitest.config.mts).
+      DATABASE_URL: postgres://holdit:holdit@localhost:55432/holdit
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@22
+          cache: true
+          install: false
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+      - name: Start Postgres
+        run: pnpm db:local
+
+      - run: pnpm db:migrate
+      - run: pnpm test:integration
+      - run: pnpm db:seed
+      - run: pnpm build

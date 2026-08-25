@@ -1,10 +1,7 @@
 import { defineConfig } from "drizzle-kit";
 
 /*
- * drizzle-kit runs outside Next, so nothing has loaded `.env.local` — the file
- * the README tells you to write your `DATABASE_URL` into. Without this, a
- * correctly configured checkout still fails with an empty `url`.
- * `if-exists` semantics: CI sets the variable directly and ships no file.
+ * drizzle-kit runs outside Next, so nothing has loaded `.env.local`
  */
 try {
   process.loadEnvFile(".env.local");
