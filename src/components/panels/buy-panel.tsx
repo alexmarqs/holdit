@@ -2,6 +2,7 @@
 
 import {
   ceilingFor,
+  ceilToDollar,
   centsForShareOf,
   clampSpend,
   MAX_SPEND_CENTS,
@@ -58,16 +59,19 @@ export function BuyPanel() {
   const atCeiling = existing !== undefined && ceilingCents === null;
   const maxUseful = Math.min(
     MAX_SPEND_CENTS,
-    Math.max(MIN_SPEND_CENTS, ceilingCents ?? MIN_SPEND_CENTS),
+    Math.max(MIN_SPEND_CENTS, ceilingCents === null ? MIN_SPEND_CENTS : ceilToDollar(ceilingCents)),
   );
   const quotedAmount = draft === null ? amount : readAmount(draft, amount, maxUseful);
   const share = shareAfterSpend(rows, quotedAmount, existing?.holder.id);
   const heldShare = existing?.share ?? 0;
   const aimCeiling = maxTargetShare(state.counters.squaresLive);
-  const targets = SHARE_TARGETS.map((value) => ({
-    value,
-    cost: centsForShareOf(rows, value, existing?.holder.id),
-  })).filter(
+  const targets = SHARE_TARGETS.map((value) => {
+    const exact = centsForShareOf(rows, value, existing?.holder.id);
+    return {
+      value,
+      cost: exact === null ? null : ceilToDollar(exact),
+    };
+  }).filter(
     (entry): entry is { value: number; cost: number } =>
       entry.value <= aimCeiling + 1e-9 && entry.value > heldShare + 1e-9 && entry.cost !== null,
   );
@@ -236,7 +240,7 @@ export function BuyPanel() {
             <span className="text-primary/80">From {formatMoney(MIN_SPEND_CENTS)}.</span>{" "}
             {empty
               ? "The whole wall until the next square."
-              : "Your square halves every two weeks."}
+              : "New spend takes a slice sized to what they paid."}
           </p>
         </div>
 

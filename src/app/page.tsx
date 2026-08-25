@@ -40,7 +40,7 @@ export default async function MapPage() {
         crawlers and screen readers without putting a moving number in it.
       */}
       <h1 className="sr-only">
-        holdit.lol — a wall that forgets: hold a square, and it fades unless you hold it again
+        holdit.lol — a wall that forgets: new spend takes a slice sized to what they paid
       </h1>
 
       <section className="flex min-h-[calc(100svh-var(--header-h))] flex-col lg:h-[calc(100svh-var(--header-h))] lg:min-h-[640px]">

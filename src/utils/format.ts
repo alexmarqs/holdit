@@ -111,3 +111,14 @@ export function formatPrintDate(at: number): string {
     parts.find((p) => p.type === type)?.value ?? "";
   return `${part("month")} ${part("day")}, ${part("year")}, ${part("hour")}:${part("minute")} UTC`;
 }
+
+const HALF_DATE = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
+/** Calendar day this live total is half, if nobody buys. */
+export function formatHalfDate(at: number): string {
+  return HALF_DATE.format(at);
+}

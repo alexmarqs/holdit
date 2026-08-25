@@ -1,7 +1,7 @@
 "use client";
 
-import { MIN_SHOWN_CLICKS, MIN_SHOWN_VISITORS } from "@holdit/core";
-import { formatInt, formatMoney } from "@holdit/utils/format";
+import { halvesAt, MIN_SHOWN_CLICKS, MIN_SHOWN_VISITORS } from "@holdit/core";
+import { formatHalfDate, formatInt, formatMoney } from "@holdit/utils/format";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { wallAtom } from "@/components/map-provider";
@@ -31,7 +31,7 @@ export function CounterStrip() {
           until they carry their own weight. The live total always shows —
           that is the wall itself. Online only waits out zero: anybody reading
           this made it true, so there is nothing to be shy about at one.
-          Square count lives on the map. The half-life lives on /rules.
+          Square count lives on the map.
         */}
         {(counters.onlineNow ?? 0) > 0 ? (
           <span className="flex items-center gap-1.5 font-medium text-live">
@@ -40,7 +40,7 @@ export function CounterStrip() {
           </span>
         ) : null}
 
-        <Stat value={formatMoney(counters.liveCents)} label="live" tone="accent" />
+        <LiveStat cents={counters.liveCents} now={state.generatedAt} />
         {/* All-time, not today: a young wall's "today" resets to nothing every
             morning, which reads as decline rather than as a fresh start. */}
         {counters.clicksAllTime >= MIN_SHOWN_CLICKS ? (
@@ -57,6 +57,25 @@ export function CounterStrip() {
         </span>
       </div>
     </div>
+  );
+}
+
+function LiveStat({ cents, now }: { cents: number; now: number }) {
+  if (cents <= 0) {
+    return <Stat value={formatMoney(0)} label="live" tone="accent" />;
+  }
+
+  const when = formatHalfDate(halvesAt(now));
+
+  return (
+    <span className="flex max-w-xl flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-muted-foreground">
+      <span className="num font-medium text-primary">{formatMoney(cents)}</span>
+      live
+      <span>
+        If nobody buys, this live total is half on{" "}
+        <span className="num text-foreground">{when}</span>. The wall does not change.
+      </span>
+    </span>
   );
 }
 

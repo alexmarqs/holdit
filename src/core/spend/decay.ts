@@ -27,6 +27,17 @@ export function decayFactor(ageMs: number, halfLifeDays: number = HALF_LIFE_DAYS
 }
 
 /**
+ * When live spend is half of what it is at `now`, if nobody buys.
+ *
+ * Same half-life as every purchase, so a sum of them halves on this instant
+ * too — overflow (slower fade) can leave a little more than half, which is
+ * why the strip says "if nobody buys" rather than promising the dollar.
+ */
+export function halvesAt(now: number): number {
+  return now + HALF_LIFE_DAYS * MS_PER_DAY;
+}
+
+/**
  * How much of one purchase still counts towards area.
  *
  * `capCents` is the largest amount the display cap could ever render. Anything

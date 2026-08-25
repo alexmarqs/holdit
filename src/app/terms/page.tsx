@@ -35,10 +35,10 @@ export default function TermsPage() {
         <p>
           Space on one shared page, for as long as your spend keeps it there. Your square&rsquo;s
           area is your spend as a share of everyone&rsquo;s, drawn beside every other square.{" "}
-          <b>Live spend halves every {HALF_LIFE_DAYS} days</b> — that is how hard you are to knock
-          down, not how big you are. Your share of the page only changes when somebody else buys.
-          You are not buying a fixed position, a guaranteed size, a duration, or any amount of
-          traffic.
+          <b>Every {HALF_LIFE_DAYS} days, live spend is half — if nobody buys</b>. That is how hard
+          you are to knock down, not how big you are. Your share of the page only changes when
+          somebody else buys. You are not buying a fixed position, a guaranteed size, a duration, or
+          any amount of traffic.
         </p>
         <p>
           The smallest purchase is {formatMoney(MIN_SPEND_CENTS)}. Prices are in US dollars and

@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { formatAgo, formatMoney, formatPrintDate, formatShare, moneyDraft } from "./format";
+import {
+  formatAgo,
+  formatHalfDate,
+  formatMoney,
+  formatPrintDate,
+  formatShare,
+  moneyDraft,
+} from "./format";
 
 const NOW = Date.UTC(2026, 7, 21, 12);
 
@@ -62,6 +69,12 @@ describe("formatAgo", () => {
 describe("formatPrintDate", () => {
   it("prints the UTC instant so the receipt names the timezone", () => {
     expect(formatPrintDate(Date.UTC(2026, 7, 22, 11, 37))).toBe("Aug 22, 2026, 11:37 UTC");
+  });
+});
+
+describe("formatHalfDate", () => {
+  it("prints the calendar day live spend is half", () => {
+    expect(formatHalfDate(Date.UTC(2026, 8, 8, 14, 24))).toBe("Sep 8");
   });
 });
 

@@ -40,6 +40,11 @@ export function clampSpend(cents: number): number {
   return Math.min(MAX_SPEND_CENTS, Math.max(MIN_SPEND_CENTS, Math.round(cents)));
 }
 
+/** Aim chips round up to a dollar so quiet decay does not look like a glitch. */
+export function ceilToDollar(cents: number): number {
+  return clampSpend(Math.ceil(cents / 100) * 100);
+}
+
 /** Next rung up or down the ladder from an arbitrary amount. */
 export function stepAmount(cents: number, direction: 1 | -1): number {
   const current = clampSpend(cents);

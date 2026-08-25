@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ceilingFor } from "../config";
 import {
+  ceilToDollar,
   centsForShare,
   centsToReachShare,
   clampSpend,
@@ -26,6 +27,14 @@ describe("clampSpend", () => {
     expect(clampSpend(Number.NaN)).toBe(MIN_SPEND_CENTS);
     expect(clampSpend(Number.POSITIVE_INFINITY)).toBe(MAX_SPEND_CENTS);
     expect(clampSpend(-50)).toBe(MIN_SPEND_CENTS);
+  });
+});
+
+describe("ceilToDollar", () => {
+  it("raises a chip to the next whole dollar so cents do not tick", () => {
+    expect(ceilToDollar(28_951)).toBe(29_000);
+    expect(ceilToDollar(2_558)).toBe(2_600);
+    expect(ceilToDollar(2_600)).toBe(2_600);
   });
 });
 

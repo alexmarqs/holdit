@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HALF_LIFE_DAYS, MS_PER_DAY } from "../config";
-import { allTimeCents, decayFactor, liveCentsForHolder, purchasesAsOf } from "./decay";
+import { allTimeCents, decayFactor, halvesAt, liveCentsForHolder, purchasesAsOf } from "./decay";
 
 const NOW = Date.UTC(2026, 7, 21);
 const daysAgo = (d: number) => NOW - d * MS_PER_DAY;
@@ -72,5 +72,12 @@ describe("purchasesAsOf", () => {
 describe("allTimeCents", () => {
   it("never fades — you lose prominence, not history", () => {
     expect(allTimeCents([buy(1_000), buy(15_000), buy(900, 0, true)])).toBe(16_000);
+  });
+});
+
+describe("halvesAt", () => {
+  it("is one half-life from now — the instant live spend is half if nobody buys", () => {
+    expect(halvesAt(NOW)).toBe(NOW + HALF_LIFE_DAYS * MS_PER_DAY);
+    expect(liveCentsForHolder([buy(10_000)], halvesAt(NOW))).toBeCloseTo(5_000, 6);
   });
 });

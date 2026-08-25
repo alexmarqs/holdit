@@ -9,9 +9,9 @@ import "./globals.css";
 const sans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display: "swap" });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
 
-const TAGLINE = "Nobody holds this wall for long. Every square halves every two weeks.";
+const TAGLINE = "Nobody holds this wall for long. There's always room for the next square.";
 const DESCRIPTION =
-  "A wall that forgets. Every square halves every two weeks, so no one can buy it and keep it \u2014 there is always room next week. Your area is your spend as a share of everyone else's. No auction, nobody outbid, nobody pushed off. From $1.";
+  "A wall that forgets. Your area is your spend as a share of everyone else's. New spend takes a slice sized to what they paid \u2014 a smaller cheque does not take the wall. Live spend is half every two weeks if nobody buys, so there is always room next week. No auction, nobody outbid, nobody pushed off. From $1.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

@@ -19,7 +19,7 @@ const TEN_K = formatMoney(1_000_000);
 export const metadata = leafPage({
   title: "Rules",
   description:
-    "How a square works: spend from $1, your area is your share of live spend, a cap stops anyone owning the wall, and live spend halves every 14 days so the wall stays contestable. What is not allowed, and when spend is refunded.",
+    "How a square works: spend from $1, your area is your share of live spend, a cap stops anyone owning the wall, and live spend is easier to beat every 14 days so the wall stays contestable. What is not allowed, and when spend is refunded.",
   path: "/rules",
 });
 
@@ -49,8 +49,9 @@ export default function RulesPage() {
       <Section title="How a square works">
         <p>
           Spend from {formatMoney(MIN_SPEND_CENTS)}. Your <b>share</b> is your spend over
-          everyone&rsquo;s live spend. When somebody else buys, you shrink. You are not buying a
-          fixed size, a duration, or a deposit you can withdraw.
+          everyone&rsquo;s live spend. When somebody else buys, the wall resizes — they get a slice
+          sized to what they paid. You are not buying a fixed size, a duration, or a deposit you can
+          withdraw.
         </p>
         <p>Clicks never change area. History never fades — you lose prominence, not the record.</p>
       </Section>
@@ -68,10 +69,10 @@ export default function RulesPage() {
 
       <Section title="What actually fades">
         <p>
-          Live spend halves every {HALF_LIFE_DAYS} days. That is how hard you are to knock down, not
-          how big you are. If nobody else buys, everyone fades together — the ratios stay put, so{" "}
-          <b>the map does not move</b>. You only lose space when new money arrives. Old money is
-          then easier to beat.
+          Every {HALF_LIFE_DAYS} days, live spend is half — if nobody buys. That is how hard you are
+          to knock down, not how big you are. If nobody else buys, everyone fades together — the
+          ratios stay put, so <b>the map does not move</b>. You only lose space when new money
+          arrives. Old money is then easier to beat.
         </p>
         <ul className="space-y-2.5 pt-1">
           <Example title="You are alone.">
@@ -83,11 +84,11 @@ export default function RulesPage() {
             wall 50 / 50.
           </Example>
           <Example title="Someone matches you later.">
-            You pay {TEN_K}. Two weeks later they pay {TEN_K}. Their money is fresh; yours is half
-            as strong. They would take two-thirds — the cap stops them at {CAP_YOUNG}%.
+            You pay {TEN_K}. Two weeks later they pay {TEN_K}. Their money is fresh; yours is half.
+            They would take two-thirds — the cap stops them at {CAP_YOUNG}%.
           </Example>
           <Example title="A cheaper attack after you age.">
-            You pay {TEN_K}. Two weeks later they pay {formatMoney(500_000)}. Same live strength, so
+            You pay {TEN_K}. Two weeks later they pay {formatMoney(500_000)}. Same live dollars, so
             you split the wall. On day one that {formatMoney(500_000)} would have left them the
             smaller square.
           </Example>

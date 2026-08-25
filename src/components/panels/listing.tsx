@@ -65,7 +65,7 @@ export function Listing() {
                   {standing.lastPurchaseAt !== null ? (
                     <span>bought {formatAgo(standing.lastPurchaseAt, state.generatedAt)}</span>
                   ) : null}
-                  {standing.capped ? <span className="text-primary">at the cap</span> : null}
+                  {standing.capped ? <span className="text-primary">max size</span> : null}
                 </p>
               </div>
               <span className="mt-0.5 ml-0.5 flex shrink-0 items-center gap-0.5">

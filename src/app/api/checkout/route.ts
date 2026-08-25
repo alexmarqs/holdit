@@ -87,7 +87,7 @@ export async function POST(request: Request) {
                  * showing. A share of a sum, fading, is the honest description —
                  * and this is the one place a buyer reads it while paying.
                  */
-                description: `A share of the wall, sized against everyone's live spend. Halves every ${HALF_LIFE_DAYS} days.`,
+                description: `A share of the wall, sized against everyone's live spend. New spend takes a slice sized to what they paid. Live spend is half every ${HALF_LIFE_DAYS} days if nobody buys.`,
               },
             },
           },
