@@ -1,0 +1,1 @@
+ALTER TABLE "holders" DROP COLUMN "notify_prefs";

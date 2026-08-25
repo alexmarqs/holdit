@@ -1,0 +1,1 @@
+ALTER TABLE "purchases" ALTER COLUMN "provider" SET DEFAULT 'stripe';
