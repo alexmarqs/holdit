@@ -1,17 +1,12 @@
 # holdit.lol
 
-**A map of everyone paying for attention, sized by how much they're paying right now.**
+**A wall of everyone paying for attention, sized by live spend.**
 
-You buy points. Your square's area is your share of all live points. Points decay on a
-14-day half-life, so area is rented, not owned. The map resizes the instant anyone buys.
+Your area is your spend as a share of everyone else's. New spend takes a slice
+sized to what they paid. Live spend is half every 14 days if nobody buys — until
+then, the wall does not change.
 
-No auction. No countdown. No bidding. Display space at a published rate.
-
-The map renders as a **bundle analyzer**: squares nest inside category groups the way a
-build report groups modules into chunks, a *weigh by* control switches the sizing metric,
-and tooltips read as an analyzer readout. Product requirements are in
-[`holdit-spec.md`](./holdit-spec.md); the implementation design is in
-[`docs/superpowers/specs/2026-08-21-holdit-app-design.md`](./docs/superpowers/specs/2026-08-21-holdit-app-design.md).
+No auction. Nobody outbid. Nobody pushed off. From $1.
 
 ---
 
@@ -35,7 +30,7 @@ one — a failure that looks exactly like success.
 ```bash
 pnpm test          # needs the container up: four suites run against real Postgres
 pnpm typecheck
-pnpm lint          # biome; `pnpm format` writes fixes
+pnpm lint          # biome; `pnpm lint:fix` writes fixes
 pnpm build         # prerenders the wall, so it needs the database too
 ```
 
@@ -62,9 +57,9 @@ the database degrades rather than failing.
 
 | Set this | To get |
 |---|---|
-| `DATABASE_URL` | **Required.** Then `pnpm db:migrate && pnpm db:seed`. |
+| `DATABASE_URL` | **Required.** Then `pnpm db:migrate`. `pnpm db:seed` is the local founding wall — not production. |
 | `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` | Hosted checkout and signed `checkout.session.completed` webhooks. Without a key, development purchases are recorded directly. |
-| `UPSTASH_REDIS_REST_URL` + `_TOKEN` | Rate limiting on `/api/state`, `/api/checkout` and `/c/*`. |
+| `UPSTASH_REDIS_REST_URL` + `_TOKEN` | Rate limiting on checkout, state, clicks, visits, and a few other routes. |
 | `NEXT_PUBLIC_APP_URL` | Canonical production origin and checkout return URL. |
 | `CLICK_HASH_SALT` | Secret salt for privacy-preserving click fingerprints. |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | Takedown and refund contact shown on the site. |
@@ -85,27 +80,35 @@ scripts/                       local Postgres: the compose file, and the foundin
 ```
 
 `src/core/` imports nothing from the other folders and does no I/O. That is what makes
-the pricing behaviour — who shrinks when someone buys — testable without a database.
+the pricing behaviour — how a new buy takes a slice, and how live spend fades —
+testable without a database.
 
-`src/db/repository.ts` declares one interface with two implementations behind it
-(`drizzle/`, `mock/`). `src/db/index.ts` picks one from the environment, so switching
-between them is a config change and nothing else.
+Postgres is the only backend. Queries live in `src/db/queries/` and take the Drizzle
+client as their first argument. Import the client from `@holdit/db/client`;
+`src/db/index.ts` is types only, so a client component cannot pull a connection pool
+in by accident.
 
 ## The parts worth knowing
 
-**Decay with overflow persistence.** Points above the 10% display cap decay at half rate,
-implemented statelessly in two passes: sum live points at the normal half-life to get the
-map total, then re-price each purchase as
+**Decay with overflow persistence.** Live spend is half every 14 days if nobody buys,
+so shares stay put until new money arrives. Spend above the display cap fades at half
+rate, implemented statelessly in two passes: sum live spend at the normal half-life to
+get the wall total, then re-price each purchase as
 `min(p, cap)·0.5^(dt/H) + max(0, p−cap)·0.5^(dt/2H)`. The portion that could never have
 been displayed persists twice as long — big money buys persistence, not dominance.
 
 **Share.** Raw share, then the cap water-filled with its overflow redistributed across
-everyone still under it, then the minimum-size floor funded by those with headroom. The
-cap raises itself when the holder count makes 10% unreachable, so the map never has a gap.
+everyone still under it, then the minimum-size floor funded by those with headroom.
+The ceiling is `ceilingFor(n)` in `src/core/config.ts`: the whole wall at one square,
+never above 60% on a young wall, 10% from 16 squares. Extra spend past the cap does
+not grow the tile.
 
-**No materialised points table.** The rows are cached for 60s (`src/db/cache.ts`,
-invalidated on purchase); the arithmetic is recomputed per request because it depends on
-the caller's canvas size and the current instant. One code path, microseconds of CPU.
+**No sockets, no in-process cache.** The page is prerendered (`revalidate = 30`) and
+`revalidatePath("/")` on purchase. Visitors ask `/api/state` when they refresh or chase
+a paid square onto the wall; that route is the CDN cache (`s-maxage=10`). Online is
+visit beacons into the `visits` table, not presence. `src/db/cache.ts` only collapses
+in-flight loads — it holds nothing between requests, so two instances cannot disagree
+about the same wall.
 
 **Purchases are not a race.** No locks, no queue, no version counter, no boundary policy.
 Position is a share of a sum, so two simultaneous buyers cannot conflict.
