@@ -117,3 +117,8 @@ Position is a share of a sum, so two simultaneous buyers cannot conflict.
 ## Not built yet
 
 Holder profile/dashboard pages and email delivery.
+
+If mail is needed: Resend or Cloudflare Email for transactional send. Loops for
+marketing and workflows.
+
+If monitoring is needed: Sentry for errors. PostHog for product analytics.
