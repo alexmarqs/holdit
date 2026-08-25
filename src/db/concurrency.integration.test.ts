@@ -1,7 +1,7 @@
 import { buildMapState } from "@holdit/core";
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "./client";
-import { loadMapDataset } from "./queries/dataset";
+import { loadMapRows } from "./queries/dataset";
 import { recordPurchase } from "./queries/purchases";
 import { resetDatabase } from "./testing";
 
@@ -16,7 +16,7 @@ const T0 = 1_700_000_000_000;
 describe("many buyers at once", () => {
   beforeEach(resetDatabase);
 
-  const wall = async () => buildMapState({ ...(await loadMapDataset(db, T0)), now: T0 });
+  const wall = async () => buildMapState({ ...(await loadMapRows(db, T0)), now: T0 });
 
   it("loses no money when twenty buy in the same instant", async () => {
     const amounts = Array.from({ length: 20 }, (_, i) => 100 + i * 337);

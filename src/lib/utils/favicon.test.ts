@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { faviconDomain, isFaviconDomain } from "./favicon";
+import { faviconDomain, isFaviconDomain, toFaviconUrl } from "./favicon";
 
 /**
  * The domain never becomes a host we connect to — it is interpolated into a URL
@@ -35,5 +35,26 @@ describe("favicon domains", () => {
   it("sends a handle to the platform that hosts it", () => {
     expect(faviconDomain("@someone")).toBe("x.com");
     expect(faviconDomain("Stripe.COM")).toBe("stripe.com");
+  });
+});
+
+describe("toFaviconUrl", () => {
+  it("hotlinks Google so the wall is not a Vercel function per square", () => {
+    const url = toFaviconUrl("stripe.com");
+    expect(url.startsWith("https://t0.gstatic.com/faviconV2?")).toBe(true);
+    expect(url).toContain("url=https%3A%2F%2Fstripe.com");
+  });
+
+  it("resolves an @handle to the platform it lives on", () => {
+    expect(toFaviconUrl("@someone")).toContain("url=https%3A%2F%2Fx.com");
+  });
+
+  it("passes only sizes the endpoint accepts", () => {
+    expect(toFaviconUrl("stripe.com", 32)).toContain("size=32");
+    expect(toFaviconUrl("stripe.com", 128)).toContain("size=128");
+  });
+
+  it("escapes the domain rather than interpolating it raw", () => {
+    expect(toFaviconUrl("a b.com" as string)).toContain("a%20b.com");
   });
 });

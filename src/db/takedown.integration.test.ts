@@ -2,7 +2,7 @@ import type { Holder } from "@holdit/core";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "./client";
-import { loadMapDataset } from "./queries/dataset";
+import { loadMapRows } from "./queries/dataset";
 import { recordPurchase } from "./queries/purchases";
 import { holders, purchases } from "./schema";
 import { resetDatabase } from "./testing";
@@ -33,7 +33,7 @@ describe("taking a square down", () => {
     const result = await buy("instant.dev");
     expect(result.holder.status).toBe("live");
 
-    const dataset = await loadMapDataset(db, NOW);
+    const dataset = await loadMapRows(db, NOW);
     expect(dataset.holders.some((h) => h.handle === "instant.dev")).toBe(true);
   });
 
@@ -41,7 +41,7 @@ describe("taking a square down", () => {
     await buy("breaks-the-rules.dev");
     await setStatus("breaks-the-rules.dev", "rejected");
 
-    const dataset = await loadMapDataset(db, NOW);
+    const dataset = await loadMapRows(db, NOW);
     expect(dataset.holders.some((h) => h.handle === "breaks-the-rules.dev")).toBe(false);
   });
 
@@ -50,11 +50,11 @@ describe("taking a square down", () => {
     const withBoth = await buy("bad.dev", 90_000);
     expect(withBoth.holder.status).toBe("live");
 
-    const before = await loadMapDataset(db, NOW);
+    const before = await loadMapRows(db, NOW);
     expect(before.purchasesByHolder.has(withBoth.holder.id)).toBe(true);
 
     await setStatus("bad.dev", "rejected");
-    const after = await loadMapDataset(db, NOW);
+    const after = await loadMapRows(db, NOW);
 
     // Its spend must leave the total too, or the survivors keep being diluted
     // by a square nobody can see.
@@ -78,7 +78,7 @@ describe("topping up an existing square", () => {
   beforeEach(resetDatabase);
 
   const urlOf = async (handle: string) =>
-    (await loadMapDataset(db, NOW)).holders.find((h) => h.handle === handle)?.url;
+    (await loadMapRows(db, NOW)).holders.find((h) => h.handle === handle)?.url;
 
   it("keeps the destination when someone tops up with the bare domain", async () => {
     await recordPurchase(
@@ -111,7 +111,7 @@ describe("topping up an existing square", () => {
     );
     expect(second.isNew).toBe(false);
 
-    const dataset = await loadMapDataset(db, NOW);
+    const dataset = await loadMapRows(db, NOW);
     const rows = dataset.purchasesByHolder.get(second.holder.id) ?? [];
     expect(rows).toHaveLength(2);
     expect(rows.reduce((t, r) => t + r.amountCents, 0)).toBe(20_000);

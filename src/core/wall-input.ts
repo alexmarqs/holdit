@@ -1,4 +1,5 @@
-import type { ActivityEvent, Holder, MapInput, Purchase } from "@holdit/core";
+import type { MapInput } from "./map";
+import type { ActivityEvent, Holder, Purchase } from "./types";
 
 /**
  * Builds the rows `buildMapState` reads, without a database.

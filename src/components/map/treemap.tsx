@@ -296,15 +296,17 @@ export function Treemap() {
                   <span className="num pointer-events-none px-1.5 text-[11px] text-muted-foreground">
                     {matches}
                   </span>
-                  <button
+                  <Button
                     type="button"
-                    className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    variant="outline"
+                    size="icon"
+                    className="size-7 border-foreground/25 bg-muted text-foreground shadow-sm hover:bg-muted-foreground/15"
                     aria-label="Clear search"
                     title="Clear search"
                     onClick={() => setQuery("")}
                   >
-                    <X className="size-3.5" />
-                  </button>
+                    <X className="size-3.5" strokeWidth={2.5} />
+                  </Button>
                 </span>
               ) : null}
             </div>

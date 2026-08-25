@@ -14,7 +14,7 @@
  */
 export type { Database } from "./client";
 export type { TrackClickInput } from "./queries/clicks";
-export type { MapDataset } from "./queries/dataset";
+export type { MapRows } from "./queries/dataset";
 export type { MapStateOptions } from "./queries/map";
 export type { BuyInput, RecordPurchaseInput, RecordPurchaseResult } from "./queries/purchases";
 export type { RecordVisitInput } from "./queries/visits";

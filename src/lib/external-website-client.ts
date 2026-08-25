@@ -1,36 +1,20 @@
 import { TAGLINE_MAX_CHARS } from "@holdit/core";
-import { type FaviconSize, isFaviconDomain } from "./utils/favicon";
+import { type FaviconSize, faviconDomain, isFaviconDomain, toFaviconUrl } from "./utils/favicon";
 
 /**
- * Outbound fetches for other people's sites: the description a square shows
- * when the buyer left the field blank, and the mark we proxy so visitors never
- * ask Google for the wall's contents.
+ * Outbound fetches: the tagline scrape at record time, and favicon bytes for
+ * OG. The live wall hotlinks `toFaviconUrl` so those images never touch a
+ * Vercel function. This fetches the same URL because ImageResponse needs bytes.
  *
- * Fetched by us, not by the visitor's browser, for three reasons.
- *
- * A visitor asking Google directly for each logo tells Google the whole
- * contents of the wall and that this person is looking at it. Nothing about
- * showing a logo requires handing a third party that list.
- *
- * `gstatic.com` is also blocked outright in some countries and by plenty of
- * corporate networks and blocklists — and when it is, the wall renders with no
- * logos at all. That is the largest visual failure this site has, and it is
- * invisible from anywhere it would be noticed in testing.
- *
- * And the share card already fetches marks server-side, so proxying leaves one
- * path instead of two that can disagree.
- *
- * Note the shape of the favicon request: the domain is interpolated into a URL
- * we construct against a host we hardcode. It never becomes a host we connect
- * to, so this cannot be turned into a request-forgery primitive the way reading
- * a caller-supplied page can.
+ * The favicon request interpolates the domain into a URL against a host we
+ * hardcode. It never becomes a host we connect to, so this cannot be turned
+ * into a request-forgery primitive the way reading a caller-supplied page can.
  */
 
-const FAVICON_UPSTREAM = "https://t0.gstatic.com";
 const FAVICON_TIMEOUT_MS = 2_500;
 const FAVICON_MAX_BYTES = 256 * 1024;
 
-const FAVICON_CACHE_TTL_SECONDS = 604_800; // 1 week
+const FAVICON_CACHE_TTL_SECONDS = 2_592_000; // 30 days — logos change about never
 
 const SITE_TIMEOUT_MS = 3_000;
 const SITE_MAX_BYTES = 96 * 1024;
@@ -68,21 +52,16 @@ const tidy = (raw: string): string | null => {
   return `${(lastSpace > 40 ? clipped.slice(0, lastSpace) : clipped).replace(/[,;:.\s]+$/, "")}…`;
 };
 
-const toFaviconUpstreamUrl = (domain: string, size: FaviconSize): string => {
-  const url = encodeURIComponent(`https://${domain}`);
-  return `${FAVICON_UPSTREAM}/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${url}&size=${size}`;
-};
-
 export interface FaviconResult {
   bytes: Uint8Array;
   contentType: string;
 }
 
-async function fetchFavicon(domain: string, size: FaviconSize): Promise<FaviconResult | null> {
-  if (!isFaviconDomain(domain)) return null;
+async function fetchFavicon(handle: string, size: FaviconSize): Promise<FaviconResult | null> {
+  if (!isFaviconDomain(faviconDomain(handle))) return null;
 
   try {
-    const response = await fetch(toFaviconUpstreamUrl(domain, size), {
+    const response = await fetch(toFaviconUrl(handle, size), {
       headers: { accept: "image/*", "user-agent": "holdit.lol/1.0 (+https://holdit.lol)" },
       signal: AbortSignal.timeout(FAVICON_TIMEOUT_MS),
       next: { revalidate: FAVICON_CACHE_TTL_SECONDS },

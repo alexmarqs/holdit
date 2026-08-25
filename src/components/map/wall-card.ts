@@ -9,7 +9,8 @@ import {
   squarify,
   tileContent,
 } from "@holdit/core";
-import { faviconUrl, shortHandle } from "@/lib/utils/domain";
+import { shortHandle } from "@/lib/utils/domain";
+import { toFaviconUrl } from "@/lib/utils/favicon";
 import { formatInt, formatMoney, formatPrintDate, formatShare } from "@/lib/utils/format";
 
 export const WALL_CARD_SIZE = { width: 1200, height: 630 };
@@ -187,7 +188,7 @@ export function wallCardModel(state: MapState, theme: CardTheme = "light"): Wall
            * card to named tiles replaced real favicons with teal monograms and
            * was the most visible way the download differed from the screen.
            */
-          logoUrl: faviconUrl(handle, 128),
+          logoUrl: toFaviconUrl(handle, 128),
           tagline: face.tagline ? standing.holder.tagline : null,
         },
       ];

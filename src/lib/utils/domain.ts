@@ -4,8 +4,6 @@
  * "https://www.linear.app" and "linear.app" must all resolve to one square.
  */
 
-import { faviconDomain } from "./favicon";
-
 export interface NormalizedTarget {
   /** Display name on the tile. */
   handle: string;
@@ -54,23 +52,11 @@ export function isValidTarget(input: string): boolean {
   return normalizeTarget(input) !== null;
 }
 
-/**
- * Our own endpoint, not Google's directly. See `utils/favicon.ts` for why: the
- * browser should not be handing a third party the contents of the wall, and the
- * upstream host is blocked in places where the wall would then render bare.
- *
- * The handle-to-domain rule is `faviconDomain`, not a copy of it. Two copies of
- * a rule about case are exactly the pair that drifts.
- */
-export function faviconUrl(handle: string, size: 32 | 64 | 128 = 64): string {
-  return `/api/favicon?domain=${encodeURIComponent(faviconDomain(handle))}&size=${size}`;
-}
-
 /** Two letters for the fallback tile when a favicon fails to load. */
-export function monogram(handle: string): string {
+export const monogram = (handle: string): string => {
   const cleaned = handle.replace(/^@/, "");
   return cleaned.slice(0, 2).toUpperCase();
-}
+};
 
 /**
  * A short display form for a square too narrow to hold the whole domain.

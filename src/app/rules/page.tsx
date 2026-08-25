@@ -95,7 +95,7 @@ export default function RulesPage() {
         </ul>
         <p>
           That is also why the quoted price of a share can drop by a cent while you wait: the pool
-          got slightly cheaper. A new purchase raises it.
+          got slightly cheaper. A new purchase makes it climb.
         </p>
       </Section>
 

@@ -5,7 +5,7 @@ import {
   MIN_SHOWN_VISITORS,
 } from "@holdit/core";
 import { describe, expect, it } from "vitest";
-import { wallInput } from "../../test/wall";
+import { wallInput } from "../../core/wall-input";
 
 /**
  * Launch day: real squares, no traffic yet. Nothing that would render a zero

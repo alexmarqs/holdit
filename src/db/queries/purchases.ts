@@ -5,7 +5,7 @@ import { normalizeTarget } from "@/lib/utils/domain";
 import type { Database } from "../client";
 import { num, toHolder, toPurchase } from "../rows";
 import { holders, purchases } from "../schema";
-import { loadMapDataset } from "./dataset";
+import { loadMapRows } from "./dataset";
 import { getHolderByHandle, getHolderById } from "./holders";
 
 export interface RecordPurchaseInput {
@@ -95,7 +95,7 @@ export async function recordPurchase(
   }
 
   // Read the map as it stands, so the feed can quote an honest "was → is".
-  const before = buildMapState({ ...(await loadMapDataset(db, now)), now });
+  const before = buildMapState({ ...(await loadMapRows(db, now)), now });
   const existing = await getHolderByHandle(db, input.handle);
   const shareBefore =
     existing === null
@@ -161,7 +161,7 @@ export async function recordPurchase(
     })
     .returning();
 
-  const after = buildMapState({ ...(await loadMapDataset(db, now)), now });
+  const after = buildMapState({ ...(await loadMapRows(db, now)), now });
   const shareAfter = after.standings.find((s) => s.holder.id === holder.id)?.share ?? 0;
   await db
     .update(purchases)

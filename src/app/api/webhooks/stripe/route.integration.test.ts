@@ -19,7 +19,7 @@ process.env.STRIPE_WEBHOOK_SECRET = SECRET;
 
 const { default: Stripe } = await import("stripe");
 const { db } = await import("@holdit/db/client");
-const { loadMapDataset } = await import("@holdit/db/queries/dataset");
+const { loadMapRows } = await import("@holdit/db/queries/dataset");
 const { resetDatabase } = await import("@holdit/db/testing");
 const { POST } = await import("./route");
 const { buildMapState } = await import("@holdit/core");
@@ -70,7 +70,7 @@ function deliver(payload: unknown, opts: { sign?: boolean; type?: string } = {})
 
 const wall = async () => {
   const now = Date.now();
-  return buildMapState({ ...(await loadMapDataset(db, now)), now });
+  return buildMapState({ ...(await loadMapRows(db, now)), now });
 };
 
 describe("the Stripe webhook", () => {

@@ -17,7 +17,7 @@ import { clicks, holders, purchases, visits } from "../schema";
  * are computed by `buildMapState` in `@holdit/core`, so this layer only has to
  * return rows, never behaviour.
  */
-export interface MapDataset {
+export interface MapRows {
   holders: Holder[];
   purchasesByHolder: Map<string, Purchase[]>;
   clicksAllTimeByHolder: Map<string, number>;
@@ -31,7 +31,7 @@ export interface MapDataset {
 /** Live activity feed length. Long enough to look alive, short enough to be cheap. */
 const ACTIVITY_LIMIT = 12;
 
-export async function loadMapDataset(db: Database, now: number): Promise<MapDataset> {
+export async function loadMapRows(db: Database, now: number): Promise<MapRows> {
   const trendingSince = new Date(now - TRENDING_WINDOW_MS);
 
   const countsQuery = (since?: Date) => {

@@ -2,19 +2,17 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { faviconUrl, monogram } from "@/lib/utils/domain";
+import { monogram } from "@/lib/utils/domain";
+import { toFaviconUrl } from "@/lib/utils/favicon";
 
 /**
  * Favicon with a monogram fallback. Roughly one site in six has no usable
  * favicon, and a broken image on a paid square is not acceptable.
  *
- * `onError` alone is not enough. `/api/favicon` answers 200 with a 1x1
- * transparent GIF when the upstream has nothing, deliberately staying out of
- * the browser's error path so the miss can be cached — which means a missing
- * icon loads *successfully* and stretches an invisible pixel across the box.
- * The natural width is the only signal that reaches the client, so it is
- * checked on load, and again by ref for an image the cache completed before
- * React attached the handler.
+ * Google often answers a globe at 16px instead of an error, so `onError` is
+ * not enough on its own. A 1px spacer still loads as success; natural width
+ * is the signal, checked on load and again by ref if the cache finished
+ * before React attached the handler.
  */
 export function SiteLogo({
   handle,
@@ -56,7 +54,7 @@ export function SiteLogo({
        * dozen of them on a full wall. 64 is also the honest size for a
        * 20px box on a retina screen, where 32 is already upscaled.
        */
-      src={faviconUrl(handle, 64)}
+      src={toFaviconUrl(handle, 64)}
       width={size}
       height={size}
       loading="lazy"

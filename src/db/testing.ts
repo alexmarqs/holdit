@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { resetDatasetCache } from "./cache";
+import { resetMapRowsCache } from "./queries/map";
 import { db } from "./client";
 
 /**
@@ -17,7 +17,7 @@ import { db } from "./client";
 export async function resetDatabase(): Promise<void> {
   // CASCADE covers the foreign keys from clicks and purchases back to holders.
   await db.execute(sql`truncate table holders, purchases, clicks, visits cascade`);
-  // The in-flight collapse in cache.ts would otherwise answer the next test
+  // The in-flight collapse in getMapState would otherwise answer the next test
   // from a load started before the truncation.
-  resetDatasetCache();
+  resetMapRowsCache();
 }

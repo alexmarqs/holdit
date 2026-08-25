@@ -10,7 +10,7 @@ import {
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "./client";
-import { loadMapDataset } from "./queries/dataset";
+import { loadMapRows } from "./queries/dataset";
 import { recordPurchase } from "./queries/purchases";
 import { holders } from "./schema";
 import { resetDatabase } from "./testing";
@@ -27,7 +27,7 @@ import { resetDatabase } from "./testing";
 const T0 = 1_700_000_000_000;
 
 async function wall(now = T0) {
-  return buildMapState({ ...(await loadMapDataset(db, now)), now });
+  return buildMapState({ ...(await loadMapRows(db, now)), now });
 }
 const shareOf = (state: Awaited<ReturnType<typeof wall>>, handle: string) =>
   state.standings.find((s) => s.holder.handle === handle)?.share ?? 0;

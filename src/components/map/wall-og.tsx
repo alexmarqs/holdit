@@ -1,7 +1,6 @@
 import { ImageResponse } from "next/og";
 import { externalWebsiteClient } from "@/lib/external-website-client";
 import { monogram } from "@/lib/utils/domain";
-import { faviconDomain } from "@/lib/utils/favicon";
 import { loadOgFonts, OG_SCALE, px } from "./og-fonts";
 import { CARD_TILE_PAD_X, CARD_TILE_PAD_Y, cardPalette, type WallCard } from "./wall-card";
 
@@ -19,7 +18,7 @@ export async function resolveCardLogos(card: WallCard): Promise<WallCard> {
       if (!tile.logoUrl) return tile;
       if (!allowed.has(index)) return { ...tile, logoUrl: null };
 
-      const found = await externalWebsiteClient.fetchFavicon(faviconDomain(tile.handle), 128);
+      const found = await externalWebsiteClient.fetchFavicon(tile.handle, 128);
       return {
         ...tile,
         logoUrl: found

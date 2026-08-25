@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { wallInput } from "../test/wall";
+import { wallInput } from "./wall-input";
 import {
   buildMapState,
   ceilingFor,

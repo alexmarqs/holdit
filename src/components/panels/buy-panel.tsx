@@ -160,10 +160,10 @@ export function BuyPanel() {
     <section className="border-b border-border px-4 py-2.5 md:px-5 md:py-3">
       <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-5">
         <div className="min-w-0 shrink-0 text-center lg:text-left">
-          <h2 className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-[20px] leading-none font-bold tracking-[-0.03em] md:text-[26px] lg:justify-start">
+          <h2 className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-[20px] leading-none font-bold tracking-[-0.03em] lg:justify-start">
             <span>
               {existing && !atCeiling ? "Add" : "Hold"}{" "}
-              <span className="num text-[30px] leading-none md:text-[28px]">
+              <span className="num text-[30px] leading-none text-primary">
                 {existing && !atCeiling ? `+${formatShare(delta)}` : formatShare(share)}
               </span>{" "}
               of the wall for
@@ -213,7 +213,7 @@ export function BuyPanel() {
                   aria-label="Amount to spend, in dollars"
                   size={1}
                   style={{ width: `${Math.max(3, (draft ?? formatMoney(amount)).length) + 0.5}ch` }}
-                  className="num bg-transparent text-center text-[34px] leading-none text-primary tabular-nums outline-none md:text-[30px]"
+                  className="num bg-transparent text-center text-[34px] leading-none text-primary tabular-nums outline-none"
                 />
                 <Pencil
                   aria-hidden
@@ -239,7 +239,7 @@ export function BuyPanel() {
             <span className="text-primary/80">From {formatMoney(MIN_SPEND_CENTS)}.</span>{" "}
             {empty
               ? "The whole wall until the next square."
-              : "New spend takes a slice sized to what they paid."}
+              : "New spend takes a slice sized to what they paid. The price of a slice climbs as the wall fills."}
           </p>
         </div>
 

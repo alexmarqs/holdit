@@ -2,6 +2,7 @@
 
 import { halvesAt, MIN_SHOWN_CLICKS, MIN_SHOWN_VISITORS } from "@holdit/core";
 import { useAtomValue } from "jotai";
+import { Hourglass } from "lucide-react";
 import type { ReactNode } from "react";
 import { wallAtom } from "@/components/map-provider";
 import { RefreshButton } from "@/components/panels/refresh-button";
@@ -23,7 +24,7 @@ export function CounterStrip() {
         The numbers are text, not one big link. A full-width anchor navigates on
         a stray click and makes the figures impossible to select or copy.
       */}
-      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 py-2 text-[13px] lg:justify-start lg:gap-x-5">
+      <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-y-1 px-4 py-2 text-center text-[13px] lg:flex-row lg:flex-wrap lg:items-center lg:justify-start lg:gap-x-5 lg:text-left">
         {/*
           A small counter is worse than an absent one. On launch day this row
           would read "0 online · 0 clicks · 0 visitors", which invites a verdict
@@ -68,14 +69,14 @@ function LiveStat({ cents, now }: { cents: number; now: number }) {
   const when = formatHalfDate(halvesAt(now));
 
   return (
-    <span className="flex max-w-xl flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-muted-foreground">
-      <span className="num font-medium text-primary">{formatMoney(cents)}</span>
-      live
-      <span>
+    <>
+      <Stat value={formatMoney(cents)} label="live" tone="accent" />
+      <span className="max-w-xl text-pretty text-muted-foreground">
+        <Hourglass className="mb-px mr-1 inline size-3.5 align-text-bottom" aria-hidden />
         If nobody buys, this live total is half on{" "}
         <span className="num text-foreground">{when}</span>. The wall does not change.
       </span>
-    </span>
+    </>
   );
 }
 

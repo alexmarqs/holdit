@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { faviconUrl, isValidTarget, monogram, normalizeTarget, shortHandle } from "./domain";
+import { isValidTarget, monogram, normalizeTarget, shortHandle } from "./domain";
 
 describe("normalizeTarget", () => {
   it("collapses the ways people write the same domain into one square", () => {
@@ -63,33 +63,6 @@ describe("normalizeTarget", () => {
     expect(isValidTarget("storybook.js.org")).toBe(true);
     expect(isValidTarget("scaling.pt")).toBe(true);
     expect(isValidTarget("tinkerer.club")).toBe(true);
-  });
-});
-
-/**
- * The URL now points at our own proxy. Why it does — privacy, and upstream
- * hosts that are blocked in places the wall still has to render — is in
- * `utils/favicon.ts`; what matters here is that it never names a third party.
- */
-describe("faviconUrl", () => {
-  it("points at our own endpoint, not a third party", () => {
-    const url = faviconUrl("stripe.com");
-    expect(url.startsWith("/api/favicon?")).toBe(true);
-    expect(url).not.toContain("gstatic");
-    expect(url).not.toContain("google");
-  });
-
-  it("resolves an @handle to the platform it lives on", () => {
-    expect(faviconUrl("@someone")).toContain("domain=x.com");
-  });
-
-  it("passes only sizes the endpoint accepts", () => {
-    expect(faviconUrl("stripe.com", 32)).toContain("size=32");
-    expect(faviconUrl("stripe.com", 128)).toContain("size=128");
-  });
-
-  it("escapes the domain rather than interpolating it raw", () => {
-    expect(faviconUrl("a b.com" as string)).toContain("a%20b.com");
   });
 });
 
