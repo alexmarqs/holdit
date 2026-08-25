@@ -1,5 +1,5 @@
-import { formatShare } from "@holdit/utils/format";
 import { describe, expect, it } from "vitest";
+import { formatShare } from "@/lib/utils/format";
 import { ceilingFor } from "../config";
 import { centsForShareOf, shareAfterSpend } from "./project";
 import { computeShares } from "./share";

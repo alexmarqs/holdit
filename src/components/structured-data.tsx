@@ -1,6 +1,6 @@
 import type { MapState } from "@holdit/core";
 import { MIN_SPEND_CENTS } from "@holdit/core";
-import { siteUrl } from "@holdit/utils/env";
+import { siteUrl } from "@/lib/utils/env";
 
 /**
  * JSON-LD as a script body. `<` is escaped so a holder tagline cannot close

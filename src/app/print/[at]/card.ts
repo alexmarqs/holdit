@@ -1,4 +1,4 @@
-import { siteUrl } from "@holdit/utils/env";
+import { siteUrl } from "@/lib/utils/env";
 import { WALL_CARD_SIZE } from "../../../components/map/wall-card";
 
 const TITLE = "holdit.lol — hold your square of the wall";

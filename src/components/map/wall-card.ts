@@ -9,8 +9,8 @@ import {
   squarify,
   tileContent,
 } from "@holdit/core";
-import { faviconUrl, shortHandle } from "@holdit/utils/domain";
-import { formatInt, formatMoney, formatPrintDate, formatShare } from "@holdit/utils/format";
+import { faviconUrl, shortHandle } from "@/lib/utils/domain";
+import { formatInt, formatMoney, formatPrintDate, formatShare } from "@/lib/utils/format";
 
 export const WALL_CARD_SIZE = { width: 1200, height: 630 };
 export const WALL_CARD_HEADER_H = 82;

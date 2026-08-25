@@ -7,10 +7,10 @@ import {
   type Placed,
   tileContent,
 } from "@holdit/core";
-import { shortHandle } from "@holdit/utils/domain";
-import { formatInt, formatShare } from "@holdit/utils/format";
 import { memo } from "react";
 import { SiteLogo } from "@/components/site-logo";
+import { shortHandle } from "@/lib/utils/domain";
+import { formatInt, formatShare } from "@/lib/utils/format";
 import { SquareLink } from "./square-link";
 
 export interface TileLayerProps {

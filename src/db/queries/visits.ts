@@ -1,4 +1,4 @@
-import { classifyUserAgent, hashIp } from "@holdit/utils/hash";
+import { classifyUserAgent, hashIp } from "@/lib/utils/hash";
 import type { Database } from "../client";
 import { visits } from "../schema";
 

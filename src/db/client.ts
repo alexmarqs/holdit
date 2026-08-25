@@ -1,6 +1,6 @@
-import { isProduction, serverEnv } from "@holdit/utils/env";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { isProduction, serverEnv } from "@/lib/utils/env";
 import { schema } from "./schema";
 
 if (!serverEnv.databaseUrl) {

@@ -1,8 +1,8 @@
 import { db } from "@holdit/db/client";
 import { recordVisit } from "@holdit/db/queries/visits";
-import { rateLimit } from "@holdit/utils/rate-limit";
-import { clientIp } from "@holdit/utils/request";
 import { NextResponse } from "next/server";
+import { rateLimit } from "@/lib/utils/rate-limit";
+import { clientIp } from "@/lib/utils/request";
 
 /**
  * Count a visitor, from the browser rather than from the render.

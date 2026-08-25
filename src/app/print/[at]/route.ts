@@ -1,6 +1,6 @@
-import { serverEnv } from "@holdit/utils/env";
-import { parsePrintAt, printAtProof } from "@holdit/utils/print-at";
 import { NextResponse } from "next/server";
+import { serverEnv } from "@/lib/utils/env";
+import { parsePrintAt, printAtProof } from "@/lib/utils/print-at";
 import { printCardHtml } from "./card";
 
 /**

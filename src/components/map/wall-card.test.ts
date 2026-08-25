@@ -7,8 +7,8 @@ import {
   squarify,
   tileContent,
 } from "@holdit/core";
-import { shortHandle } from "@holdit/utils/domain";
 import { describe, expect, it } from "vitest";
+import { shortHandle } from "@/lib/utils/domain";
 import { tileColor, WALL_CARD_MAP, wallCardModel } from "./wall-card";
 
 const NOW = Date.UTC(2026, 7, 22, 11, 37);

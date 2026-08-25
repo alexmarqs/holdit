@@ -67,7 +67,7 @@ the database degrades rather than failing.
 
 ## Layout
 
-No monorepo. Domain, persistence, utilities, routes, and components live under `src/`.
+No monorepo. Domain, persistence, helpers, routes, and components live under `src/`.
 The shared layers use namespaced `@holdit/*` aliases; application code uses `@/*`.
 
 ```
@@ -75,7 +75,7 @@ src/app/          pages and route handlers
 src/components/   wall, panels, shared UI, and metadata
 src/core/         @holdit/core   pure domain: decay, share, squarify, thresholds
 src/db/           @holdit/db     Drizzle schema and per-domain queries
-src/utils/        @holdit/utils  formatting, domains, hashing, environment, rate limiting
+src/lib/          Stripe and site clients; helpers under utils/
 drizzle/                       generated SQL migrations and schema snapshots
 scripts/                       local Postgres: the compose file, and the founding wall as SQL
 ```

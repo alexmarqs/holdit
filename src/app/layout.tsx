@@ -1,8 +1,8 @@
-import { siteUrl } from "@holdit/utils/env";
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Geist_Mono } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { siteUrl } from "@/lib/utils/env";
 import { OG_IMAGE } from "./seo";
 import "./globals.css";
 

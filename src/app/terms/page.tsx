@@ -1,7 +1,7 @@
 import { HALF_LIFE_DAYS, MIN_SPEND_CENTS } from "@holdit/core";
-import { publicEnv } from "@holdit/utils/env";
-import { formatMoney } from "@holdit/utils/format";
 import { PageHead, Section } from "@/components/prose";
+import { publicEnv } from "@/lib/utils/env";
+import { formatMoney } from "@/lib/utils/format";
 import { leafPage } from "../seo";
 
 export const metadata = leafPage({

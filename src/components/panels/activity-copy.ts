@@ -1,5 +1,5 @@
 import type { ActivityEvent } from "@holdit/core";
-import { formatMoney, formatShare } from "@holdit/utils/format";
+import { formatMoney, formatShare } from "@/lib/utils/format";
 
 type ActivityLine = Pick<ActivityEvent, "kind" | "shareBefore" | "shareAfter" | "amountCents">;
 

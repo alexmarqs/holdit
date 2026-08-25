@@ -1,7 +1,6 @@
 "use client";
 
 import type { Holder } from "@holdit/core";
-import { formatAgo, formatInt } from "@holdit/utils/format";
 import { useAtomValue } from "jotai";
 import { ExternalLink, LocateFixed } from "lucide-react";
 import { emitSquareFocus } from "@/components/map/focus-square";
@@ -9,6 +8,7 @@ import { SquareLink } from "@/components/map/square-link";
 import { wallAtom } from "@/components/map-provider";
 import { activityLine } from "@/components/panels/activity-copy";
 import { SiteLogo } from "@/components/site-logo";
+import { formatAgo, formatInt } from "@/lib/utils/format";
 
 const rowClass =
   "group/row flex items-center gap-2.5 px-4 py-2 text-sm transition-colors hover:bg-muted/30";

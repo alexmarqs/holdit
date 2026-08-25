@@ -24,9 +24,7 @@
       "@holdit/core": ["./src/core/index.ts"],
       "@holdit/core/*": ["./src/core/*"],
       "@holdit/db": ["./src/db/index.ts"],
-      "@holdit/db/*": ["./src/db/*"],
-      "@holdit/utils": ["./src/utils/index.ts"],
-      "@holdit/utils/*": ["./src/utils/*"]
+      "@holdit/db/*": ["./src/db/*"]
     }
   },
   "include": [

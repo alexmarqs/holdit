@@ -1,5 +1,5 @@
-import { siteUrl } from "@holdit/utils/env";
 import { describe, expect, it } from "vitest";
+import { siteUrl } from "@/lib/utils/env";
 import { printCardHtml } from "./card";
 
 describe("printCardHtml", () => {

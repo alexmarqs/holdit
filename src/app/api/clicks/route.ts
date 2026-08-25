@@ -1,10 +1,10 @@
 import { db } from "@holdit/db/client";
 import { trackClick } from "@holdit/db/queries/clicks";
 import { getHolderById } from "@holdit/db/queries/holders";
-import { rateLimit } from "@holdit/utils/rate-limit";
-import { clientIp, referrerOf } from "@holdit/utils/request";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { rateLimit } from "@/lib/utils/rate-limit";
+import { clientIp, referrerOf } from "@/lib/utils/request";
 
 /** Only bounded, not a uuid: the mock repository issues ids like `seed-h-1`. */
 const Body = z.object({ holderId: z.string().min(1).max(64) });

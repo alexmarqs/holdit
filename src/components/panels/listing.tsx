@@ -1,7 +1,6 @@
 "use client";
 
 import { MIN_SHOWN_TILE_CLICKS } from "@holdit/core";
-import { formatAgo, formatInt, formatMoney, formatShare } from "@holdit/utils/format";
 import { useAtomValue } from "jotai";
 import { ExternalLink, LocateFixed } from "lucide-react";
 import { useState } from "react";
@@ -11,6 +10,7 @@ import { heldAtom, wallAtom } from "@/components/map-provider";
 import { SiteLogo } from "@/components/site-logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatAgo, formatInt, formatMoney, formatShare } from "@/lib/utils/format";
 
 const PAGE = 20;
 

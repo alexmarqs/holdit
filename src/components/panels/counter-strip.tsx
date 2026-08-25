@@ -1,12 +1,12 @@
 "use client";
 
 import { halvesAt, MIN_SHOWN_CLICKS, MIN_SHOWN_VISITORS } from "@holdit/core";
-import { formatHalfDate, formatInt, formatMoney } from "@holdit/utils/format";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { wallAtom } from "@/components/map-provider";
 import { RefreshButton } from "@/components/panels/refresh-button";
 import { cn } from "@/lib/utils";
+import { formatHalfDate, formatInt, formatMoney } from "@/lib/utils/format";
 
 /**
  * Publishing your own numbers is the cheapest credibility move available, and

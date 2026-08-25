@@ -10,7 +10,6 @@ import {
   shareAfterSpend,
   squarify,
 } from "@holdit/core";
-import { formatInt, formatMoney, formatShare } from "@holdit/utils/format";
 import { useAtomValue } from "jotai";
 import { Maximize2, Minimize2, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -18,6 +17,7 @@ import { flashAtom, previewAtom, previewHandleAtom, wallAtom } from "@/component
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { formatInt, formatMoney, formatShare } from "@/lib/utils/format";
 import { onSquareFocus } from "./focus-square";
 import { type HoverTarget, MapTooltip } from "./map-tooltip";
 import { ShareWallButton } from "./share-wall";

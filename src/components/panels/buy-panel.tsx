@@ -5,7 +5,6 @@ import {
   ceilToDollar,
   centsForShareOf,
   clampSpend,
-  MAX_SPEND_CENTS,
   MIN_SPEND_CENTS,
   maxTargetShare,
   openingAmountCents,
@@ -13,8 +12,6 @@ import {
   shareAfterSpend,
   stepAmount,
 } from "@holdit/core";
-import { isValidTarget, normalizeTarget } from "@holdit/utils/domain";
-import { formatMoney, formatShare, moneyDraft } from "@holdit/utils/format";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { Globe, Minus, Pencil, Plus, Target } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -26,6 +23,8 @@ import {
 } from "@/components/map-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isValidTarget, normalizeTarget } from "@/lib/utils/domain";
+import { formatMoney, formatShare, moneyDraft } from "@/lib/utils/format";
 
 /** Pause after a keystroke before the typed amount lands on the map. */
 const SETTLE_MS = 320;
@@ -57,9 +56,9 @@ export function BuyPanel() {
   const ceilingAfter = ceilingFor(state.counters.squaresLive + (existing ? 0 : 1));
   const ceilingCents = centsForShareOf(rows, ceilingAfter, existing?.holder.id);
   const atCeiling = existing !== undefined && ceilingCents === null;
-  const maxUseful = Math.min(
-    MAX_SPEND_CENTS,
-    Math.max(MIN_SPEND_CENTS, ceilingCents === null ? MIN_SPEND_CENTS : ceilToDollar(ceilingCents)),
+  const maxUseful = Math.max(
+    MIN_SPEND_CENTS,
+    ceilingCents === null ? MIN_SPEND_CENTS : ceilToDollar(ceilingCents),
   );
   const quotedAmount = draft === null ? amount : readAmount(draft, amount, maxUseful);
   const share = shareAfterSpend(rows, quotedAmount, existing?.holder.id);

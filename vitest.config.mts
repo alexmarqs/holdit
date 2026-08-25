@@ -19,12 +19,12 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: /^@holdit\/core$/,
-        replacement: fileURLToPath(new URL("./src/core/index.ts", import.meta.url)),
+        find: /^@\//,
+        replacement: fileURLToPath(new URL("./src/", import.meta.url)),
       },
       {
-        find: /^@holdit\/utils$/,
-        replacement: fileURLToPath(new URL("./src/utils/index.ts", import.meta.url)),
+        find: /^@holdit\/core$/,
+        replacement: fileURLToPath(new URL("./src/core/index.ts", import.meta.url)),
       },
       {
         find: /^@holdit\/(\w+)\//,

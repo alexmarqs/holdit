@@ -1,6 +1,6 @@
 import { CLICK_DEDUPE_WINDOW_MS } from "@holdit/core";
-import { publicEnv } from "@holdit/utils/env";
 import { PageHead, Section } from "@/components/prose";
+import { publicEnv } from "@/lib/utils/env";
 import { leafPage } from "../seo";
 
 export const metadata = leafPage({

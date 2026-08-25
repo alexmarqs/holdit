@@ -5,10 +5,10 @@ import {
   MIN_SPEND_CENTS,
   YOUNG_WALL_MAX_SHARE,
 } from "@holdit/core";
-import { publicEnv } from "@holdit/utils/env";
-import { formatMoney } from "@holdit/utils/format";
 import type { ReactNode } from "react";
 import { PageHead, Section } from "@/components/prose";
+import { publicEnv } from "@/lib/utils/env";
+import { formatMoney } from "@/lib/utils/format";
 import { leafPage } from "../seo";
 
 const CAP_YOUNG = Math.round(YOUNG_WALL_MAX_SHARE * 100);

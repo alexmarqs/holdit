@@ -1,8 +1,7 @@
 import type { Holder, Purchase } from "@holdit/core";
 import { buildMapState, clampSpend } from "@holdit/core";
-import { normalizeTarget } from "@holdit/utils/domain";
-import { fetchSiteDescription } from "@holdit/utils/site-description";
 import { eq } from "drizzle-orm";
+import { normalizeTarget } from "@/lib/utils/domain";
 import type { Database } from "../client";
 import { num, toHolder, toPurchase } from "../rows";
 import { holders, purchases } from "../schema";
@@ -41,6 +40,8 @@ export interface BuyInput {
   target: string;
   amountCents: number;
   tagline?: string | null;
+  /** Site meta, already fetched. Queries do not go to the network. */
+  fallbackTagline?: string | null;
   externalOrderId?: string | null;
   email?: string | null;
 }
@@ -178,35 +179,23 @@ export async function recordPurchase(
 
 /**
  * The public entry point: normalise what the buyer typed, then append.
+ *
+ * A line for the square is whoever called: the one the buyer wrote, or the
+ * site's own meta passed as `fallbackTagline`. This function does not fetch.
  */
 export async function buy(db: Database, input: BuyInput): Promise<RecordPurchaseResult> {
   const normalized = normalizeTarget(input.target);
   if (!normalized) throw new InvalidTargetError(input.target);
 
-  /*
-   * A line for the square, in this order of preference: the one the buyer
-   * wrote, then the one the site publishes about itself, then none at all.
-   *
-   * Never one we compose. Inventing a sentence and printing it beside a real
-   * company's logo reads as their own claim, and it is not.
-   *
-   * `@handle` targets are skipped: they all resolve to one social host, whose
-   * description says nothing about the person.
-   */
   const written = input.tagline?.trim() || null;
-  const fromSite =
-    written || normalized.handle.startsWith("@")
-      ? null
-      : await fetchSiteDescription(normalized.url);
 
-  // Nothing to invalidate: the wall is read straight from the database.
   return recordPurchase(
     db,
     {
       handle: normalized.handle,
       url: normalized.url,
       tagline: written,
-      fallbackTagline: fromSite,
+      fallbackTagline: written ? null : (input.fallbackTagline ?? null),
       amountCents: clampSpend(input.amountCents),
       externalOrderId: input.externalOrderId ?? null,
       email: input.email ?? null,

@@ -1,7 +1,5 @@
 "use client";
 
-import { publicEnv } from "@holdit/utils/env";
-import { formatShare } from "@holdit/utils/format";
 import { useAtomValue, useSetAtom } from "jotai";
 import { Loader2, X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -14,6 +12,8 @@ import {
   wallAtom,
 } from "@/components/map-provider";
 import { SiteLogo } from "@/components/site-logo";
+import { publicEnv } from "@/lib/utils/env";
+import { formatShare } from "@/lib/utils/format";
 
 function Banner({
   handle,

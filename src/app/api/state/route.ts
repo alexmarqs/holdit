@@ -1,8 +1,8 @@
 import { db } from "@holdit/db/client";
 import { getMapState } from "@holdit/db/queries/map";
-import { rateLimit } from "@holdit/utils/rate-limit";
-import { clientIp } from "@holdit/utils/request";
 import { NextResponse } from "next/server";
+import { rateLimit } from "@/lib/utils/rate-limit";
+import { clientIp } from "@/lib/utils/request";
 
 export const dynamic = "force-dynamic";
 

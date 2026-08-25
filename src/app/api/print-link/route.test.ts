@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 process.env.CLICK_HASH_SALT = process.env.CLICK_HASH_SALT ?? "test-print-secret";
 
 const { POST } = await import("./route");
-const { parsePrintAt } = await import("@holdit/utils/print-at");
-const { serverEnv } = await import("@holdit/utils/env");
+const { parsePrintAt } = await import("@/lib/utils/print-at");
+const { serverEnv } = await import("@/lib/utils/env");
 
 function post(body: unknown) {
   return POST(

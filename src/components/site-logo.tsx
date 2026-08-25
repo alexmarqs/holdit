@@ -1,8 +1,8 @@
 "use client";
 
-import { faviconUrl, monogram } from "@holdit/utils/domain";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { faviconUrl, monogram } from "@/lib/utils/domain";
 
 /**
  * Favicon with a monogram fallback. Roughly one site in six has no usable

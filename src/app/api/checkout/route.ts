@@ -1,27 +1,19 @@
-import {
-  clampSpend,
-  HALF_LIFE_DAYS,
-  MAX_SPEND_CENTS,
-  MIN_SPEND_CENTS,
-  TAGLINE_MAX_CHARS,
-} from "@holdit/core";
+import { clampSpend, HALF_LIFE_DAYS, MIN_SPEND_CENTS, TAGLINE_MAX_CHARS } from "@holdit/core";
 import { db } from "@holdit/db/client";
 import { buy, InvalidTargetError } from "@holdit/db/queries/purchases";
-import { normalizeTarget } from "@holdit/utils/domain";
-import { isProduction, serverEnv, siteUrl } from "@holdit/utils/env";
-import { formatMoney } from "@holdit/utils/format";
-import { rateLimit } from "@holdit/utils/rate-limit";
-import { clientIp } from "@holdit/utils/request";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { externalWebsiteClient } from "@/lib/external-website-client";
+import { stripeClient } from "@/lib/stripe-client";
+import { normalizeTarget } from "@/lib/utils/domain";
+import { isProduction, siteUrl } from "@/lib/utils/env";
+import { formatMoney } from "@/lib/utils/format";
+import { rateLimit } from "@/lib/utils/rate-limit";
+import { clientIp } from "@/lib/utils/request";
 
-const Body = z.object({
+const CreateCheckoutRequest = z.object({
   target: z.string().min(1).max(200),
-  amountCents: z.number().int().min(MIN_SPEND_CENTS).max(MAX_SPEND_CENTS),
-  /*
-   * One line under the name on a large square. Optional, and capped short: it
-   * has to fit inside a tile, and a paragraph would simply be clipped.
-   */
+  amountCents: z.number().int().min(MIN_SPEND_CENTS),
   tagline: z.string().trim().max(TAGLINE_MAX_CHARS).optional(),
 });
 
@@ -35,7 +27,9 @@ const Body = z.object({
  */
 export async function POST(request: Request) {
   const ip = clientIp(request);
+
   const limited = await rateLimit("checkout", ip, { limit: 5, windowSeconds: 60 });
+
   if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many attempts. Try again in a minute." },
@@ -43,7 +37,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const parsed = Body.safeParse(await request.json().catch(() => null));
+  const parsed = CreateCheckoutRequest.safeParse(await request.json().catch(() => null));
+
   if (!parsed.success) {
     return NextResponse.json(
       { error: `Enter a domain and an amount of at least ${formatMoney(MIN_SPEND_CENTS)}.` },
@@ -52,25 +47,16 @@ export async function POST(request: Request) {
   }
 
   const amountCents = clampSpend(parsed.data.amountCents);
+
   const normalized = normalizeTarget(parsed.data.target);
+
   if (!normalized) {
     return NextResponse.json({ error: "That is not a domain or an @handle." }, { status: 400 });
   }
 
-  if (serverEnv.stripeSecretKey) {
+  if (stripeClient) {
     try {
-      const { default: Stripe } = await import("stripe");
-      const stripe = new Stripe(serverEnv.stripeSecretKey);
-
-      /*
-       * A price built per session rather than a catalogue product: the amount
-       * is whatever the buyer chose, so there is nothing fixed to point at.
-       *
-       * Everything the webhook needs travels in `metadata`, because the session
-       * is the only thing that comes back and the wall is not touched until the
-       * payment actually lands.
-       */
-      const session = await stripe.checkout.sessions.create({
+      const session = await stripeClient.checkout.sessions.create({
         mode: "payment",
         line_items: [
           {
@@ -80,13 +66,6 @@ export async function POST(request: Request) {
               unit_amount: amountCents,
               product_data: {
                 name: `holdit.lol — a square for ${normalized.handle}`,
-                /*
-                 * Not "area proportional to spend", which is what this said and
-                 * is not what is sold: the display cap stops extra money buying
-                 * area at all, and the minimum tile size stops small differences
-                 * showing. A share of a sum, fading, is the honest description —
-                 * and this is the one place a buyer reads it while paying.
-                 */
                 description: `A share of the wall, sized against everyone's live spend. New spend takes a slice sized to what they paid. Live spend is half every ${HALF_LIFE_DAYS} days if nobody buys.`,
               },
             },
@@ -121,10 +100,16 @@ export async function POST(request: Request) {
   }
 
   try {
+    const written = parsed.data.tagline ?? null;
     const result = await buy(db, {
       target: parsed.data.target,
       amountCents,
-      tagline: parsed.data.tagline ?? null,
+      tagline: written,
+      fallbackTagline: await externalWebsiteClient.fetchSiteInfo(
+        normalized.handle,
+        normalized.url,
+        written,
+      ),
     });
     return NextResponse.json({
       recorded: true,

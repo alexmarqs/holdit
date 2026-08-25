@@ -34,10 +34,10 @@ function session(overrides: Record<string, unknown> = {}) {
     amount_total: 2_500,
     customer_details: { email: "buyer@example.com" },
     /*
-     * A tagline is supplied so these stay hermetic. Without one, `buy` goes and
+     * A tagline is supplied so these stay hermetic. Without one, the webhook
      * reads the destination's own description — a real outbound request with a
      * 3s ceiling, which both slows the test and reaches the network. That path
-     * is covered in money.test.ts against the repository directly.
+     * is covered in money.integration.test.ts against the repository directly.
      */
     metadata: {
       handle: "buyer.com",

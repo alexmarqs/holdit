@@ -1,4 +1,4 @@
-import { clampSpend, MAX_SPEND_CENTS, MIN_SPEND_CENTS } from "./amounts";
+import { clampSpend, MIN_SPEND_CENTS } from "./amounts";
 import { computeShares } from "./share";
 
 /**
@@ -58,14 +58,20 @@ export function centsForShareOf(
    * small wall, and a small wall is exactly what launch day looks like.
    */
   if (shareAfterSpend(standings, MIN_SPEND_CENTS, holderId) >= targetShare) return null;
-  if (shareAfterSpend(standings, MAX_SPEND_CENTS, holderId) < targetShare) return null;
+
+  const liveCents = standings.reduce((sum, row) => sum + row.liveCents, 0);
+  const current =
+    holderId === undefined ? 0 : (standings.find((row) => row.id === holderId)?.liveCents ?? 0);
+  const closed = (targetShare * liveCents - current) / (1 - targetShare);
+  const high = Math.max(MIN_SPEND_CENTS, Math.ceil(Math.max(0, closed) * 2));
+  if (shareAfterSpend(standings, high, holderId) < targetShare) return null;
 
   let low = MIN_SPEND_CENTS;
-  let high = MAX_SPEND_CENTS;
+  let top = high;
   for (let step = 0; step < 40; step++) {
-    const mid = (low + high) / 2;
+    const mid = (low + top) / 2;
     if (shareAfterSpend(standings, mid, holderId) < targetShare) low = mid;
-    else high = mid;
+    else top = mid;
   }
-  return clampSpend(Math.ceil(high));
+  return clampSpend(Math.ceil(top));
 }

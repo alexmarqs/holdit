@@ -1,5 +1,5 @@
 import type { MapCounters } from "@holdit/core";
-import { formatInt, formatMoney, formatShare } from "@holdit/utils/format";
+import { formatInt, formatMoney, formatShare } from "@/lib/utils/format";
 
 /** The numbers a share is a picture of. */
 export type WallCounters = Pick<MapCounters, "squaresLive" | "liveCents">;

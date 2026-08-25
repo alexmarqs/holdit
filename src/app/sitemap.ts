@@ -1,5 +1,5 @@
-import { siteUrl } from "@holdit/utils/env";
 import type { MetadataRoute } from "next";
+import { siteUrl } from "@/lib/utils/env";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

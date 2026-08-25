@@ -1,9 +1,9 @@
 "use client";
 
 import { type HolderStanding, MIN_SHOWN_TILE_CLICKS } from "@holdit/core";
-import { formatAgo, formatInt, formatMoney, formatShare } from "@holdit/utils/format";
 import type { RefObject } from "react";
 import { SiteLogo } from "@/components/site-logo";
+import { formatAgo, formatInt, formatMoney, formatShare } from "@/lib/utils/format";
 
 export interface HoverTarget {
   standing: HolderStanding;

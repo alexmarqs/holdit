@@ -1,23 +1,10 @@
 import { ceilingFor } from "../config";
 
 /**
- * There is no currency to learn. You spend dollars; your square is your dollars
- * as a share of everyone's live dollars.
- */
-
-/**
  * Entry price. Any amount at or above this puts you on the map.
- *
- * Deliberately low, so the map fills from the bottom rather than waiting for
- * large spenders. Worth knowing where the floor really is: a card processor
- * takes roughly 5% + 50c, so at $1 the fee is over half the payment and at $3
- * it is about a fifth. $1 buys reach, not margin.
  */
 export const MIN_SPEND_CENTS = 100;
 
-export const MAX_SPEND_CENTS = 2_000_000;
-
-/** What the − and + controls step through. Round numbers people actually pick. */
 export const AMOUNT_LADDER_CENTS: readonly number[] = [
   100, 200, 500, 1_000, 2_000, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000,
 ] as const;
@@ -34,10 +21,8 @@ export function openingAmountCents(squaresLive: number): number {
 }
 
 export function clampSpend(cents: number): number {
-  // Only NaN has no sensible clamp. Infinities must fall to the nearer bound,
-  // not to the minimum — an overflowing amount becoming $5 would be a surprise.
-  if (Number.isNaN(cents)) return MIN_SPEND_CENTS;
-  return Math.min(MAX_SPEND_CENTS, Math.max(MIN_SPEND_CENTS, Math.round(cents)));
+  if (!Number.isFinite(cents)) return MIN_SPEND_CENTS;
+  return Math.max(MIN_SPEND_CENTS, Math.round(cents));
 }
 
 /** Aim chips round up to a dollar so quiet decay does not look like a glitch. */
@@ -95,9 +80,8 @@ export function projectedShare(
  * thing cheaply — the arithmetic does the defending, not a rule.
  */
 export function centsForShare(liveCents: number, share: number): number {
-  // 100% is asymptotic — no finite amount reaches it — so the honest answer at
-  // and beyond the asymptote is the ceiling, not the floor.
-  if (share >= 1) return MAX_SPEND_CENTS;
+  // 100% is asymptotic — no finite amount reaches it.
+  if (share >= 1) return Number.POSITIVE_INFINITY;
   return centsToReachShare(liveCents, 0, share) ?? MIN_SPEND_CENTS;
 }
 

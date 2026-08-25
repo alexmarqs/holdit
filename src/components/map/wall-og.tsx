@@ -1,21 +1,12 @@
-import { monogram } from "@holdit/utils/domain";
-import { faviconDomain, fetchFavicon } from "@holdit/utils/favicon";
 import { ImageResponse } from "next/og";
+import { externalWebsiteClient } from "@/lib/external-website-client";
+import { monogram } from "@/lib/utils/domain";
+import { faviconDomain } from "@/lib/utils/favicon";
 import { loadOgFonts, OG_SCALE, px } from "./og-fonts";
 import { CARD_TILE_PAD_X, CARD_TILE_PAD_Y, cardPalette, type WallCard } from "./wall-card";
 
-/**
- * How many marks one render will go and fetch.
- *
- * Rate limiting bounds how often this route runs; this bounds what one run
- * costs. A thousand-square wall would otherwise open a thousand connections to
- * one host per image. Tiles are handled largest first, so the cap only ever
- * falls on squares drawn at the minimum size, where a monogram and a favicon
- * are a couple of dozen pixels apart and nobody can tell.
- */
 const MAX_LOGO_FETCHES = 160;
 
-/** Fetch each tile mark so a 404 favicon becomes a monogram, not a broken card. */
 export async function resolveCardLogos(card: WallCard): Promise<WallCard> {
   const order = [...card.tiles]
     .map((tile, index) => ({ index, area: tile.w * tile.h }))
@@ -27,9 +18,8 @@ export async function resolveCardLogos(card: WallCard): Promise<WallCard> {
     card.tiles.map(async (tile, index) => {
       if (!tile.logoUrl) return tile;
       if (!allowed.has(index)) return { ...tile, logoUrl: null };
-      // Straight to the source here rather than through our own route: this
-      // already runs on the server, so the proxy would only add a hop.
-      const found = await fetchFavicon(faviconDomain(tile.handle), 128);
+
+      const found = await externalWebsiteClient.fetchFavicon(faviconDomain(tile.handle), 128);
       return {
         ...tile,
         logoUrl: found

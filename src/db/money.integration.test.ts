@@ -3,7 +3,6 @@ import {
   ceilingFor,
   clampSpend,
   HALF_LIFE_DAYS,
-  MAX_SPEND_CENTS,
   MIN_SPEND_CENTS,
   MS_PER_DAY,
   shareAfterSpend,
@@ -192,7 +191,7 @@ describe("what the buyer is quoted", () => {
         );
       }
       const before = await wall();
-      for (const amount of [100, 1_000, 20_000, 500_000, MAX_SPEND_CENTS]) {
+      for (const amount of [100, 1_000, 20_000, 500_000, 2_000_000]) {
         const quoted = shareAfterSpend(
           before.standings.map((s) => ({ id: s.holder.id, liveCents: s.liveCents })),
           amount,
@@ -228,7 +227,7 @@ describe("what the buyer is quoted", () => {
     }
     await recordPurchase(
       db,
-      { handle: "whale.com", url: "https://whale.com", amountCents: MAX_SPEND_CENTS },
+      { handle: "whale.com", url: "https://whale.com", amountCents: 2_000_000 },
       T0,
     );
     const state = await wall();
@@ -248,7 +247,7 @@ describe("what the buyer is quoted", () => {
     }
     await recordPurchase(
       db,
-      { handle: "whale.com", url: "https://whale.com", amountCents: MAX_SPEND_CENTS },
+      { handle: "whale.com", url: "https://whale.com", amountCents: 2_000_000 },
       T0,
     );
     for (const s of (await wall()).standings) {
@@ -258,11 +257,11 @@ describe("what the buyer is quoted", () => {
 });
 
 describe("clamping what can be charged", () => {
-  it("refuses to record less than the minimum or more than the maximum", () => {
+  it("refuses to record less than the minimum", () => {
     expect(clampSpend(0)).toBe(MIN_SPEND_CENTS);
     expect(clampSpend(-100_000)).toBe(MIN_SPEND_CENTS);
-    expect(clampSpend(MAX_SPEND_CENTS + 1)).toBe(MAX_SPEND_CENTS);
-    expect(clampSpend(Number.POSITIVE_INFINITY)).toBe(MAX_SPEND_CENTS);
+    expect(clampSpend(2_000_001)).toBe(2_000_001);
+    expect(clampSpend(Number.POSITIVE_INFINITY)).toBe(MIN_SPEND_CENTS);
     expect(clampSpend(Number.NEGATIVE_INFINITY)).toBe(MIN_SPEND_CENTS);
     expect(clampSpend(Number.NaN)).toBe(MIN_SPEND_CENTS);
   });

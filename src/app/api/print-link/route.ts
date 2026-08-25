@@ -1,9 +1,9 @@
-import { serverEnv } from "@holdit/utils/env";
-import { mintPrintAt } from "@holdit/utils/print-at";
-import { rateLimit } from "@holdit/utils/rate-limit";
-import { clientIp } from "@holdit/utils/request";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { serverEnv } from "@/lib/utils/env";
+import { mintPrintAt } from "@/lib/utils/print-at";
+import { rateLimit } from "@/lib/utils/rate-limit";
+import { clientIp } from "@/lib/utils/request";
 
 const Body = z.object({ at: z.number().int() });
 

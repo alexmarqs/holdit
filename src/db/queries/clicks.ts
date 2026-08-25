@@ -1,6 +1,6 @@
 import { CLICK_DEDUPE_WINDOW_MS } from "@holdit/core";
-import { classifyUserAgent, hashIp } from "@holdit/utils/hash";
 import { and, eq, gte, sql } from "drizzle-orm";
+import { classifyUserAgent, hashIp } from "@/lib/utils/hash";
 import type { Database } from "../client";
 import { clicks } from "../schema";
 

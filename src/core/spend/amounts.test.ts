@@ -6,7 +6,6 @@ import {
   centsToReachShare,
   clampSpend,
   DEFAULT_AMOUNT_CENTS,
-  MAX_SPEND_CENTS,
   MIN_SPEND_CENTS,
   maxTargetShare,
   openingAmountCents,
@@ -17,15 +16,15 @@ import {
 } from "./amounts";
 
 describe("clampSpend", () => {
-  it("holds the amount between the entry price and the ceiling", () => {
+  it("does not record below the entry price", () => {
     expect(clampSpend(1)).toBe(MIN_SPEND_CENTS);
-    expect(clampSpend(9_999_999)).toBe(MAX_SPEND_CENTS);
+    expect(clampSpend(9_999_999)).toBe(9_999_999);
     expect(clampSpend(4_321)).toBe(4_321);
   });
 
   it("survives junk input", () => {
     expect(clampSpend(Number.NaN)).toBe(MIN_SPEND_CENTS);
-    expect(clampSpend(Number.POSITIVE_INFINITY)).toBe(MAX_SPEND_CENTS);
+    expect(clampSpend(Number.POSITIVE_INFINITY)).toBe(MIN_SPEND_CENTS);
     expect(clampSpend(-50)).toBe(MIN_SPEND_CENTS);
   });
 });
@@ -54,14 +53,12 @@ describe("stepAmount", () => {
     expect(stepAmount(MIN_SPEND_CENTS, 1)).toBe(200);
   });
 
-  it("stops at both ends instead of running off", () => {
+  it("stops at the entry price instead of running off the bottom", () => {
     expect(stepAmount(MIN_SPEND_CENTS, -1)).toBe(MIN_SPEND_CENTS);
-    expect(stepAmount(MAX_SPEND_CENTS, 1)).toBe(MAX_SPEND_CENTS);
   });
 
   it("starts from a sensible default", () => {
     expect(DEFAULT_AMOUNT_CENTS).toBeGreaterThanOrEqual(MIN_SPEND_CENTS);
-    expect(DEFAULT_AMOUNT_CENTS).toBeLessThanOrEqual(MAX_SPEND_CENTS);
   });
 });
 
@@ -96,10 +93,10 @@ describe("centsForShare", () => {
     expect(half - quarter).toBeGreaterThan(quarter * 2);
   });
 
-  it("stays inside the spend bounds at both extremes", () => {
+  it("does not invent a finite price for the whole wall", () => {
     expect(centsForShare(65_800, 0)).toBe(MIN_SPEND_CENTS);
-    expect(centsForShare(65_800, 1)).toBe(MAX_SPEND_CENTS);
-    expect(centsForShare(65_800, 0.99999)).toBe(MAX_SPEND_CENTS);
+    expect(centsForShare(65_800, 1)).toBe(Number.POSITIVE_INFINITY);
+    expect(centsForShare(65_800, 0.99999)).toBeGreaterThan(centsForShare(65_800, 0.9));
   });
 
   it("charges the entry price for the first square on an empty wall", () => {
