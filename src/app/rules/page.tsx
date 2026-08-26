@@ -21,7 +21,7 @@ const TEN_K = formatMoney(1_000_000);
 export const metadata = leafPage({
   title: "Rules",
   description:
-    "How a square works: spend from $1, live-spend shares, visual sizing, caps, decay, moderation, and refunds.",
+    "How a square works: spend from $1, live-spend shares, visual sizing, caps, decay, and moderation.",
   path: "/rules",
 });
 
@@ -115,13 +115,6 @@ export default function RulesPage() {
           Squares go up as soon as you pay. These come down: <b>sexual content</b>,{" "}
           <b>chat and invite links</b>, <b>malware and scams</b>, and <b>link shorteners</b>. Report
           them to {CONTACT}.
-        </p>
-      </Section>
-
-      <Section title="Refunds">
-        <p>
-          Purchases are generally final once a square is displayed. Refunds may be considered
-          case-by-case and will be provided where required by law. Ask at {CONTACT}.
         </p>
       </Section>
     </div>

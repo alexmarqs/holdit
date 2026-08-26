@@ -1,4 +1,4 @@
-import { HALF_LIFE_DAYS, MIN_SPEND_CENTS, OVERFLOW_HALF_LIFE_MULTIPLIER } from "@holdit/core";
+import { MIN_SPEND_CENTS } from "@holdit/core";
 import { PageHead, Section } from "@/components/prose";
 import { leafPage } from "@/lib/seo/metadata";
 import { publicEnv } from "@/lib/utils/env";
@@ -7,11 +7,9 @@ import { formatMoney } from "@/lib/utils/format";
 export const metadata = leafPage({
   title: "Terms",
   description:
-    "What you get when you buy a square on holdit.lol, what it costs, how live spend fades, what is not allowed, and the refund policy.",
+    "What you get when you buy a square on holdit.lol, what it costs, how live spend fades, and what is not allowed.",
   path: "/terms",
 });
-
-const OVERFLOW_HALF_LIFE_DAYS = HALF_LIFE_DAYS * OVERFLOW_HALF_LIFE_MULTIPLIER;
 
 const CONTACT = (
   <a className="text-primary hover:text-primary/80" href={`mailto:${publicEnv.contactEmail}`}>
@@ -35,17 +33,15 @@ export default function TermsPage() {
 
       <Section title="What you are buying">
         <p>
-          Space on one shared page, for as long as your spend keeps it there. Your square&rsquo;s
-          numeric share is its live spend as a share of everyone&rsquo;s. The map visually
-          compresses those shares and gives tiny squares a minimum footprint, so on-screen area is
-          not an exact percentage.{" "}
-          <b>
-            Spend within the display cap halves every {HALF_LIFE_DAYS} days if nobody buys; spend
-            above it halves every {OVERFLOW_HALF_LIFE_DAYS} days.
-          </b>{" "}
-          This affects how hard a position is to challenge, not a guaranteed duration. You are not
-          buying a fixed position, a guaranteed size, or any amount of traffic. The share shown
-          before you pay is this wall at that moment; payment is the dollars you chose.
+          Space on one shared page. A square&rsquo;s share depends on its live spend compared with
+          everyone else&rsquo;s, and live spend loses weight over time. New purchases and other
+          changes to the wall can change a square&rsquo;s share, position, and appearance. Visual
+          area is illustrative and may not exactly match the numeric share.
+        </p>
+        <p>
+          You are not buying a fixed position, guaranteed size, duration, or amount of traffic. The
+          share shown before payment is an estimate based on the wall at that moment. The rules page
+          explains the mechanics in more detail.
         </p>
         <p>
           The smallest purchase is {formatMoney(MIN_SPEND_CENTS)}. Prices are in US dollars and
@@ -73,19 +69,9 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <Section title="Refunds">
-        <p>
-          Purchases are generally final once a square is displayed. We may consider refunds
-          case-by-case and will provide any refund required by applicable law. Removing a square for
-          breaking these terms does not by itself create a right to a refund.
-        </p>
-        <p>Ask at {CONTACT}.</p>
-      </Section>
-
       <Section title="The unglamorous part">
         <p>
-          The site is provided as it is, without warranty. It may change, break, or stop; if it
-          stops for good, any refund is governed by the policy above and applicable law. Nothing
+          The site is provided as it is, without warranty. It may change, break, or stop. Nothing
           here is worth more than what you spent on it, and that is the limit of what can be
           claimed.
         </p>

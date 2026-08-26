@@ -1,4 +1,3 @@
-import { CLICK_DEDUPE_WINDOW_MS } from "@holdit/core";
 import { PageHead, Section } from "@/components/prose";
 import { leafPage } from "@/lib/seo/metadata";
 import { publicEnv } from "@/lib/utils/env";
@@ -40,15 +39,11 @@ export default function PrivacyPage() {
 
       <Section title="What is stored about visitors">
         <p>
-          Two things, both one-way hashed with a secret salt before they are written: a <b>visit</b>
-          , so the site can say how many people are here, and a <b>click</b>, so a square can be
-          told how much traffic it received. Each row holds the hash, a timestamp, the referring
-          page, and whether the request looked like a browser or a bot.
-        </p>
-        <p>
-          The hash is what makes one click per address per{" "}
-          {Math.round(CLICK_DEDUPE_WINDOW_MS / 60_000)} minutes countable without keeping the
-          address. There is no way to read an IP back out of it, and it is never shared.
+          Visits and clicks are counted using a salted, one-way hash derived from the
+          visitor&rsquo;s address. This lets the site count recent visitors and avoid counting
+          repeated clicks without storing the address itself. Basic request details, such as the
+          time and referring page, may also be stored. The hash cannot be reversed and is not
+          shared.
         </p>
       </Section>
 
@@ -63,24 +58,20 @@ export default function PrivacyPage() {
 
       <Section title="Who else is involved">
         <p>
-          <b>Stripe</b> processes payments and holds whatever you give their checkout, under their
-          own privacy policy. <b>Supabase</b> hosts the database and <b>Vercel</b> serves the site.
-          <b>Upstash</b> holds rate-limit counters keyed by a hash of your address, for a few
-          minutes at a time.
+          <b>Stripe</b> processes payments. <b>Supabase</b> stores site data, <b>Vercel</b> hosts
+          the site, and <b>Upstash</b> helps prevent abuse. These providers handle data under their
+          own privacy policies.
         </p>
         <p>
-          Square logos on the wall are loaded from Google&rsquo;s public favicon service in the
-          browser. A downloaded PNG and a share card fetch the same files on the server (`GET
-          /api/favicons/…`, and OG in-process) so those images can be painted without Google&rsquo;s
-          CORS headers.
+          Square logos may be retrieved through Google&rsquo;s public favicon service for display
+          and sharing.
         </p>
       </Section>
 
       <Section title="Asking for changes">
         <p>
-          Write to {CONTACT}. A square can be taken down, and a click or visit record can be
-          deleted, though a hashed record cannot be looked up by an address — you would need to say
-          which square. Purchase records are kept as long as the payment record has to be.
+          Write to {CONTACT} to request a change or deletion where possible. Some hashed records
+          cannot be connected back to a person. Purchase records are kept for as long as required.
         </p>
       </Section>
     </div>
