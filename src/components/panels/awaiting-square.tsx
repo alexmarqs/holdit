@@ -5,7 +5,8 @@ import { Loader2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { CopyShareButton, ShareWallButton } from "@/components/map/share-wall";
 import { SiteLogo } from "@/components/site-logo";
-import { awaitingAtom, claimedAtom, dilutedAtom } from "@/components/wall-provider";
+import { awaitingAtom, claimedAtom, dilutedAtom } from "@/context/wall-atoms";
+import { useForgetHeld } from "@/hooks/use-forget-held";
 import { publicEnv } from "@/lib/utils/env";
 import { formatShare } from "@/lib/utils/format";
 
@@ -13,10 +14,12 @@ function Banner({
   handle,
   children,
   onDismiss,
+  dismissLabel = "Dismiss",
 }: {
   handle: string;
   children: ReactNode;
   onDismiss?: () => void;
+  dismissLabel?: string;
 }) {
   return (
     <div
@@ -33,7 +36,7 @@ function Banner({
           <button
             type="button"
             className="inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Dismiss"
+            aria-label={dismissLabel}
             onClick={onDismiss}
           >
             <X className="size-3.5" />
@@ -53,7 +56,7 @@ export function AwaitingSquare() {
   const claimed = useAtomValue(claimedAtom);
   const diluted = useAtomValue(dilutedAtom);
   const setClaimed = useSetAtom(claimedAtom);
-  const setDiluted = useSetAtom(dilutedAtom);
+  const forgetHeld = useForgetHeld();
 
   if (claimed) {
     return (
@@ -101,7 +104,7 @@ export function AwaitingSquare() {
 
   if (diluted) {
     return (
-      <Banner handle={diluted.handle} onDismiss={() => setDiluted(null)}>
+      <Banner handle={diluted.handle} onDismiss={forgetHeld} dismissLabel="Forget this square">
         <p>
           <b>{diluted.handle}</b> just shrank{" "}
           <span className="num font-bold">

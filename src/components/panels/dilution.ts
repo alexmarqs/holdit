@@ -3,7 +3,7 @@ export const HELD_KEY = "holdit.held";
 /** A tenth of a percent — smaller than that is decay noise, not a story. */
 const DROP_FLOOR = 0.001;
 
-export type HandleStorage = Pick<Storage, "getItem" | "setItem"> | null;
+export type HandleStorage = Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
 
 /** How much a square shrank, or null if nothing happened worth saying. */
 export function dilutionDrop(before: number, after: number): number | null {
@@ -19,4 +19,9 @@ export function rememberHandle(storage: HandleStorage, handle: string): void {
 export function recallHandle(storage: HandleStorage): string | null {
   const value = storage?.getItem(HELD_KEY)?.trim();
   return value && value.length > 0 ? value : null;
+}
+
+/** This browser is no longer watching that square for dilution. */
+export function forgetHandle(storage: HandleStorage): void {
+  storage?.removeItem(HELD_KEY);
 }

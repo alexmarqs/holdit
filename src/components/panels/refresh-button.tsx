@@ -4,9 +4,10 @@ import { RotateCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { sendVisitBeacon } from "@/components/visit-beacon";
-import { useWall, useWallRefresh } from "@/components/wall-provider";
+import { useWall } from "@/hooks/use-wall";
+import { useWallRefresh } from "@/hooks/use-wall-refresh";
 import { cn } from "@/lib/utils";
-import { wallStaleAgo, wallStaleWarn } from "@/lib/wall-state";
+import { wallStaleAgo, wallStaleWarn } from "@/lib/utils/wall-state";
 
 const AGE_TICK_MS = 30_000;
 

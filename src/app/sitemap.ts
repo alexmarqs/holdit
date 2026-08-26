@@ -1,15 +1,8 @@
 import type { MetadataRoute } from "next";
+import { sitemapEntries } from "@/lib/seo/metadata";
 import { siteUrl } from "@/lib/utils/env";
 
+/** Special metadata route. Cached unless it reads request-time data. */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
-  return [
-    { url: siteUrl, lastModified: now, changeFrequency: "hourly", priority: 1 },
-    ...["rules", "terms", "privacy"].map((path) => ({
-      url: `${siteUrl}/${path}`,
-      lastModified: now,
-      changeFrequency: "monthly" as const,
-      priority: 0.5,
-    })),
-  ];
+  return sitemapEntries(siteUrl);
 }

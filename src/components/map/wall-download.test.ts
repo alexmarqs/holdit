@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PREVIEW_ID, placeWall } from "./place-wall";
 import {
+  downloadLogoSrc,
   logoDataUrl,
   wallCaptureOptions,
   wallDownloadCaption,
@@ -74,7 +75,16 @@ describe("wall capture logos", () => {
     expect(wallCaptureOptions("#c9d6d3").pixelRatio).toBe(3);
   });
 
-  it("keeps a fetched favicon as a data URL so the PNG can paint it", () => {
+  it("points a download at the same-origin GET, not a data URL of the whole wall", () => {
+    expect(downloadLogoSrc("linear.app")).toBe("/api/favicons/linear.app");
+    expect(downloadLogoSrc("@someone")).toBe("/api/favicons/x.com");
+  });
+
+  it("does not ask the proxy for a host we would not hotlink", () => {
+    expect(downloadLogoSrc("127.0.0.1")).toMatch(/^data:image\/svg\+xml/);
+  });
+
+  it("keeps fetched bytes as a data URL when OG already has them in process", () => {
     const png = new Uint8Array(64).fill(7);
     png.set([137, 80, 78, 71, 13, 10, 26, 10]);
     const url = logoDataUrl("linear.app", { bytes: png, contentType: "image/png" });

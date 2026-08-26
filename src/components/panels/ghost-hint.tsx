@@ -15,12 +15,30 @@ const copy = (
   </>
 );
 
+function DownArrow({ className }: { className: string }) {
+  return (
+    <svg viewBox="0 0 24 32" className={className} fill="none">
+      <title>Arrow toward the dashed square</title>
+      <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+        <path
+          className="ghost-hint-shaft"
+          d="M12 3 C 12 12, 12 20, 12 26"
+          opacity="0.28"
+          transform="translate(0.45 0.4)"
+        />
+        <path className="ghost-hint-shaft" d="M12 3 C 12 12, 12 20, 12 26" />
+        <path className="ghost-hint-head" d="M7 21 L12 27 L17 21" />
+      </g>
+    </svg>
+  );
+}
+
 /**
  * Handwritten note that names the dashed preview.
  *
- * `hold` sits in the leftover gutter left of the Hold chip (`lg+`), where the
- * headline still leaves room. Below that, `map` sits under the form and
- * points down at the wall so the note is never clipped.
+ * `hold` sits in the leftover gutter left of the Hold chip (`lg+`). The
+ * arrow points at the note, from the chip. Below `lg`, `map` sits under the
+ * form and points down at the wall so the note is never clipped.
  */
 export function GhostHint({ placement }: { placement: "hold" | "map" }) {
   if (placement === "map") {
@@ -34,19 +52,7 @@ export function GhostHint({ placement }: { placement: "hold" | "map" }) {
         >
           {copy}
         </p>
-        <svg viewBox="0 0 24 32" className="h-7 w-5 overflow-visible text-primary/90" fill="none">
-          <title>Arrow toward the dashed square</title>
-          <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
-            <path
-              className="ghost-hint-shaft"
-              d="M12 3 C 12 12, 12 20, 12 26"
-              opacity="0.28"
-              transform="translate(0.45 0.4)"
-            />
-            <path className="ghost-hint-shaft" d="M12 3 C 12 12, 12 20, 12 26" />
-            <path className="ghost-hint-head" d="M7 21 L12 27 L17 21" />
-          </g>
-        </svg>
+        <DownArrow className="h-7 w-5 overflow-visible text-primary/90" />
       </aside>
     );
   }
@@ -66,16 +72,16 @@ export function GhostHint({ placement }: { placement: "hold" | "map" }) {
         className="h-9.5 w-11.5 shrink-0 overflow-visible text-primary/90"
         fill="none"
       >
-        <title>Arrow toward Hold</title>
+        <title>Arrow from Hold toward the note</title>
         <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
           <path
             className="ghost-hint-shaft"
-            d="M4 19 C 15 18, 31 18, 43 19"
+            d="M42 19 C 31 18, 15 18, 3 19"
             opacity="0.28"
-            transform="translate(0.55 0.45)"
+            transform="translate(-0.55 0.45)"
           />
-          <path className="ghost-hint-shaft" d="M4 19 C 15 18, 31 18, 43 19" />
-          <path className="ghost-hint-head" d="M36 13 L43 19 L36 25" />
+          <path className="ghost-hint-shaft" d="M42 19 C 31 18, 15 18, 3 19" />
+          <path className="ghost-hint-head" d="M10 13 L3 19 L10 25" />
         </g>
       </svg>
     </aside>

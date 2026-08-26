@@ -3,7 +3,7 @@ import { ceilingFor } from "../config";
 /**
  * Entry price. Any amount at or above this puts you on the map.
  */
-export const MIN_SPEND_CENTS = 100;
+export const MIN_SPEND_CENTS = 100; // $1 is the minimum spend
 
 export const AMOUNT_LADDER_CENTS: readonly number[] = [
   100, 200, 500, 1_000, 2_000, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000,

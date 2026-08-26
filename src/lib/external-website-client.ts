@@ -1,10 +1,15 @@
 import { TAGLINE_MAX_CHARS } from "@holdit/core";
+import { FAVICON_DATA_REVALIDATE_SECONDS } from "./http-cache";
 import { type FaviconSize, faviconDomain, isFaviconDomain, toFaviconUrl } from "./utils/favicon";
 
 /**
  * Outbound fetches: the tagline scrape at record time, and favicon bytes for
- * OG. The live wall hotlinks `toFaviconUrl` so those images never touch a
- * Vercel function. This fetches the same URL because ImageResponse needs bytes.
+ * OG and `GET /api/favicons/{domain}`. The live wall hotlinks `toFaviconUrl`
+ * so those images never touch a Vercel function. This fetches the same URL
+ * because ImageResponse and the download proxy need bytes. `force-cache` plus
+ * a 30-day `revalidate` is origin Data Cache — two prints of the same square
+ * must not pay Google twice. The CDN `s-maxage` on the GET is what skips the
+ * function after the first download miss.
  *
  * The favicon request interpolates the domain into a URL against a host we
  * hardcode. It never becomes a host we connect to, so this cannot be turned
@@ -13,8 +18,6 @@ import { type FaviconSize, faviconDomain, isFaviconDomain, toFaviconUrl } from "
 
 const FAVICON_TIMEOUT_MS = 2_500;
 const FAVICON_MAX_BYTES = 256 * 1024;
-
-const FAVICON_CACHE_TTL_SECONDS = 2_592_000; // 30 days — logos change about never
 
 const SITE_TIMEOUT_MS = 3_000;
 const SITE_MAX_BYTES = 96 * 1024;
@@ -57,15 +60,38 @@ export interface FaviconResult {
   contentType: string;
 }
 
+/**
+ * Next Data Cache keys on URL, method, headers, and body. A unique
+ * `AbortSignal.timeout()` on every call can split that key, so the deadline
+ * sits beside the fetch rather than on it. `force-cache` is required in this
+ * Next: `revalidate` alone does not opt the request in.
+ */
+async function fetchCachedFavicon(url: string): Promise<Response> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      fetch(url, {
+        headers: { accept: "image/*", "user-agent": "holdit.lol/1.0 (+https://holdit.lol)" },
+        cache: "force-cache",
+        next: { revalidate: FAVICON_DATA_REVALIDATE_SECONDS },
+      }),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new DOMException("The operation timed out.", "TimeoutError")),
+          FAVICON_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
 async function fetchFavicon(handle: string, size: FaviconSize): Promise<FaviconResult | null> {
   if (!isFaviconDomain(faviconDomain(handle))) return null;
 
   try {
-    const response = await fetch(toFaviconUrl(handle, size), {
-      headers: { accept: "image/*", "user-agent": "holdit.lol/1.0 (+https://holdit.lol)" },
-      signal: AbortSignal.timeout(FAVICON_TIMEOUT_MS),
-      next: { revalidate: FAVICON_CACHE_TTL_SECONDS },
-    });
+    const response = await fetchCachedFavicon(toFaviconUrl(handle, size));
 
     if (!response.ok) return null;
 

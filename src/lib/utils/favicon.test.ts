@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { faviconDomain, isFaviconDomain, toFaviconUrl } from "./favicon";
+import { faviconDomain, isFaviconDomain, toFaviconProxyUrl, toFaviconUrl } from "./favicon";
 
 /**
  * The domain never becomes a host we connect to — it is interpolated into a URL
@@ -56,5 +56,15 @@ describe("toFaviconUrl", () => {
 
   it("escapes the domain rather than interpolating it raw", () => {
     expect(toFaviconUrl("a b.com" as string)).toContain("a%20b.com");
+  });
+});
+
+describe("toFaviconProxyUrl", () => {
+  it("is one same-origin path per domain, so the CDN can hold it", () => {
+    expect(toFaviconProxyUrl("linear.app")).toBe("/api/favicons/linear.app");
+  });
+
+  it("collapses @handles onto the host they borrow, so they share a cache key", () => {
+    expect(toFaviconProxyUrl("@someone")).toBe("/api/favicons/x.com");
   });
 });

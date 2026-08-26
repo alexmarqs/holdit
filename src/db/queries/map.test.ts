@@ -50,4 +50,22 @@ describe("getMapState", () => {
     await expect(getMapState(db, { now: 3_001 })).resolves.toBeDefined();
     expect(loadMapRows).toHaveBeenCalledTimes(2);
   });
+
+  it("does not let a print stamp share the live wall's query", async () => {
+    const { getMapState } = await import("./map");
+    await Promise.all([getMapState(db), getMapState(db, { now: 9_000 })]);
+    expect(loadMapRows).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not collapse two different stamps into one query", async () => {
+    const { getMapState } = await import("./map");
+    await Promise.all([getMapState(db, { now: 1_000 }), getMapState(db, { now: 9_000 })]);
+    expect(loadMapRows).toHaveBeenCalledTimes(2);
+  });
+
+  it("collapses simultaneous live loads without a stamp", async () => {
+    const { getMapState } = await import("./map");
+    await Promise.all([getMapState(db), getMapState(db), getMapState(db)]);
+    expect(loadMapRows).toHaveBeenCalledTimes(1);
+  });
 });

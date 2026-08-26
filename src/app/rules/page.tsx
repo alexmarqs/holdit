@@ -3,23 +3,25 @@ import {
   HALF_LIFE_DAYS,
   MAX_SHARE,
   MIN_SPEND_CENTS,
+  OVERFLOW_HALF_LIFE_MULTIPLIER,
   YOUNG_WALL_MAX_SHARE,
 } from "@holdit/core";
 import type { ReactNode } from "react";
 import { PageHead, Section } from "@/components/prose";
+import { leafPage } from "@/lib/seo/metadata";
 import { publicEnv } from "@/lib/utils/env";
 import { formatMoney } from "@/lib/utils/format";
-import { leafPage } from "../seo";
 
 const CAP_YOUNG = Math.round(YOUNG_WALL_MAX_SHARE * 100);
 const CAP_GROWN = Math.round(MAX_SHARE * 100);
 const GROWN_AT = Math.round(CEILING_BUDGET / MAX_SHARE);
+const OVERFLOW_HALF_LIFE_DAYS = HALF_LIFE_DAYS * OVERFLOW_HALF_LIFE_MULTIPLIER;
 const TEN_K = formatMoney(1_000_000);
 
 export const metadata = leafPage({
   title: "Rules",
   description:
-    "How a square works: spend from $1, your area is your share of live spend, a cap stops anyone owning the wall, and live spend is easier to beat every 14 days so the wall stays contestable. What is not allowed, and when spend is refunded.",
+    "How a square works: spend from $1, live-spend shares, visual sizing, caps, decay, moderation, and refunds.",
   path: "/rules",
 });
 
@@ -54,6 +56,11 @@ export default function RulesPage() {
           withdraw. The share in the buy panel is this wall at this moment. Checkout charges the
           dollars you chose; the square that lands is whatever that money is worth when it lands.
         </p>
+        <p>
+          The map compresses the difference between shares and gives tiny squares a minimum
+          footprint so every square stays visible. On-screen area is therefore a visual ranking, not
+          an exact percentage; the numeric share is exact.
+        </p>
         <p>Clicks never change area. History never fades — you lose prominence, not the record.</p>
       </Section>
 
@@ -63,17 +70,20 @@ export default function RulesPage() {
           more squares arrive, and from {GROWN_AT} squares on it is {CAP_GROWN}%.
         </p>
         <p>
-          Spend past the cap does not grow the tile. The first square is the whole wall at any
-          price, so {formatMoney(MIN_SPEND_CENTS)} is enough until somebody else shows up.
+          Spend above the cap does not grow the tile. It acts as headroom, helping the square hold
+          the cap as the wall grows, and fades more slowly than displayed spend. The first square is
+          the whole wall at any price, so {formatMoney(MIN_SPEND_CENTS)} is enough until somebody
+          else shows up.
         </p>
       </Section>
 
       <Section title="What actually fades">
         <p>
-          Every {HALF_LIFE_DAYS} days, live spend is half — if nobody buys. That is how hard you are
-          to knock down, not how big you are. If nobody else buys, everyone fades together — the
-          ratios stay put, so <b>the map does not move</b>. You only lose space when new money
-          arrives. Old money is then easier to beat.
+          Every {HALF_LIFE_DAYS} days, the part of live spend within the display cap is half — if
+          nobody buys. Spend above the cap is headroom and halves every {OVERFLOW_HALF_LIFE_DAYS}{" "}
+          days. That is how hard you are to knock down, not a countdown on the square. Most
+          positions fade together; capped positions can shift slowly because their headroom lasts
+          longer. New money changes the wall immediately, and old money is easier to beat.
         </p>
         <ul className="space-y-2.5 pt-1">
           <Example title="You are alone.">
@@ -95,8 +105,8 @@ export default function RulesPage() {
           </Example>
         </ul>
         <p>
-          That is also why the quoted price of a share can drop by a cent while you wait: the pool
-          got slightly cheaper. A new purchase makes it climb.
+          That is why the same dollar amount can preview a slightly larger share while you wait: the
+          existing pool got cheaper. A new purchase usually makes that preview smaller.
         </p>
       </Section>
 
@@ -110,8 +120,8 @@ export default function RulesPage() {
 
       <Section title="Refunds">
         <p>
-          Spend already displayed is not refundable. If a square is taken down for breaking the
-          rules, whatever it had left is refunded; the days it was already up are not.
+          Purchases are generally final once a square is displayed. Refunds may be considered
+          case-by-case and will be provided where required by law. Ask at {CONTACT}.
         </p>
       </Section>
     </div>

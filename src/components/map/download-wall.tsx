@@ -6,10 +6,11 @@ import { useState } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { Button } from "@/components/ui/button";
-import { useWall } from "@/components/wall-provider";
+import { useWall } from "@/hooks/use-wall";
 import { placeWall } from "./place-wall";
 import { TileLayer } from "./tile-layer";
 import {
+  downloadLogoSrc,
   logoDataUrl,
   wallCaptureOptions,
   wallDownloadCaption,
@@ -139,37 +140,27 @@ async function paintLogos(root: ParentNode): Promise<void> {
   const imgs = [...root.querySelectorAll("img")];
   if (imgs.length === 0) return;
 
-  const handles = [...new Set(imgs.map(tileHandle).filter((h): h is string => h !== null))];
-  const logos = await fetchLogoDataUrls(handles);
-
   for (const img of imgs) {
     const handle = tileHandle(img);
     if (!handle) continue;
     img.loading = "eager";
-    img.src = logos[handle] ?? logoDataUrl(handle, null);
     img.removeAttribute("srcset");
+    img.src = downloadLogoSrc(handle);
+    img.addEventListener(
+      "error",
+      () => {
+        img.src = logoDataUrl(handle, null);
+      },
+      { once: true },
+    );
   }
 
   await waitForImages(root);
 }
 
-async function fetchLogoDataUrls(handles: string[]): Promise<Record<string, string>> {
-  if (handles.length === 0) return {};
-  try {
-    const response = await fetch("/api/favicons", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ handles }),
-    });
-    if (!response.ok) return {};
-    const body = (await response.json()) as { logos?: Record<string, string> };
-    return body.logos ?? {};
-  } catch {
-    return {};
-  }
-}
-
-function waitForImages(root: ParentNode, ms = 1500): Promise<void> {
+function waitForImages(root: ParentNode, ms = 4_000): Promise<void> {
+  // Cold origin fetch is 2.5s; a hundred parallel GETs still need to land
+  // before html-to-image snapshots. Warm CDN is far shorter.
   const imgs = [...root.querySelectorAll("img")];
   if (imgs.length === 0) return Promise.resolve();
   return Promise.race([

@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { externalWebsiteClient } from "./external-website-client";
+import { FAVICON_DATA_REVALIDATE_SECONDS } from "./http-cache";
+import { toFaviconUrl } from "./utils/favicon";
 
 /**
  * The URL is supplied by whoever is buying and the fetch runs on our server, so
@@ -47,5 +49,33 @@ describe("fetchSiteInfo", () => {
       externalWebsiteClient.fetchSiteInfo("@holdit", "https://x.com/holdit", null),
     ).resolves.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("fetchFavicon", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("opts Google into the Data Cache so two prints share one fetch", async () => {
+    const png = new Uint8Array(64).fill(9);
+    const fetchMock = vi.fn<typeof fetch>(
+      async () => new Response(png, { headers: { "content-type": "image/png" } }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(externalWebsiteClient.fetchFavicon("linear.app", 128)).resolves.toEqual({
+      bytes: png,
+      contentType: "image/png",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      toFaviconUrl("linear.app", 128),
+      expect.objectContaining({
+        cache: "force-cache",
+        next: { revalidate: FAVICON_DATA_REVALIDATE_SECONDS },
+      }),
+    );
+    expect(fetchMock.mock.calls[0]?.[1]).not.toHaveProperty("signal");
   });
 });

@@ -7,7 +7,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshButton } from "@/components/panels/refresh-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { flashAtom, previewAtom, previewHandleAtom, useWall } from "@/components/wall-provider";
+import { flashAtom, previewAtom, previewHandleAtom } from "@/context/wall-atoms";
+import { useWall } from "@/hooks/use-wall";
 import { cn } from "@/lib/utils";
 import { formatMoney, formatShare } from "@/lib/utils/format";
 import { DownloadWallButton } from "./download-wall";
@@ -22,11 +23,6 @@ const TOOLTIP_H = 122;
 
 /**
  * The map. Every square on one canvas, area proportional to its share.
- *
- * Tiles are keyed by square and never rebuilt — only transform, width and
- * height change — so a purchase reads as the whole map redistributing rather
- * than as a repaint. Hover is deliberately kept out of React: the tooltip is
- * positioned imperatively, so moving the pointer costs no renders and no layout.
  */
 export function Treemap() {
   const state = useWall();
@@ -272,14 +268,7 @@ export function Treemap() {
 
       <div
         ref={frame}
-        className={cn(
-          "map-canvas relative w-full bg-map-grout",
-          // Height comes from the flex parent in both modes, so the server
-          // renders the final size and the map never jumps on load.
-          // A floor low enough that flex can still shrink the wall on a short
-          // phone; without it the canvas refuses to yield and pushes the fold.
-          "min-h-[200px] flex-1 sm:min-h-[280px]",
-        )}
+        className={cn("map-canvas relative w-full bg-map-grout", "min-h-50 flex-1 sm:min-h-70")}
       >
         <TileLayer
           tiles={tiles}

@@ -1,4 +1,5 @@
 import { monogram } from "@/lib/utils/domain";
+import { faviconDomain, isFaviconDomain, toFaviconProxyUrl } from "@/lib/utils/favicon";
 import { formatInt, formatMoney } from "@/lib/utils/format";
 
 /** PNG name for a photograph of the wall at `generatedAt`. Always UTC. */
@@ -31,7 +32,8 @@ export type FaviconBytes = { bytes: Uint8Array; contentType: string };
 /**
  * html-to-image paints `<img>` into a canvas. Google's favicon host sends
  * CORP but no ACAO, so a hotlinked mark is visible on the live wall and
- * blank in the PNG — unless it is already a data URL.
+ * blank in the PNG. Download swaps to `downloadLogoSrc` (same-origin GET the
+ * CDN can hold). A data URL is only the monogram when that GET has nothing.
  *
  * Never pass `imagePlaceholder`: that was a 1×1 GIF, which is how a
  * download of the wall lost every logo.
@@ -44,6 +46,16 @@ export function wallCaptureOptions(backgroundColor: string) {
     skipFonts: true,
     pixelRatio: 3,
   };
+}
+
+/**
+ * Same-origin proxy for a real domain; monogram for anything we would not
+ * fetch. The `<img>` error path also lands on the monogram if the GET 404s.
+ */
+export function downloadLogoSrc(handle: string): string {
+  return isFaviconDomain(faviconDomain(handle))
+    ? toFaviconProxyUrl(handle)
+    : logoDataUrl(handle, null);
 }
 
 /** Favicon bytes, or a monogram so the square still has a mark. */

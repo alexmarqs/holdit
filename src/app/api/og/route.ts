@@ -4,19 +4,18 @@ import { NextResponse } from "next/server";
 import { marketingOgImage } from "@/components/map/marketing-og";
 import { wallCardModel } from "@/components/map/wall-card";
 import { resolveCardLogos, wallOgImage } from "@/components/map/wall-og";
+import { CACHE } from "@/lib/http-cache";
 import { parsePrintAt } from "@/lib/utils/print-at";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { clientIp } from "@/lib/utils/request";
 
-const MARKETING_EDGE_TTL_SECONDS = 86_400; // 1 day
-const MARKETING_STALE_WHILE_REVALIDATE_SECONDS = 604_800; // 1 week
-
-const WALL_BROWSER_TTL_SECONDS = 3_600; // 1 hour
-const WALL_EDGE_TTL_SECONDS = 31_536_000; // 1 year
-const WALL_STALE_WHILE_REVALIDATE_SECONDS = 604_800; // 1 week
-
 /**
  * Bare `/api/og` is the marketing poster. `?at=` is a frozen print of the wall.
+ * That image is a reconstruction at one instant, so the CDN is told `immutable`.
+ *
+ * A present but unreadable `at` (junk, or a stamp still in the future) must not
+ * fall through to marketing: the URL would be `/api/og?at=…`, and the CDN would
+ * freeze the wrong card under a key that later becomes a real print.
  */
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
@@ -26,10 +25,16 @@ export async function GET(request: Request) {
     windowSeconds: 60,
   });
   if (!limited.ok) {
-    return NextResponse.json({ error: "Too many image requests." }, { status: 429 });
+    return NextResponse.json(
+      { error: "Too many image requests." },
+      { status: 429, headers: { "cache-control": CACHE.noStore } },
+    );
   }
 
   const at = parsePrintAt(params.get("at"));
+  if (params.has("at") && at === null) {
+    return new Response(null, { status: 404, headers: { "cache-control": CACHE.noStore } });
+  }
 
   const image =
     at === null
@@ -39,13 +44,7 @@ export async function GET(request: Request) {
         );
 
   const headers = new Headers(image.headers);
-
-  headers.set(
-    "Cache-Control",
-    at === null
-      ? `public, s-maxage=${MARKETING_EDGE_TTL_SECONDS}, stale-while-revalidate=${MARKETING_STALE_WHILE_REVALIDATE_SECONDS}`
-      : `public, max-age=${WALL_BROWSER_TTL_SECONDS}, s-maxage=${WALL_EDGE_TTL_SECONDS}, stale-while-revalidate=${WALL_STALE_WHILE_REVALIDATE_SECONDS}`,
-  );
+  headers.set("Cache-Control", at === null ? CACHE.marketingOg : CACHE.printImage);
 
   return new Response(image.body, { status: image.status, headers });
 }

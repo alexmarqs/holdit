@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dilutionDrop, HELD_KEY, recallHandle, rememberHandle } from "./dilution";
+import { dilutionDrop, forgetHandle, HELD_KEY, recallHandle, rememberHandle } from "./dilution";
 
 describe("dilutionDrop", () => {
   it("is the shrink, when somebody else bought", () => {
@@ -18,21 +18,45 @@ describe("dilutionDrop", () => {
 });
 
 describe("rememberHandle", () => {
-  it("writes and reads the square this browser just took", () => {
+  function memory() {
     const store = new Map<string, string>();
-    const storage = {
+    return {
       getItem: (key: string) => store.get(key) ?? null,
       setItem: (key: string, value: string) => {
         store.set(key, value);
       },
+      removeItem: (key: string) => {
+        store.delete(key);
+      },
+      store,
     };
+  }
+
+  it("writes and reads the square this browser just took", () => {
+    const storage = memory();
     rememberHandle(storage, "figma.com");
-    expect(store.get(HELD_KEY)).toBe("figma.com");
+    expect(storage.store.get(HELD_KEY)).toBe("figma.com");
     expect(recallHandle(storage)).toBe("figma.com");
+  });
+
+  it("overwrites, so a second company is the only one this tab still watches", () => {
+    const storage = memory();
+    rememberHandle(storage, "linear.app");
+    rememberHandle(storage, "figma.com");
+    expect(recallHandle(storage)).toBe("figma.com");
+  });
+
+  it("forgets, so this tab stops watching dilution", () => {
+    const storage = memory();
+    rememberHandle(storage, "figma.com");
+    forgetHandle(storage);
+    expect(recallHandle(storage)).toBeNull();
+    expect(storage.store.has(HELD_KEY)).toBe(false);
   });
 
   it("survives a missing store", () => {
     expect(recallHandle(null)).toBeNull();
     rememberHandle(null, "figma.com");
+    forgetHandle(null);
   });
 });

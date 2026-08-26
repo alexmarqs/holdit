@@ -1,11 +1,9 @@
 import { db } from "@holdit/db/client";
 import { getMapState } from "@holdit/db/queries/map";
 import { NextResponse } from "next/server";
+import { CACHE } from "@/lib/http-cache";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { clientIp } from "@/lib/utils/request";
-
-const EDGE_TTL_SECONDS = 10; // 10 seconds
-const STALE_WHILE_REVALIDATE_SECONDS = 30; // 30 seconds
 
 /**
  * The one payload every surface of the wall renders from.
@@ -23,7 +21,10 @@ export async function GET(request: Request) {
   const limited = await rateLimit("state", clientIp(request), { limit: 10, windowSeconds: 10 });
 
   if (!limited.ok) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "cache-control": CACHE.noStore } },
+    );
   }
 
   const wantsFresh = new URL(request.url).searchParams.has("fresh");
@@ -32,9 +33,7 @@ export async function GET(request: Request) {
 
   return NextResponse.json(state, {
     headers: {
-      "cache-control": wantsFresh
-        ? "private, no-store"
-        : `public, s-maxage=${EDGE_TTL_SECONDS}, stale-while-revalidate=${STALE_WHILE_REVALIDATE_SECONDS}`,
+      "cache-control": wantsFresh ? CACHE.noStore : CACHE.wallState,
     },
   });
 }

@@ -7,5 +7,4 @@ out
 next-env.d.ts
 .DS_Store
 .playwright-mcp
-outbid-full.png
 tsconfig.tsbuildinfo

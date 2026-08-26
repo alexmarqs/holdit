@@ -1,18 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
+import { apiClient } from "@/lib/api-client";
 
 /**
  * Tells the server a person is here.
  * Fall back to fetch if sendBeacon is not available.
  */
 export function sendVisitBeacon(): void {
-  try {
-    if (navigator.sendBeacon?.("/api/visit")) return;
-  } catch {
-    // Fall through to fetch.
-  }
-  void fetch("/api/visit", { method: "POST", keepalive: true }).catch(() => {});
+  apiClient.recordVisit();
 }
 
 /**

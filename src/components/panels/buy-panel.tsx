@@ -17,12 +17,10 @@ import { StatsPill } from "@/components/panels/counter-strip";
 import { GhostHint } from "@/components/panels/ghost-hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  previewAtom,
-  previewHandleAtom,
-  useWall,
-  useWallRefresh,
-} from "@/components/wall-provider";
+import { previewAtom, previewHandleAtom } from "@/context/wall-atoms";
+import { useWall } from "@/hooks/use-wall";
+import { useWallRefresh } from "@/hooks/use-wall-refresh";
+import { apiClient } from "@/lib/api-client";
 import { isValidTarget, normalizeTarget } from "@/lib/utils/domain";
 import { formatShare, moneyDraft } from "@/lib/utils/format";
 
@@ -134,25 +132,17 @@ export function BuyPanel() {
     setError(null);
     let leaving = false;
     try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ target, amountCents: quotedAmount }),
-      });
-      const body = (await response.json()) as
-        | { checkoutUrl: string }
-        | { recorded: true; handle: string }
-        | { error: string };
+      const result = await apiClient.startCheckout({ target, amountCents: quotedAmount });
 
-      if (!response.ok || "error" in body) {
-        setError("error" in body ? body.error : "Something went wrong. Nothing was charged.");
+      if (!result.ok) {
+        setError(result.error);
         return;
       }
 
-      if ("checkoutUrl" in body) {
+      if ("checkoutUrl" in result) {
         // location.href is async — finally would paint Hold again before Stripe.
         leaving = true;
-        window.location.href = body.checkoutUrl;
+        window.location.href = result.checkoutUrl;
         return;
       }
 
@@ -192,7 +182,8 @@ export function BuyPanel() {
           </span>
         </h2>
         <p className="mt-1.5 max-w-md text-[13px] leading-snug text-muted-foreground">
-          New spend takes a slice sized to what they paid.
+          From $1. No auction. Old spend gets cheaper to challenge. New money takes a slice from
+          everyone.
         </p>
 
         <form

@@ -72,10 +72,12 @@ The shared layers use namespaced `@holdit/*` aliases; application code uses `@/*
 
 ```
 src/app/          pages and route handlers
-src/components/   wall, panels, shared UI, and metadata
+src/components/   wall, panels, shared UI
+src/context/      Jotai session atoms and the wall provider
+src/hooks/        React Query and session hooks
 src/core/         @holdit/core   pure domain: decay, share, squarify, thresholds
 src/db/           @holdit/db     Drizzle schema and per-domain queries
-src/lib/          Stripe and site clients; helpers under utils/
+src/lib/          API and site clients; SEO copy and JSON-LD; helpers under utils/
 drizzle/                       generated SQL migrations and schema snapshots
 scripts/                       local Postgres: the compose file, and the founding wall as SQL
 ```
@@ -104,12 +106,26 @@ The ceiling is `ceilingFor(n)` in `src/core/config.ts`: the whole wall at one sq
 never above 60% on a young wall, 10% from 16 squares. Extra spend past the cap does
 not grow the tile.
 
-**No sockets, no in-process cache.** The page is prerendered (`revalidate = 30`) and
-`revalidatePath("/")` on purchase. Visitors ask `/api/state` when they refresh or chase
-a paid square onto the wall; that route is the CDN cache (`s-maxage=10`). Online is
-visit beacons into the `visits` table, not presence. `src/db/cache.ts` only collapses
-in-flight loads — it holds nothing between requests, so two instances cannot disagree
-about the same wall.
+**No sockets, no in-process wall cache.** The page is ISR (`revalidate = 30`) and
+`revalidatePath("/")` on purchase. Refresh and chase hit `/api/state` (`s-maxage=10`;
+`?fresh=` is `no-store`). Online is visit beacons, not presence. `getMapState` only
+collapses in-flight loads on one instance — live requests share one query; a print
+stamp is keyed by `now` so it cannot steal that query. Nothing is kept after it
+settles, so two instances cannot disagree about the same wall. TTLs live in
+`src/lib/http-cache.ts`.
+
+**Prints are immutable.** `/print/{at}` tags and `/api/og?at=` images are one URL,
+one body, `immutable` for a year. A future or junk stamp is `no-store` so the CDN
+cannot freeze a 302 or the marketing poster under a URL that later becomes a real
+print. Bare `/api/og` is the marketing poster (`s-maxage=1d`, SWR).
+
+**Download logos.** The live wall hotlinks Google. A PNG cannot (no CORS), so Download
+points each mark at `GET /api/favicons/{domain}` — image bytes with `s-maxage=30d`.
+One path per domain, so the CDN key is the square. A POST of the whole wall could
+never sit on the edge: every set of handles was a unique body. After the first miss
+the function does not run. OG still fetches Google in-process (`ImageResponse` needs
+bytes, not a URL) into the Next Data Cache, so two prints of the same square do not
+pay Google twice.
 
 **Purchases are not a race.** No locks, no queue, no version counter, no boundary policy.
 Position is a share of a sum, so two simultaneous buyers cannot conflict.

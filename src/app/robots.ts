@@ -1,15 +1,13 @@
 import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/utils/env";
 
+/** Special metadata route. Cached unless it reads request-time data. */
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
         allow: ["/", "/api/og"],
-        // Payloads stay out. `/api/og` is the exception above: it is og:image.
-        // `/print/` is an unbounded snapshot space — noindex on the card is not
-        // a crawl budget. Social unfurlers ignore robots.txt.
         disallow: ["/api/", "/print/"],
       },
     ],

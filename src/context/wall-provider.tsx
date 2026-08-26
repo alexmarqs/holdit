@@ -1,80 +1,22 @@
 "use client";
 
-import { DEFAULT_AMOUNT_CENTS, type MapState } from "@holdit/core";
-import {
-  QueryClientProvider,
-  useIsMutating,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { atom, createStore, Provider, useAtomValue, useSetAtom } from "jotai";
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import type { MapState } from "@holdit/core";
+import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { createStore, Provider, useAtomValue, useSetAtom } from "jotai";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { dilutionDrop, recallHandle, rememberHandle } from "@/components/panels/dilution";
+import { awaitingAtom, claimedAtom, dilutedAtom, flashAtom, heldAtom } from "@/context/wall-atoms";
+import { useWall } from "@/hooks/use-wall";
+import { apiClient } from "@/lib/api-client";
+import { createWallQueryClient, writeWallCache } from "@/lib/utils/wall-query";
 import {
   CHASE_FIRST_MS,
   CHASE_GAP_MS,
   chaseTimedOut,
   claimedSquare,
-  createWallQueryClient,
-  fetchWall,
   heldHandleFromHref,
   hrefWithoutHeld,
-  tryFetchWall,
-  WALL_QUERY_KEY,
-  writeWallCache,
-} from "@/lib/wall-state";
-
-/** Atoms for the wall state. */
-export const flashAtom = atom<string | null>(null);
-export const previewAtom = atom<number | null>(DEFAULT_AMOUNT_CENTS);
-export const previewHandleAtom = atom<string | null>(null);
-export const awaitingAtom = atom<{ handle: string; timedOut: boolean } | null>(null);
-export const claimedAtom = atom<{ handle: string; share: number } | null>(null);
-export const heldAtom = atom<string | null>(null);
-export const dilutedAtom = atom<{ handle: string; before: number; after: number } | null>(null);
-
-/**
- * The wall as last fetched. Seeded from the prerendered page; replaced when
- * somebody asks for a newer one. Never Jotai — that copy would drift from this.
- */
-export function useWall(): MapState {
-  const { data } = useQuery({
-    queryKey: WALL_QUERY_KEY,
-    queryFn: () => fetchWall(false),
-  });
-  if (data === undefined) throw new Error("The wall must be read inside <WallProvider>.");
-  return data;
-}
-
-const REFRESH_KEY = ["wall", "refresh"] as const;
-
-/**
- * Ask for the wall again, and say whether a pull is in flight.
- *
- * `fresh` bypasses the CDN copy. The Refresh control asks for that — the word
- * means the wall as it is. A purchase that just landed does too. The 10s edge
- * copy is only for `GET /api/state` without `?fresh=`.
- *
- * A 429 or a failed pull is skipped: the wall on screen stays, the control
- * stays pressable. Mutations do not retry, so pressing again is the only retry.
- */
-export function useWallRefresh() {
-  const queryClient = useQueryClient();
-  const { mutate } = useMutation<MapState | null, Error, boolean>({
-    mutationKey: REFRESH_KEY,
-    mutationFn: tryFetchWall,
-    onSuccess: (wall) => {
-      if (wall === null) return;
-      writeWallCache(queryClient, wall);
-    },
-  });
-
-  return {
-    refresh: useCallback((fresh = false) => mutate(fresh), [mutate]),
-    refreshing: useIsMutating({ mutationKey: REFRESH_KEY }) > 0,
-  };
-}
+} from "@/lib/utils/wall-state";
 
 /**
  * Everything this visit does on its own: reading the handle checkout sends back,
@@ -164,13 +106,15 @@ function WallEffects() {
   }, [wall.standings, held, claimed, setDiluted]);
 
   /*
-   * Chase the square rather than wait for the buyer to press refresh. Bypassed
-   * fetches every 1.5s until it appears, then stop; give up after forty seconds
-   * and say so, because silence at this point reads as a lost payment.
+   * Stripe sends the buyer back before the webhook has written the square.
+   * This loop asks `/api/state?fresh=` (the live wall, not the 10s CDN copy)
+   * until that handle appears. First ask at CHASE_FIRST_MS, then every
+   * CHASE_GAP_MS. At CHASE_GIVE_UP_MS it stops and the banner says the square
+   * is paid for but not on the wall yet — silence here reads as a lost payment.
    *
-   * Keyed on the handle alone — the one thing that decides whether to chase and
-   * what to chase. Depending on `awaiting` itself, or on the wall, is what
-   * restarted the loop under its own answers.
+   * The effect depends on `chasing` (the handle) alone. Depending on `awaiting`
+   * or the wall restarted the loop every time a fetch landed, which burned
+   * the rate limit and never reached the forty-second cap.
    */
   useEffect(() => {
     if (chasing === null) return;
@@ -183,7 +127,7 @@ function WallEffects() {
         setAwaiting((current) => (current ? { ...current, timedOut: true } : null));
         return;
       }
-      const wall = await tryFetchWall(true);
+      const wall = await apiClient.tryFetchWall(true);
       if (wall) writeWallCache(queryClient, wall);
       if (live) timer = setTimeout(tick, CHASE_GAP_MS);
     };
@@ -197,16 +141,17 @@ function WallEffects() {
   return null;
 }
 
-interface ProviderProps {
-  initialState: MapState;
-  children: ReactNode;
-}
-
 /**
  * The wall the page arrived with, this visit's session, and the means to ask
  * for a newer wall.
  */
-export function WallProvider({ initialState, children }: ProviderProps) {
+export function WallProvider({
+  initialState,
+  children,
+}: {
+  initialState: MapState;
+  children: ReactNode;
+}) {
   /*
    * A store and a query client per mount, rather than module-level defaults.
    *

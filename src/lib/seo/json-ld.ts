@@ -1,6 +1,12 @@
-import type { MapState } from "@holdit/core";
 import { MIN_SPEND_CENTS } from "@holdit/core";
 import { siteUrl } from "@/lib/utils/env";
+import { SITE_DESCRIPTION, SITE_NAME } from "./copy";
+
+type WallListing = {
+  standings: readonly {
+    holder: { handle: string; url: string; tagline: string | null };
+  }[];
+};
 
 /**
  * JSON-LD as a script body. `<` is escaped so a holder tagline cannot close
@@ -10,25 +16,14 @@ export function jsonLd(data: unknown): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
-/**
- * JSON-LD for the wall.
- *
- * The treemap needs a client-side measurement before it can draw, so a crawler
- * sees no tiles — only the list below it. This states the same facts in a form
- * search engines read directly: what the site is, what a square costs, and who
- * currently holds one.
- */
-export function StructuredData({ state }: { state: MapState }) {
-  const base = siteUrl;
-
-  const graph = [
+export function wallGraph(state: WallListing, base = siteUrl) {
+  return [
     {
       "@type": "WebSite",
       "@id": `${base}#website`,
       url: base,
-      name: "holdit.lol",
-      description:
-        "A wall of everyone paying for attention. Your square's area is your spend as a share of everyone's.",
+      name: SITE_NAME,
+      description: SITE_DESCRIPTION,
     },
     {
       "@type": "Product",
@@ -65,14 +60,4 @@ export function StructuredData({ state }: { state: MapState }) {
       })),
     },
   ];
-
-  return (
-    <script
-      type="application/ld+json"
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD has no other injection point
-      dangerouslySetInnerHTML={{
-        __html: jsonLd({ "@context": "https://schema.org", "@graph": graph }),
-      }}
-    />
-  );
 }

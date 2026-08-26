@@ -1,8 +1,11 @@
 /**
- * Pure handle → domain rules for marks, and the Google URL the browser loads.
+ * Pure handle → domain rules for marks, and the URLs that load them.
  *
- * The live wall hotlinks this. OG still fetches the same URL on the server
- * (`externalWebsiteClient.fetchFavicon`) because ImageResponse needs bytes.
+ * The live wall hotlinks Google (`toFaviconUrl`). A download cannot: that host
+ * sends CORP and no CORS, so html-to-image would paint a blank. Download points
+ * at `toFaviconProxyUrl` — `GET /api/favicons/{domain}` — same-origin bytes the
+ * CDN can hold. OG still fetches Google on the server because ImageResponse
+ * needs the bytes in-process.
  *
  * `faviconV2` is the real service. `www.google.com/s2/favicons?domain=…` 301s
  * here, so calling s2 would add a hop for an identical image.
@@ -28,6 +31,14 @@ export function faviconDomain(handle: string): string {
 /** The URL the live wall hotlinks, and OG fetches. Same string either way. */
 export function toFaviconUrl(handle: string, size: FaviconSize = 64): string {
   return faviconUpstreamUrl(faviconDomain(handle), size);
+}
+
+/**
+ * Same-origin mark for a download PNG. One path per domain so the CDN key is
+ * the square, not "whatever handles were on the wall in this POST".
+ */
+export function toFaviconProxyUrl(handle: string): string {
+  return `/api/favicons/${encodeURIComponent(faviconDomain(handle))}`;
 }
 
 export function isFaviconDomain(value: string): boolean {

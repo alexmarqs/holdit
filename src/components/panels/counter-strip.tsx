@@ -2,7 +2,7 @@
 
 import { MIN_SHOWN_CLICKS, MIN_SHOWN_VISITORS } from "@holdit/core";
 import type { ReactNode } from "react";
-import { useWall } from "@/components/wall-provider";
+import { useWall } from "@/hooks/use-wall";
 import { formatInt, formatMoney } from "@/lib/utils/format";
 
 /**

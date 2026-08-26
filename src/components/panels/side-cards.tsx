@@ -6,7 +6,7 @@ import { emitSquareFocus } from "@/components/map/focus-square";
 import { SquareLink } from "@/components/map/square-link";
 import { activityLine } from "@/components/panels/activity-copy";
 import { SiteLogo } from "@/components/site-logo";
-import { useWall } from "@/components/wall-provider";
+import { useWall } from "@/hooks/use-wall";
 import { formatAgo, formatInt } from "@/lib/utils/format";
 
 const rowClass =

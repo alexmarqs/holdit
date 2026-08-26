@@ -3,7 +3,8 @@
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { claimedAtom, dilutedAtom, useWall } from "@/components/wall-provider";
+import { claimedAtom, dilutedAtom } from "@/context/wall-atoms";
+import { useWall } from "@/hooks/use-wall";
 import {
   claimShareCopy,
   dilutionShareCopy,

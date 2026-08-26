@@ -2,13 +2,15 @@
 
 import { MIN_SHOWN_TILE_CLICKS } from "@holdit/core";
 import { useAtomValue } from "jotai";
-import { ExternalLink, LocateFixed } from "lucide-react";
+import { ExternalLink, LocateFixed, X } from "lucide-react";
 import { useState } from "react";
 import { emitSquareFocus } from "@/components/map/focus-square";
 import { SquareLink } from "@/components/map/square-link";
 import { SiteLogo } from "@/components/site-logo";
 import { Button } from "@/components/ui/button";
-import { heldAtom, useWall } from "@/components/wall-provider";
+import { heldAtom } from "@/context/wall-atoms";
+import { useForgetHeld } from "@/hooks/use-forget-held";
+import { useWall } from "@/hooks/use-wall";
 import { cn } from "@/lib/utils";
 import { formatAgo, formatInt, formatMoney, formatShare } from "@/lib/utils/format";
 
@@ -25,6 +27,7 @@ const action =
 export function Listing() {
   const state = useWall();
   const held = useAtomValue(heldAtom);
+  const forgetHeld = useForgetHeld();
   const [shown, setShown] = useState(PAGE);
   const rows = state.standings.slice(0, shown);
 
@@ -93,6 +96,17 @@ export function Listing() {
                 >
                   <LocateFixed className="size-3.5" />
                 </button>
+                {held === standing.holder.handle ? (
+                  <button
+                    type="button"
+                    className={action}
+                    aria-label="Forget this square"
+                    title="Forget this square"
+                    onClick={forgetHeld}
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                ) : null}
               </span>
             </div>
           </li>

@@ -1,61 +1,16 @@
 import type { MapState } from "@holdit/core";
-import { QueryClient } from "@tanstack/react-query";
-import { formatAgo } from "@/lib/utils/format";
+import { formatAgo } from "./format";
 
-export const WALL_QUERY_KEY = ["wall"] as const;
-
+/**
+ * After Stripe sends the buyer back, the square is not on the wall yet — the
+ * webhook is still landing. The tab asks for a newer wall rather than waiting
+ * for Refresh: first look at 400ms (the webhook is rarely faster than that),
+ * then every 1.5s. Forty seconds of silence reads as a lost payment, so the
+ * chase stops and says so.
+ */
 export const CHASE_FIRST_MS = 400;
 export const CHASE_GAP_MS = 1_500;
 export const CHASE_GIVE_UP_MS = 40_000;
-
-export function createWallQueryClient(initialState: MapState): QueryClient {
-  const client = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: Number.POSITIVE_INFINITY,
-        gcTime: Number.POSITIVE_INFINITY,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        retry: false,
-      },
-      mutations: { retry: false },
-    },
-  });
-  writeWallCache(client, initialState);
-  return client;
-}
-
-/** Write the wall to the query cache.
- *
- * TODO: Alternative: use useQuery with initialData or hydration.
- *
- */
-export function writeWallCache(client: QueryClient, wall: MapState): void {
-  client.setQueryData(WALL_QUERY_KEY, wall);
-}
-
-export function wallStateUrl(fresh: boolean, now = Date.now()): string {
-  return fresh ? `/api/state?fresh=${now}` : "/api/state";
-}
-
-export async function fetchWall(fresh = false): Promise<MapState> {
-  const response = await fetch(wallStateUrl(fresh), fresh ? { cache: "no-store" } : undefined);
-  if (!response.ok) throw new Error(`Wall unavailable (${response.status})`);
-  return response.json();
-}
-
-/**
- * Refresh and chase: a 429 or a dead origin must not replace the wall or
- * surface an error. The rate limit on `/api/state` is 10 / 10s; pressing
- * through it just keeps what they already have.
- */
-export async function tryFetchWall(fresh = false): Promise<MapState | null> {
-  try {
-    return await fetchWall(fresh);
-  } catch {
-    return null;
-  }
-}
 
 /** Checkout returns `/?held=<handle>`. Empty or missing is not a chase. */
 export function heldHandleFromHref(href: string): string | null {

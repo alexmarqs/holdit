@@ -1,7 +1,7 @@
 import { CLICK_DEDUPE_WINDOW_MS } from "@holdit/core";
 import { PageHead, Section } from "@/components/prose";
+import { leafPage } from "@/lib/seo/metadata";
 import { publicEnv } from "@/lib/utils/env";
-import { leafPage } from "../seo";
 
 export const metadata = leafPage({
   title: "Privacy",
@@ -47,7 +47,7 @@ export default function PrivacyPage() {
         </p>
         <p>
           The hash is what makes one click per address per{" "}
-          {Math.round(CLICK_DEDUPE_WINDOW_MS / 3_600_000)} hour countable without keeping the
+          {Math.round(CLICK_DEDUPE_WINDOW_MS / 60_000)} minutes countable without keeping the
           address. There is no way to read an IP back out of it, and it is never shared.
         </p>
       </Section>
@@ -69,10 +69,10 @@ export default function PrivacyPage() {
           minutes at a time.
         </p>
         <p>
-          Square logos come from Google&rsquo;s public favicon service, but{" "}
-          <b>this site fetches them, not your browser</b> — so Google is never told which wall you
-          are looking at, or that you are looking at one. Loading the page contacts no third party
-          at all.
+          Square logos on the wall are loaded from Google&rsquo;s public favicon service in the
+          browser. A downloaded PNG and a share card fetch the same files on the server (`GET
+          /api/favicons/…`, and OG in-process) so those images can be painted without Google&rsquo;s
+          CORS headers.
         </p>
       </Section>
 

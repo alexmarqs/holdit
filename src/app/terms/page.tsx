@@ -1,15 +1,17 @@
-import { HALF_LIFE_DAYS, MIN_SPEND_CENTS } from "@holdit/core";
+import { HALF_LIFE_DAYS, MIN_SPEND_CENTS, OVERFLOW_HALF_LIFE_MULTIPLIER } from "@holdit/core";
 import { PageHead, Section } from "@/components/prose";
+import { leafPage } from "@/lib/seo/metadata";
 import { publicEnv } from "@/lib/utils/env";
 import { formatMoney } from "@/lib/utils/format";
-import { leafPage } from "../seo";
 
 export const metadata = leafPage({
   title: "Terms",
   description:
-    "What you get when you buy a square on holdit.lol, what it costs, when it fades, what is not allowed, and how refunds work.",
+    "What you get when you buy a square on holdit.lol, what it costs, how live spend fades, what is not allowed, and the refund policy.",
   path: "/terms",
 });
+
+const OVERFLOW_HALF_LIFE_DAYS = HALF_LIFE_DAYS * OVERFLOW_HALF_LIFE_MULTIPLIER;
 
 const CONTACT = (
   <a className="text-primary hover:text-primary/80" href={`mailto:${publicEnv.contactEmail}`}>
@@ -34,12 +36,16 @@ export default function TermsPage() {
       <Section title="What you are buying">
         <p>
           Space on one shared page, for as long as your spend keeps it there. Your square&rsquo;s
-          area is your spend as a share of everyone&rsquo;s, drawn beside every other square.{" "}
-          <b>Every {HALF_LIFE_DAYS} days, live spend is half — if nobody buys</b>. That is how hard
-          you are to knock down, not how big you are. Your share of the page only changes when
-          somebody else buys. You are not buying a fixed position, a guaranteed size, a duration, or
-          any amount of traffic. The share shown before you pay is this wall at that moment; payment
-          is the dollars you chose.
+          numeric share is its live spend as a share of everyone&rsquo;s. The map visually
+          compresses those shares and gives tiny squares a minimum footprint, so on-screen area is
+          not an exact percentage.{" "}
+          <b>
+            Spend within the display cap halves every {HALF_LIFE_DAYS} days if nobody buys; spend
+            above it halves every {OVERFLOW_HALF_LIFE_DAYS} days.
+          </b>{" "}
+          This affects how hard a position is to challenge, not a guaranteed duration. You are not
+          buying a fixed position, a guaranteed size, or any amount of traffic. The share shown
+          before you pay is this wall at that moment; payment is the dollars you chose.
         </p>
         <p>
           The smallest purchase is {formatMoney(MIN_SPEND_CENTS)}. Prices are in US dollars and
@@ -69,9 +75,9 @@ export default function TermsPage() {
 
       <Section title="Refunds">
         <p>
-          Spend that has already been displayed is not refundable, because the space was delivered.
-          Spend that has not been displayed yet is. So a square taken down for breaking these terms
-          is refunded whatever it had left; the days it was already up are not.
+          Purchases are generally final once a square is displayed. We may consider refunds
+          case-by-case and will provide any refund required by applicable law. Removing a square for
+          breaking these terms does not by itself create a right to a refund.
         </p>
         <p>Ask at {CONTACT}.</p>
       </Section>
@@ -79,8 +85,9 @@ export default function TermsPage() {
       <Section title="The unglamorous part">
         <p>
           The site is provided as it is, without warranty. It may change, break, or stop; if it
-          stops for good, undisplayed spend is refunded. Nothing here is worth more than what you
-          spent on it, and that is the limit of what can be claimed.
+          stops for good, any refund is governed by the policy above and applicable law. Nothing
+          here is worth more than what you spent on it, and that is the limit of what can be
+          claimed.
         </p>
         <p>These terms may change. The version on this page is the one that applies.</p>
       </Section>
