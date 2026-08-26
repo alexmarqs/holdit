@@ -1,13 +1,12 @@
 "use client";
 
 import type { Holder } from "@holdit/core";
-import { useAtomValue } from "jotai";
 import { ExternalLink, LocateFixed } from "lucide-react";
 import { emitSquareFocus } from "@/components/map/focus-square";
 import { SquareLink } from "@/components/map/square-link";
-import { wallAtom } from "@/components/map-provider";
 import { activityLine } from "@/components/panels/activity-copy";
 import { SiteLogo } from "@/components/site-logo";
+import { useWall } from "@/components/wall-provider";
 import { formatAgo, formatInt } from "@/lib/utils/format";
 
 const rowClass =
@@ -47,7 +46,7 @@ function RowActions({ handle, holder }: { handle: string; holder?: Holder }) {
  * would be holes — the honest empty state still reads as a dead site.
  */
 export function TrendingCard() {
-  const state = useAtomValue(wallAtom);
+  const state = useWall();
   if (state.trending.length === 0) return null;
   const holders = new Map(
     state.standings.map((standing) => [standing.holder.handle, standing.holder]),
@@ -75,7 +74,7 @@ export function TrendingCard() {
 }
 
 export function ActivityCard() {
-  const state = useAtomValue(wallAtom);
+  const state = useWall();
   if (state.activity.length === 0) return null;
   const holders = new Map(
     state.standings.map((standing) => [standing.holder.handle, standing.holder]),

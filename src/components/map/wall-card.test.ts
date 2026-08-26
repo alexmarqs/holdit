@@ -24,7 +24,6 @@ function standing(
       handle,
       url: `https://${handle}`,
       tagline: null,
-      status: "live",
       createdAt: NOW,
     },
     liveCents: Math.round(share * 100_000),

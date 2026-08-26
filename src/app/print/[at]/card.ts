@@ -30,10 +30,8 @@ function attr(value: string): string {
  *
  * Absolute URLs throughout: an unfurler will not resolve a relative `og:image`.
  */
-export function printCardHtml(at: number, proof?: string | null): string {
-  const signed = proof ? `?p=${attr(proof)}` : "";
-  const imageProof = proof ? `&p=${attr(proof)}` : "";
-  const image = `${siteUrl}/api/og?at=${at}${imageProof}`;
+export function printCardHtml(at: number): string {
+  const image = `${siteUrl}/api/og?at=${at}`;
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -43,7 +41,7 @@ export function printCardHtml(at: number, proof?: string | null): string {
 <meta name="robots" content="noindex, follow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="holdit.lol">
-<meta property="og:url" content="${siteUrl}/print/${at}${signed}">
+<meta property="og:url" content="${siteUrl}/print/${at}">
 <meta property="og:title" content="${attr(TITLE)}">
 <meta property="og:description" content="${attr(DESCRIPTION)}">
 <meta property="og:image" content="${image}">

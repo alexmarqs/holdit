@@ -4,14 +4,14 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { Loader2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { CopyShareButton, ShareWallButton } from "@/components/map/share-wall";
+import { SiteLogo } from "@/components/site-logo";
 import {
   awaitingAtom,
   claimedAtom,
   dilutedAtom,
   heldAtom,
-  wallAtom,
-} from "@/components/map-provider";
-import { SiteLogo } from "@/components/site-logo";
+  useWall,
+} from "@/components/wall-provider";
 import { publicEnv } from "@/lib/utils/env";
 import { formatShare } from "@/lib/utils/format";
 
@@ -58,7 +58,7 @@ export function AwaitingSquare() {
   const claimed = useAtomValue(claimedAtom);
   const diluted = useAtomValue(dilutedAtom);
   const held = useAtomValue(heldAtom);
-  const wall = useAtomValue(wallAtom);
+  const wall = useWall();
   const setClaimed = useSetAtom(claimedAtom);
   const setDiluted = useSetAtom(dilutedAtom);
 

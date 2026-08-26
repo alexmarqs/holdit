@@ -2,28 +2,25 @@
 
 import { useAtomValue } from "jotai";
 import { useState } from "react";
-import { claimedAtom, dilutedAtom, wallAtom } from "@/components/map-provider";
 import { Button } from "@/components/ui/button";
+import { claimedAtom, dilutedAtom, useWall } from "@/components/wall-provider";
 import {
   claimShareCopy,
   dilutionShareCopy,
   tweetIntent,
-  wallPrintUrl,
   wallShareCopy,
   wallShareUrl,
 } from "./share-copy";
 
 function useSharePayload() {
-  const state = useAtomValue(wallAtom);
+  const state = useWall();
   const claimed = useAtomValue(claimedAtom);
   const diluted = useAtomValue(dilutedAtom);
 
   return async () => {
-    const paid = claimed !== null || diluted !== null;
-    const pageUrl = await resolvePrintUrl(
+    const pageUrl = wallShareUrl(
       window.location.origin,
       state.generatedAt,
-      paid,
       state.counters.squaresLive,
     );
     const text = diluted
@@ -33,30 +30,6 @@ function useSharePayload() {
         : wallShareCopy(state.counters).text;
     return { text, pageUrl };
   };
-}
-
-/** Census shares stay on the five-minute grid. A paid one mints a proof so the card still has the new square. */
-async function resolvePrintUrl(
-  origin: string,
-  at: number,
-  paid: boolean,
-  squaresLive: number,
-): Promise<string> {
-  if (squaresLive <= 0) return wallShareUrl(origin, at, squaresLive);
-  if (!paid) return wallPrintUrl(origin, at);
-  try {
-    const response = await fetch("/api/print-link", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ at }),
-    });
-    if (!response.ok) return wallPrintUrl(origin, at);
-    const body = (await response.json()) as { proof?: unknown };
-    if (typeof body.proof !== "string") return wallPrintUrl(origin, at);
-    return wallPrintUrl(origin, at, body.proof);
-  } catch {
-    return wallPrintUrl(origin, at);
-  }
 }
 
 export function ShareWallButton({ compact = false }: { compact?: boolean }) {

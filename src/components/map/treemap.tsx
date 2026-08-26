@@ -13,9 +13,9 @@ import {
 import { useAtomValue } from "jotai";
 import { Maximize2, Minimize2, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { flashAtom, previewAtom, previewHandleAtom, wallAtom } from "@/components/map-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { flashAtom, previewAtom, previewHandleAtom, useWall } from "@/components/wall-provider";
 import { cn } from "@/lib/utils";
 import { formatInt, formatMoney, formatShare } from "@/lib/utils/format";
 import { onSquareFocus } from "./focus-square";
@@ -36,7 +36,7 @@ const PREVIEW_ID = "__preview__";
  * positioned imperatively, so moving the pointer costs no renders and no layout.
  */
 export function Treemap() {
-  const state = useAtomValue(wallAtom);
+  const state = useWall();
   const flash = useAtomValue(flashAtom);
   const preview = useAtomValue(previewAtom);
   const previewHandle = useAtomValue(previewHandleAtom);

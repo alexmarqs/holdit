@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -23,11 +24,10 @@ export const holders = pgTable(
     url: text().notNull(),
     tagline: text(),
     /**
-     * Only "live" is rendered. Every insert sets it explicitly — nothing is
-     * reviewed before going up — so this default is unreachable from the app
-     * and exists so that an unforeseen insert path fails closed.
+     * "live" or "rejected". There is no review queue: a square goes up on
+     * payment, and comes down by flipping this column.
      */
-    status: text().notNull().default("pending"),
+    status: text().notNull().default("live"),
     /** Arrives with the payment. Owner-only; no query exposes it. */
     email: text(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
@@ -77,8 +77,8 @@ export const clicks = pgTable(
     uaClass: text().notNull().default("unknown"),
   },
   (t) => [
-    index("clicks_holder_ts_idx").on(t.holderId, t.ts),
     index("clicks_dedupe_idx").on(t.holderId, t.ipHash, t.ts),
+    index("clicks_browser_ts_idx").on(t.ts, t.holderId).where(sql`${t.uaClass} = 'browser'`),
   ],
 );
 

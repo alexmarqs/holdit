@@ -6,8 +6,7 @@ import { z } from "zod";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { clientIp, referrerOf } from "@/lib/utils/request";
 
-/** Only bounded, not a uuid: the mock repository issues ids like `seed-h-1`. */
-const Body = z.object({ holderId: z.string().min(1).max(64) });
+const LogClickRequest = z.object({ holderId: z.string().min(1).max(64) });
 
 /**
  * Log an outbound click, beside the hop rather than in front of it.
@@ -30,10 +29,13 @@ export async function POST(request: Request) {
   const limited = await rateLimit("click", ip, { limit: 60, windowSeconds: 60 });
   if (!limited.ok) return new Response(null, { status: 204 });
 
-  const parsed = Body.safeParse(await request.json().catch(() => null));
+  const parsed = LogClickRequest.safeParse(await request.json().catch(() => null));
+
+  // A click we cannot read has no holder to click, so nothing to do but log it.
   if (!parsed.success) return new Response(null, { status: 204 });
 
   const holder = await getHolderById(db, parsed.data.holderId);
+
   if (!holder) return new Response(null, { status: 204 });
 
   try {

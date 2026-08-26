@@ -1,4 +1,3 @@
-import type { Holder } from "@holdit/core";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "./client";
@@ -17,7 +16,7 @@ const buy = (handle: string, amountCents = 5_000) =>
  * database. These tests cover the half that has to be right for that to work —
  * that the wall reads only live squares, and that a dead one stops counting.
  */
-const setStatus = async (handle: string, status: Holder["status"]) => {
+const setStatus = async (handle: string, status: "live" | "rejected") => {
   const changed = await db
     .update(holders)
     .set({ status })
@@ -30,8 +29,7 @@ describe("taking a square down", () => {
   beforeEach(resetDatabase);
 
   it("puts a square up the moment it is paid for", async () => {
-    const result = await buy("instant.dev");
-    expect(result.holder.status).toBe("live");
+    await buy("instant.dev");
 
     const dataset = await loadMapRows(db, NOW);
     expect(dataset.holders.some((h) => h.handle === "instant.dev")).toBe(true);
@@ -48,7 +46,6 @@ describe("taking a square down", () => {
   it("stops a dead square diluting everyone else", async () => {
     await buy("good.dev", 10_000);
     const withBoth = await buy("bad.dev", 90_000);
-    expect(withBoth.holder.status).toBe("live");
 
     const before = await loadMapRows(db, NOW);
     expect(before.purchasesByHolder.has(withBoth.holder.id)).toBe(true);

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { serverEnv } from "@/lib/utils/env";
-import { parsePrintAt, printAtProof } from "@/lib/utils/print-at";
+import { parsePrintAt } from "@/lib/utils/print-at";
 import { printCardHtml } from "./card";
 
 /**
@@ -18,19 +17,13 @@ import { printCardHtml } from "./card";
  * wrong, not merely heavy.
  */
 export async function GET(request: Request, context: { params: Promise<{ at: string }> }) {
-  const proof = new URL(request.url).searchParams.get("p");
-  const at = parsePrintAt((await context.params).at, Date.now(), {
-    proof,
-    secret: serverEnv.clickHashSalt,
-  });
+  const at = parsePrintAt((await context.params).at);
 
   // A stamp we cannot read has no wall to show. Nothing to unfurl, so nothing to
   // do but send whoever followed it to the live one.
   if (at === null) return NextResponse.redirect(new URL("/", new URL(request.url)), 302);
 
-  const signed = proof && printAtProof(at, serverEnv.clickHashSalt) === proof ? proof : null;
-
-  return new Response(printCardHtml(at, signed), {
+  return new Response(printCardHtml(at), {
     status: 200,
     headers: {
       "content-type": "text/html; charset=utf-8",

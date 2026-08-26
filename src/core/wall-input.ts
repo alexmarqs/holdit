@@ -15,7 +15,6 @@ export interface SquareSpec {
   cents: number | number[];
   /** When the purchase(s) landed. Defaults to `now`. */
   at?: number | number[];
-  status?: Holder["status"];
   clicksAllTime?: number;
   clicksLastHour?: number;
 }
@@ -42,7 +41,6 @@ export function wallInput(squares: readonly SquareSpec[], spec: WallSpec): MapIn
       handle: square.handle,
       url: `https://${square.handle.replace(/^@/, "x.com/")}`,
       tagline: null,
-      status: square.status ?? "live",
       createdAt: spec.now,
     });
 

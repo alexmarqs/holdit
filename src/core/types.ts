@@ -1,15 +1,6 @@
-/**
- * `live` is the only status the wall renders. A square is created live — the
- * rules promise it "goes up as soon as you pay" — and `rejected` is how one
- * comes down. `pending` exists only as the column default, so an insert that
- * somehow omits a status is hidden rather than shown.
- */
-export type HolderStatus = "pending" | "live" | "rejected";
-
 export interface Purchase {
   id: string;
   holderId: string;
-  /** What was actually paid. This is the only quantity the map is built from. */
   amountCents: number;
   createdAt: number;
   refundedAt: number | null;
@@ -17,11 +8,9 @@ export interface Purchase {
 
 export interface Holder {
   id: string;
-  /** Bare domain, or an @handle. Doubles as the display name; there are no accounts. */
   handle: string;
   url: string;
   tagline: string | null;
-  status: HolderStatus;
   createdAt: number;
 }
 

@@ -6,9 +6,9 @@ import { ExternalLink, LocateFixed } from "lucide-react";
 import { useState } from "react";
 import { emitSquareFocus } from "@/components/map/focus-square";
 import { SquareLink } from "@/components/map/square-link";
-import { heldAtom, wallAtom } from "@/components/map-provider";
 import { SiteLogo } from "@/components/site-logo";
 import { Button } from "@/components/ui/button";
+import { heldAtom, useWall } from "@/components/wall-provider";
 import { cn } from "@/lib/utils";
 import { formatAgo, formatInt, formatMoney, formatShare } from "@/lib/utils/format";
 
@@ -23,7 +23,7 @@ const action =
  * square exists — an empty list under a heading is a hole, not a pitch.
  */
 export function Listing() {
-  const state = useAtomValue(wallAtom);
+  const state = useWall();
   const held = useAtomValue(heldAtom);
   const [shown, setShown] = useState(PAGE);
   const rows = state.standings.slice(0, shown);

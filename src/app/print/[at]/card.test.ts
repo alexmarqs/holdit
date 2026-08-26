@@ -32,16 +32,3 @@ describe("printCardHtml", () => {
     expect(html.length).toBeLessThan(2_000);
   });
 });
-
-describe("a paid print card", () => {
-  const at = Date.UTC(2026, 7, 22, 11, 37);
-  const proof = "signed-print";
-  const html = printCardHtml(at, proof);
-
-  it("hands the same proof to the image, so the render stays exact", () => {
-    expect(html).toContain(
-      `<meta property="og:image" content="${siteUrl}/api/og?at=${at}&p=${proof}">`,
-    );
-    expect(html).toContain(`<meta property="og:url" content="${siteUrl}/print/${at}?p=${proof}">`);
-  });
-});

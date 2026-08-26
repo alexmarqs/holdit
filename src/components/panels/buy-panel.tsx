@@ -12,17 +12,17 @@ import {
   shareAfterSpend,
   stepAmount,
 } from "@holdit/core";
-import { useAtomValue, useSetAtom, useStore } from "jotai";
+import { useSetAtom, useStore } from "jotai";
 import { Globe, Minus, Pencil, Plus, Target } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   previewAtom,
   previewHandleAtom,
+  useWall,
   useWallRefresh,
-  wallAtom,
-} from "@/components/map-provider";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@/components/wall-provider";
 import { isValidTarget, normalizeTarget } from "@/lib/utils/domain";
 import { formatMoney, formatShare, moneyDraft } from "@/lib/utils/format";
 
@@ -36,7 +36,7 @@ function readAmount(draft: string | null, current: number, maxUseful: number): n
 }
 
 export function BuyPanel() {
-  const state = useAtomValue(wallAtom);
+  const state = useWall();
   const empty = state.counters.squaresLive === 0;
   const { refresh } = useWallRefresh();
   const setPreview = useSetAtom(previewAtom);
@@ -235,12 +235,6 @@ export function BuyPanel() {
               </Button>
             </span>
           </h2>
-          <p className="mt-1.5 text-[13px] leading-snug text-muted-foreground">
-            <span className="text-primary/80">From {formatMoney(MIN_SPEND_CENTS)}.</span>{" "}
-            {empty
-              ? "The whole wall until the next square."
-              : "New spend takes a slice sized to what they paid. The price of a slice climbs as the wall fills."}
-          </p>
         </div>
 
         <form

@@ -1,7 +1,7 @@
 import { db } from "@holdit/db/client";
 import { getMapState } from "@holdit/db/queries/map";
 import { Treemap } from "@/components/map/treemap";
-import { MapProvider } from "@/components/map-provider";
+import { WallProvider } from "@/components/wall-provider";
 import { AwaitingSquare } from "@/components/panels/awaiting-square";
 import { BuyPanel } from "@/components/panels/buy-panel";
 import { CounterStrip } from "@/components/panels/counter-strip";
@@ -31,7 +31,7 @@ export default async function MapPage() {
   const state = await getMapState(db);
 
   return (
-    <MapProvider initialState={state}>
+    <WallProvider initialState={state}>
       <StructuredData state={state} />
       <VisitBeacon />
       {/*
@@ -67,6 +67,6 @@ export default async function MapPage() {
         </div>
         <Listing />
       </div>
-    </MapProvider>
+    </WallProvider>
   );
 }

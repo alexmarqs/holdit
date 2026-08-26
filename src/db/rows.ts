@@ -14,7 +14,6 @@ export function toHolder(row: typeof holders.$inferSelect): Holder {
     handle: row.handle,
     url: row.url,
     tagline: row.tagline,
-    status: row.status as Holder["status"],
     createdAt: row.createdAt.getTime(),
   };
 }

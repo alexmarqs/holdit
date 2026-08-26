@@ -62,23 +62,16 @@ export function wallTweetIntent(counters: WallCounters, pageUrl: string): string
 }
 
 /** Homepage URL that freezes the OG card at this print, while the page stays live. */
-export function wallPrintUrl(origin: string, generatedAt: number, proof?: string | null): string {
+export function wallPrintUrl(origin: string, generatedAt: number): string {
   // Its own path, not a query on the homepage: see `app/print/[at]/route.ts`.
-  const url = new URL(`/print/${generatedAt}`, origin);
-  if (proof) url.searchParams.set("p", proof);
-  return url.toString();
+  return new URL(`/print/${generatedAt}`, origin).toString();
 }
 
 /**
  * Where a census share should unfurl. An empty print is a blank treemap; the
  * marketing poster is the card until somebody is actually on the wall.
  */
-export function wallShareUrl(
-  origin: string,
-  generatedAt: number,
-  squaresLive: number,
-  proof?: string | null,
-): string {
+export function wallShareUrl(origin: string, generatedAt: number, squaresLive: number): string {
   if (squaresLive <= 0) return new URL("/", origin).toString();
-  return wallPrintUrl(origin, generatedAt, proof);
+  return wallPrintUrl(origin, generatedAt);
 }

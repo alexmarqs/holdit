@@ -51,7 +51,8 @@ export default function RulesPage() {
           Spend from {formatMoney(MIN_SPEND_CENTS)}. Your <b>share</b> is your spend over
           everyone&rsquo;s live spend. When somebody else buys, the wall resizes — they get a slice
           sized to what they paid. You are not buying a fixed size, a duration, or a deposit you can
-          withdraw.
+          withdraw. The share in the buy panel is this wall at this moment. Checkout charges the
+          dollars you chose; the square that lands is whatever that money is worth when it lands.
         </p>
         <p>Clicks never change area. History never fades — you lose prominence, not the record.</p>
       </Section>

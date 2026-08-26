@@ -10,9 +10,14 @@ const STALE_WHILE_REVALIDATE_SECONDS = 30; // 30 seconds
 /**
  * The one payload every surface of the wall renders from.
  *
- * Cached at the edge, but `?fresh=` opts out. A buyer's own refetch must not be answered from a copy
- * stored before their purchase — staring at an unchanged wall for ten seconds
- * having just paid is the one moment staleness is unacceptable.
+ * `?fresh=` is Refresh, chase, and a purchase that just landed: `private,
+ * no-store`, so the word Refresh means the wall as it is. That path is
+ * rate-limited (10 / 10s); a 429 is an empty answer, not a new wall.
+ *
+ * Without `?fresh=`, the 10s CDN (`s-maxage`) is still needed. First paint is
+ * ISR, not this route, but anything that looks without asking — a future poll,
+ * `fetchWall(false)`, a crawler — must not stampede Postgres. Ten seconds is
+ * a shared copy, not a quote. Do not put the Refresh button back on it.
  */
 export async function GET(request: Request) {
   const limited = await rateLimit("state", clientIp(request), { limit: 10, windowSeconds: 10 });

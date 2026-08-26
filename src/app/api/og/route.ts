@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 import { marketingOgImage } from "@/components/map/marketing-og";
 import { wallCardModel } from "@/components/map/wall-card";
 import { resolveCardLogos, wallOgImage } from "@/components/map/wall-og";
-import { serverEnv } from "@/lib/utils/env";
 import { parsePrintAt } from "@/lib/utils/print-at";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { clientIp } from "@/lib/utils/request";
@@ -30,10 +29,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Too many image requests." }, { status: 429 });
   }
 
-  const at = parsePrintAt(params.get("at"), Date.now(), {
-    proof: params.get("p"),
-    secret: serverEnv.clickHashSalt,
-  });
+  const at = parsePrintAt(params.get("at"));
 
   const image =
     at === null

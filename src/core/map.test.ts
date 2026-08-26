@@ -11,7 +11,6 @@ const holder = (id: string): Holder => ({
   handle: `${id}.dev`,
   url: `https://${id}.dev`,
   tagline: `${id} does a thing.`,
-  status: "live",
   createdAt: daysAgo(30),
 });
 

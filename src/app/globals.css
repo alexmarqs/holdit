@@ -28,6 +28,7 @@
   --accent-foreground: #14201f;
 
   --destructive: #d64045;
+  --warning: #c47a18;
   --live: #2f9e44;
 
   --border: rgb(20 32 31 / 0.1);
@@ -65,6 +66,7 @@
   --accent-foreground: #edf4f3;
 
   --destructive: #ff6568;
+  --warning: #e8a03a;
   --live: #4ade80;
 
   --border: rgb(255 255 255 / 0.1);
@@ -94,6 +96,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
   --color-live: var(--live);
   --color-border: var(--border);
   --color-input: var(--input);

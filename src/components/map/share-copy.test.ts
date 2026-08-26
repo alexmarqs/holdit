@@ -68,13 +68,6 @@ describe("wallPrintUrl", () => {
     expect(wallPrintUrl("https://holdit.lol", at)).toBe(`https://holdit.lol/print/${at}`);
   });
 
-  it("carries a paid proof so the unfurl can skip the five-minute grid", () => {
-    const at = Date.UTC(2026, 7, 22, 11, 37);
-    expect(wallPrintUrl("https://holdit.lol", at, "abc")).toBe(
-      `https://holdit.lol/print/${at}?p=abc`,
-    );
-  });
-
   it("unfurls an empty wall as the poster, not a blank print", () => {
     const at = Date.UTC(2026, 7, 22, 11, 37);
     expect(wallShareUrl("https://holdit.lol", at, 0)).toBe("https://holdit.lol/");

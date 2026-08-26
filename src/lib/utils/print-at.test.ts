@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { mintPrintAt, parsePrintAt, printAtProof } from "./print-at";
+import { parsePrintAt } from "./print-at";
 
-const NOW = Date.UTC(2026, 7, 22, 11, 37);
-const BUCKET = Date.UTC(2026, 7, 22, 11, 35);
+const NOW = Date.UTC(2026, 7, 22, 11, 37, 17);
+const BUCKET = Date.UTC(2026, 7, 22, 11, 37);
 /* Comfortably behind NOW, so an offset within the span cannot trip the skew
    check and turn a bucketing assertion into a future-stamp rejection. */
 const PAST = Date.UTC(2026, 7, 22, 10, 0);
@@ -27,18 +27,18 @@ describe("parsePrintAt", () => {
 
   /*
    * The whole point: `/api/og?at=` renders on a miss, so distinct stamps cost
-   * distinct renders. Collapsing a five-minute span onto one value is what
+   * distinct renders. Collapsing a thirty-second span onto one value is what
    * keeps a burst of shares — or a loop over random stamps — on the CDN.
    */
-  it("collapses every stamp in a five-minute span onto one", () => {
-    const spread = [0, 1, 1_000, 60_000, 299_999].map((offset) =>
+  it("collapses every stamp in a thirty-second span onto one", () => {
+    const spread = [0, 1, 1_000, 15_000, 29_999].map((offset) =>
       parsePrintAt(String(PAST + offset), NOW),
     );
     expect(new Set(spread)).toEqual(new Set([PAST]));
   });
 
-  it("starts a new bucket at the next five-minute mark", () => {
-    expect(parsePrintAt(String(PAST + 300_000), NOW)).toBe(PAST + 300_000);
+  it("starts a new bucket at the next thirty-second mark", () => {
+    expect(parsePrintAt(String(PAST + 30_000), NOW)).toBe(PAST + 30_000);
   });
 
   // Rounding up would name a wall that has not happened, which is exactly what
@@ -53,39 +53,5 @@ describe("parsePrintAt", () => {
   // after the first parse, so parsing it again has to be a no-op.
   it("is idempotent, so a bucketed stamp survives a second parse", () => {
     expect(parsePrintAt(String(BUCKET), NOW)).toBe(BUCKET);
-  });
-});
-
-describe("a paid print", () => {
-  const secret = "test-print-secret";
-
-  it("keeps the exact instant when the proof matches, so a new square is on the card", () => {
-    const proof = printAtProof(NOW, secret);
-    expect(parsePrintAt(String(NOW), NOW, { proof, secret })).toBe(NOW);
-  });
-
-  it("still buckets a stamp whose proof is missing or wrong", () => {
-    expect(parsePrintAt(String(NOW), NOW, { proof: "nope", secret })).toBe(BUCKET);
-    expect(parsePrintAt(String(NOW), NOW, { secret })).toBe(BUCKET);
-  });
-});
-
-describe("mintPrintAt", () => {
-  const secret = "test-print-secret";
-
-  it("signs a stamp from the last few minutes, so a just-paid square can be printed exact", () => {
-    const minted = mintPrintAt(NOW - 60_000, NOW, secret);
-    expect(minted).toEqual({
-      at: NOW - 60_000,
-      proof: printAtProof(NOW - 60_000, secret),
-    });
-  });
-
-  it("refuses a stamp from an hour ago, so unique prints cannot be minted forever", () => {
-    expect(mintPrintAt(NOW - 60 * 60_000, NOW, secret)).toBeNull();
-  });
-
-  it("refuses a stamp from the future", () => {
-    expect(mintPrintAt(NOW + 10 * 60_000, NOW, secret)).toBeNull();
   });
 });
