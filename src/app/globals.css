@@ -201,17 +201,15 @@
   background-image: linear-gradient(180deg, rgb(255 255 255 / 0.16) 0%, transparent 48%);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.22),
-    0 0 0 1px rgb(45 212 196 / 0.22),
-    0 0 18px 1px rgb(45 212 196 / 0.38),
-    0 4px 14px -2px rgb(45 212 196 / 0.32);
+    0 0 10px 0 rgb(45 212 196 / 0.18),
+    0 2px 8px -2px rgb(45 212 196 / 0.2);
 }
 
 .dark .hold-cta:hover {
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.28),
-    0 0 0 1px rgb(45 212 196 / 0.3),
-    0 0 22px 2px rgb(45 212 196 / 0.48),
-    0 6px 18px -2px rgb(45 212 196 / 0.4);
+    0 0 14px 0 rgb(45 212 196 / 0.24),
+    0 3px 10px -2px rgb(45 212 196 / 0.26);
 }
 
 @keyframes ghost-hint-draw {
@@ -267,6 +265,32 @@
 }
 
 /* --- the map ------------------------------------------------------------- */
+
+.wall-print {
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+}
+
+.wall-print-caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 12px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--muted-foreground);
+}
+
+.wall-print-caption strong {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
 
 .map-canvas {
   overflow: clip;
@@ -409,7 +433,7 @@
 }
 
 .dark .tile[data-match="true"] {
-  outline-color: color-mix(in srgb, var(--map-hot) 45%, white);
+  outline-color: var(--primary);
 }
 
 .tile[data-flash="true"] {
@@ -448,17 +472,15 @@
     0%,
     100% {
       box-shadow:
-        inset 0 0 28px 4px rgb(53 224 208 / 0.32),
-        0 0 0 2px rgb(210 255 248 / 0.9),
-        0 0 20px 4px rgb(53 224 208 / 0.72),
-        0 0 44px 12px rgb(45 212 196 / 0.5);
+        inset 0 0 10px 0 rgb(53 224 208 / 0.1),
+        0 0 0 1px rgb(53 224 208 / 0.45),
+        0 0 10px 1px rgb(53 224 208 / 0.22);
     }
     50% {
       box-shadow:
-        inset 0 0 16px 2px rgb(53 224 208 / 0.18),
-        0 0 0 4px rgb(210 255 248 / 0.4),
-        0 0 28px 8px rgb(53 224 208 / 0.42),
-        0 0 56px 16px rgb(45 212 196 / 0.28);
+        inset 0 0 6px 0 rgb(53 224 208 / 0.04),
+        0 0 0 4px rgb(53 224 208 / 0.1),
+        0 0 14px 3px rgb(53 224 208 / 0.08);
     }
   }
 }
@@ -480,12 +502,10 @@
 
   @keyframes tile-flash-dark {
     0% {
-      filter: brightness(1.28) saturate(1.4);
+      filter: brightness(1.14) saturate(1.15);
       box-shadow:
-        inset 0 0 32px 6px rgb(53 224 208 / 0.4),
-        0 0 0 2px rgb(210 255 248 / 0.95),
-        0 0 32px 8px rgb(53 224 208 / 0.7),
-        0 0 64px 16px rgb(45 212 196 / 0.5);
+        0 0 0 1px rgb(53 224 208 / 0.55),
+        0 0 16px 2px rgb(53 224 208 / 0.28);
     }
   }
 

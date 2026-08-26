@@ -1,8 +1,29 @@
 import { monogram } from "@/lib/utils/domain";
+import { formatInt, formatMoney } from "@/lib/utils/format";
 
 /** PNG name for a photograph of the wall at `generatedAt`. Always UTC. */
 export function wallDownloadFilename(generatedAt: number): string {
   return `holdit-${new Date(generatedAt).toISOString().slice(0, 10)}.png`;
+}
+
+const SLIP_DAY = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/** Census line under a downloaded wall — the moment, not the viewer's clock. */
+export function wallDownloadCaption(
+  generatedAt: number,
+  counters: { squaresLive: number; liveCents: number },
+): { brand: string; census: string } {
+  const squares =
+    counters.squaresLive === 1 ? "1 square" : `${formatInt(counters.squaresLive)} squares`;
+  return {
+    brand: "holdit.lol",
+    census: `${SLIP_DAY.format(generatedAt)} · ${formatMoney(counters.liveCents)} live · ${squares}`,
+  };
 }
 
 export type FaviconBytes = { bytes: Uint8Array; contentType: string };
@@ -21,7 +42,6 @@ export function wallCaptureOptions(backgroundColor: string) {
     cacheBust: false,
     includeQueryParams: true,
     skipFonts: true,
-    // Layout stays on-screen CSS size. 3× so Slack / X don't look soft.
     pixelRatio: 3,
   };
 }

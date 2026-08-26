@@ -1,12 +1,38 @@
 import { describe, expect, it } from "vitest";
 import { PREVIEW_ID, placeWall } from "./place-wall";
-import { logoDataUrl, wallCaptureOptions, wallDownloadFilename } from "./wall-download";
+import {
+  logoDataUrl,
+  wallCaptureOptions,
+  wallDownloadCaption,
+  wallDownloadFilename,
+} from "./wall-download";
 
 describe("wallDownloadFilename", () => {
   it("names the file from the wall's UTC day, not the viewer's clock", () => {
     // 00:30 UTC on the 26th is still the 25th in US Pacific — a local Date
     // would save the wrong day.
     expect(wallDownloadFilename(Date.UTC(2026, 7, 26, 0, 30))).toBe("holdit-2026-08-26.png");
+  });
+});
+
+describe("wallDownloadCaption", () => {
+  const at = Date.UTC(2026, 7, 26, 0, 30);
+
+  it("uses the wall's UTC day, not the viewer's clock", () => {
+    const { census } = wallDownloadCaption(at, { squaresLive: 46, liveCents: 256_128 });
+    expect(census.startsWith("26 Aug 2026")).toBe(true);
+  });
+
+  it("is a census slip: live spend and how many squares", () => {
+    const slip = wallDownloadCaption(at, { squaresLive: 46, liveCents: 256_128 });
+    expect(slip.brand).toBe("holdit.lol");
+    expect(slip.census).toBe("26 Aug 2026 · $2,561.28 live · 46 squares");
+  });
+
+  it("says 1 square when the wall is a single tile", () => {
+    const { census } = wallDownloadCaption(at, { squaresLive: 1, liveCents: 100 });
+    expect(census).toContain("1 square");
+    expect(census).not.toContain("squares");
   });
 });
 

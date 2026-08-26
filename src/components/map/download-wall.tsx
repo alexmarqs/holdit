@@ -9,13 +9,19 @@ import { Button } from "@/components/ui/button";
 import { useWall } from "@/components/wall-provider";
 import { placeWall } from "./place-wall";
 import { TileLayer } from "./tile-layer";
-import { logoDataUrl, wallCaptureOptions, wallDownloadFilename } from "./wall-download";
+import {
+  logoDataUrl,
+  wallCaptureOptions,
+  wallDownloadCaption,
+  wallDownloadFilename,
+} from "./wall-download";
 
 const noopStanding = (_standing: HolderStanding) => {};
 const noopFocus = (_standing: HolderStanding, _element: HTMLElement) => {};
 
 /**
- * Photograph of the live wall — grout and real squares, no ghost, no Find dim.
+ * Photograph of the live wall — grout and real squares, no ghost, no Find dim
+ * — with a census slip under it (day, live spend, square count).
  *
  * Captures an offscreen copy laid out at the on-screen size (live map never
  * flickers), then rasters at 3×. `opacity: 0` would photograph empty;
@@ -41,7 +47,6 @@ export function DownloadWallButton() {
       left: "-10000px",
       top: "0",
       width: `${Math.round(width)}px`,
-      height: `${Math.round(height)}px`,
       opacity: "1",
       pointerEvents: "none",
     });
@@ -54,36 +59,44 @@ export function DownloadWallButton() {
     );
     const byId = new Map(state.standings.map((s) => [s.holder.id, s]));
     const grout = getComputedStyle(live).backgroundColor;
+    const paper = getComputedStyle(document.body).backgroundColor;
+    const slip = wallDownloadCaption(state.generatedAt, state.counters);
     const root = createRoot(host);
 
     try {
       flushSync(() => {
         root.render(
-          <div
-            className="map-canvas relative bg-map-grout"
-            style={{ width: canvas.w, height: canvas.h, backgroundColor: grout }}
-          >
-            <TileLayer
-              tiles={packed.tiles}
-              byId={byId}
-              canvas={canvas}
-              needle=""
-              flash={null}
-              now={state.generatedAt}
-              onEnter={noopStanding}
-              onLeave={() => {}}
-              onFocusTile={noopFocus}
-            />
+          <div className="wall-print" style={{ width: canvas.w, backgroundColor: paper }}>
+            <div
+              className="map-canvas relative bg-map-grout"
+              style={{ width: canvas.w, height: canvas.h, backgroundColor: grout }}
+            >
+              <TileLayer
+                tiles={packed.tiles}
+                byId={byId}
+                canvas={canvas}
+                needle=""
+                flash={null}
+                now={state.generatedAt}
+                onEnter={noopStanding}
+                onLeave={() => {}}
+                onFocusTile={noopFocus}
+              />
+            </div>
+            <p className="wall-print-caption">
+              <strong>{slip.brand}</strong>
+              <span>{slip.census}</span>
+            </p>
           </div>,
         );
       });
 
-      const node = host.querySelector(".map-canvas");
+      const node = host.querySelector(".wall-print");
       if (!(node instanceof HTMLElement)) return;
       await paintLogos(node);
 
       const { toBlob } = await import("html-to-image");
-      const blob = await toBlob(node, wallCaptureOptions(grout));
+      const blob = await toBlob(node, wallCaptureOptions(paper));
       if (!blob) return;
 
       const href = URL.createObjectURL(blob);
@@ -105,14 +118,15 @@ export function DownloadWallButton() {
     <Button
       type="button"
       variant="outline"
-      size="icon"
-      className="size-8"
+      size="xs"
+      className="h-8 w-8 px-0 lg:h-6 lg:w-auto lg:px-2"
       disabled={pending || empty}
       onClick={() => void save()}
       aria-label="Download the wall"
       title="Download the wall"
     >
       <Download />
+      <span className="hidden lg:inline">{pending ? "Downloading" : "Download"}</span>
     </Button>
   );
 }

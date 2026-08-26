@@ -188,7 +188,7 @@ export function BuyPanel() {
                 d="M2 5.4 C 32 2.6, 58 6.8, 90 4.4 S 138 7, 178 3.6"
               />
             </svg>
-            you, or the product.
+            you, or your product.
           </span>
         </h2>
         <p className="mt-1.5 max-w-md text-[13px] leading-snug text-muted-foreground">
