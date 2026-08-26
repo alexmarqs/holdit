@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { wallInput } from "./wall-input";
 import {
   buildMapState,
   ceilingFor,
@@ -10,6 +9,7 @@ import {
   shareAfterSpend,
   wallSizeHeldTo,
 } from "./index";
+import { wallInput } from "./wall-input";
 
 const T0 = 1_700_000_000_000;
 const $ = (c: number) => `$${(c / 100).toFixed(2)}`;

@@ -25,7 +25,7 @@ export interface TileLayerProps {
   onFocusTile: (standing: HolderStanding, element: HTMLElement) => void;
 }
 
-const TILE_GAP = 2;
+const TILE_GAP = 1;
 
 /** Gutters sit between tiles, not on the canvas edge — that strip read as padding. */
 export function tileBox(

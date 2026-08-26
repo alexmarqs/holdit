@@ -1,14 +1,7 @@
-import type { HolderStanding, MapState } from "@holdit/core";
-import {
-  AREA_EXPONENT,
-  computeShares,
-  MIN_TILE_AREA,
-  minShareFor,
-  squarify,
-  tileContent,
-} from "@holdit/core";
+import { type HolderStanding, type MapState, MIN_TILE_AREA, tileContent } from "@holdit/core";
 import { describe, expect, it } from "vitest";
 import { shortHandle } from "@/lib/utils/domain";
+import { placeWall } from "./place-wall";
 import { tileColor, WALL_CARD_MAP, wallCardModel } from "./wall-card";
 
 const NOW = Date.UTC(2026, 7, 22, 11, 37);
@@ -180,16 +173,10 @@ describe("card layout equals wall layout at the same canvas size", () => {
 
   /** Exactly the steps `Treemap` takes to place its tiles. */
   function wallTiles(w: number, h: number) {
-    const weights = wall.standings
-      .filter((s) => s.share > 0)
-      .map((s) => ({ id: s.holder.id, liveCents: s.share ** AREA_EXPONENT }));
-    const items = computeShares(weights, {
-      minShare: minShareFor(MIN_TILE_AREA, w * h),
-      maxShare: 1,
-    })
-      .map((row) => ({ id: row.id, weight: row.share }))
-      .sort((a, b) => b.weight - a.weight);
-    return squarify(items, { x: 0, y: 0, w, h });
+    return placeWall(
+      wall.standings.map((s) => ({ id: s.holder.id, share: s.share })),
+      { w, h },
+    ).tiles;
   }
 
   it("places every square the way the live wall would at the card's own size", () => {
@@ -198,11 +185,11 @@ describe("card layout equals wall layout at the same canvas size", () => {
     for (const tile of wallCardModel(wall).tiles) {
       const same = onScreen.get(tile.id);
       expect(same, tile.handle).toBeDefined();
-      // The card insets each tile by 2px a side for its gutter.
-      expect(Math.round(tile.x - 2), tile.handle).toBe(Math.round(same!.x));
-      expect(Math.round(tile.y - 2), tile.handle).toBe(Math.round(same!.y));
-      expect(Math.round(tile.w + 4), tile.handle).toBe(Math.round(same!.w));
-      expect(Math.round(tile.h + 4), tile.handle).toBe(Math.round(same!.h));
+      // The card insets each tile by 1px a side for its gutter.
+      expect(Math.round(tile.x - 1), tile.handle).toBe(Math.round(same!.x));
+      expect(Math.round(tile.y - 1), tile.handle).toBe(Math.round(same!.y));
+      expect(Math.round(tile.w + 2), tile.handle).toBe(Math.round(same!.w));
+      expect(Math.round(tile.h + 2), tile.handle).toBe(Math.round(same!.h));
     }
   });
 

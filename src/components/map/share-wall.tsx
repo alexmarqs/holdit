@@ -46,7 +46,7 @@ export function ShareWallButton({ compact = false }: { compact?: boolean }) {
     <Button
       variant="outline"
       size={compact ? "icon" : "sm"}
-      className={compact ? "size-9" : undefined}
+      className={compact ? "size-8" : undefined}
       onClick={() => void postOnX()}
       aria-label="Post on X"
     >

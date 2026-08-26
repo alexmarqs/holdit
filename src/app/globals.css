@@ -35,12 +35,13 @@
   --input: rgb(20 32 31 / 0.14);
   --ring: #0b9e96;
 
-  --map-base: #e7efee;
+  --map-base: #e4eeec;
   --map-hot: #35e0d0;
-  --map-mix-max: 82%;
+  --map-mix-max: 88%;
   --map-ink: #14201f;
+  --map-grout: #c9d6d3;
 
-  --grid-line: rgb(11 158 150 / 0.07);
+  --grid-line: rgb(11 158 150 / 0.09);
 
   --radius: 0.75rem;
   --header-h: 56px;
@@ -74,8 +75,9 @@
   --ring: #2dd4c4;
 
   --map-base: #1a2625;
-  --map-mix-max: 44%;
+  --map-mix-max: 52%;
   --map-ink: #edf4f3;
+  --map-grout: #121c1b;
 
   --grid-line: rgb(45 212 196 / 0.08);
 }
@@ -104,6 +106,7 @@
   --color-map-base: var(--map-base);
   --color-map-hot: var(--map-hot);
   --color-map-ink: var(--map-ink);
+  --color-map-grout: var(--map-grout);
 
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -120,15 +123,30 @@
   }
 
   html {
-    background: var(--background);
+    background-color: var(--background);
   }
 
+  /*
+   * The wall, drawn small: the original 32px hairline grid. A paper veil sits
+   * over the hero so the lattice is texture in the empty edges, not a second
+   * map under the copy.
+   */
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: var(--background);
     background-image:
+      radial-gradient(
+        ellipse 78% 34% at 50% 168px,
+        color-mix(in srgb, var(--primary) 5%, var(--background)) 0%,
+        var(--background) 42%,
+        transparent 74%
+      ),
       linear-gradient(var(--grid-line) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-    background-size: 32px 32px;
+    background-size:
+      auto,
+      32px 32px,
+      32px 32px;
     background-attachment: fixed;
   }
 
@@ -148,28 +166,108 @@
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * Hold is the one paid click. Same 44px as the fields, tight px, but a pill
+ * with a top sheen and a teal glow so it reads as a modern checkout CTA
+ * rather than another shadcn rectangle.
+ */
+.hold-cta {
+  border-radius: 9999px;
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.24) 0%, transparent 46%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.34),
+    0 1px 1px rgb(11 158 150 / 0.14),
+    0 2px 6px -3px rgb(11 158 150 / 0.28);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.hold-cta:hover {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.42),
+    0 1px 1px rgb(11 158 150 / 0.16),
+    0 3px 8px -3px rgb(11 158 150 / 0.34);
+}
+
+.hold-cta:active {
+  box-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.16),
+    0 1px 1px rgb(11 158 150 / 0.18);
+}
+
+.dark .hold-cta {
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.16) 0%, transparent 48%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 1px 1px rgb(0 0 0 / 0.28),
+    0 3px 8px -3px rgb(45 212 196 / 0.22);
+}
+
+.dark .hold-cta:hover {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    0 1px 1px rgb(0 0 0 / 0.28),
+    0 4px 10px -3px rgb(45 212 196 / 0.28);
+}
+
+@keyframes ghost-hint-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.hold-who {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.hold-who svg {
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  bottom: -0.18em;
+  left: 0;
+  height: 0.28em;
+  width: 100%;
+  overflow: visible;
+  color: var(--primary);
+}
+
+.hold-who-stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  opacity: 0.88;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ghost-hint-shaft {
+    stroke-dasharray: 44;
+    stroke-dashoffset: 44;
+    animation: ghost-hint-draw 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+  }
+
+  .ghost-hint-head {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    animation: ghost-hint-draw 0.22s ease-out 0.52s both;
+  }
+
+  .hold-who-stroke {
+    stroke-dasharray: 190;
+    stroke-dashoffset: 190;
+    animation: ghost-hint-draw 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+  }
+}
+
 /* --- the map ------------------------------------------------------------- */
 
-/*
- * Tiles use `transform`, so a 1px *border* on the card lets them composite
- * over the stroke. The card uses an outside ring instead; this clip is the
- * same radius, with no border for them to leak through.
- */
 .map-canvas {
   overflow: clip;
-}
-
-.map-canvas[data-fold] {
-  border-bottom-left-radius: var(--radius-xl);
-  border-bottom-right-radius: var(--radius-xl);
-  clip-path: inset(0 round 0 0 var(--radius-xl) var(--radius-xl));
-}
-
-@media (min-width: 64rem) {
-  .map-canvas[data-fold] {
-    border-bottom-right-radius: 0;
-    clip-path: inset(0 round 0 0 0 var(--radius-xl));
-  }
 }
 
 .tile {
@@ -248,13 +346,13 @@
   top: 0;
   left: 0;
   border-radius: 0;
-  /* Diagonal hatching is the long-standing "reserved, not yet real" convention,
-     and it separates the preview from every solid tile around it at a glance. */
-  background-color: color-mix(in srgb, var(--primary) 16%, transparent);
+  /* Mix onto tile paper, not the grout. A transparent fill used to sit on
+     map-base; once the canvas became grout it went dark and matched the bar. */
+  background-color: color-mix(in srgb, var(--primary) 14%, var(--map-base));
   background-image: repeating-linear-gradient(
     -45deg,
-    color-mix(in srgb, var(--primary) 26%, transparent) 0 6px,
-    transparent 6px 13px
+    color-mix(in srgb, var(--primary) 22%, var(--map-base)) 0 6px,
+    var(--map-base) 6px 13px
   );
   outline: 2px dashed var(--primary);
   outline-offset: -2px;
@@ -273,7 +371,7 @@
 
   @keyframes preview-breathe {
     50% {
-      background-color: color-mix(in srgb, var(--primary) 26%, transparent);
+      background-color: color-mix(in srgb, var(--primary) 22%, var(--map-base));
     }
   }
 }
@@ -290,7 +388,6 @@
   outline-offset: -2px;
 }
 
-/* Yours is the only persistent ring, so it gets the accent. */
 .tile[data-dim="true"] {
   opacity: 0.14;
   filter: saturate(0.4);

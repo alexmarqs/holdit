@@ -19,13 +19,15 @@ export function Section({
   title,
   children,
   wide = false,
+  id,
 }: {
   title: string;
   children: ReactNode;
   wide?: boolean;
+  id?: string;
 }) {
   return (
-    <section className="border-t border-border py-7">
+    <section id={id} className="scroll-mt-[calc(var(--header-h)+12px)] border-t border-border py-7">
       <h2 className="text-sm font-bold">{title}</h2>
       <div
         className={cn(

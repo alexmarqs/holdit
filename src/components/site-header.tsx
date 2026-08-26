@@ -15,7 +15,7 @@ export function SiteHeader() {
   const path = usePathname();
 
   return (
-    <header className="h-[var(--header-h)] w-full border-b border-border/70">
+    <header className="h-[var(--header-h)] w-full border-b border-border/50 bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-4 px-4">
         <Link href="/" className="inline-flex items-center gap-2">
           <Mark className="size-6" />

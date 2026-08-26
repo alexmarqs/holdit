@@ -85,13 +85,11 @@ describe("tryFetchWall", () => {
   it("skips a 429 without throwing, so Refresh can stay silent", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: false,
-          status: 429,
-          json: async () => ({ error: "Too many requests" }),
-        }),
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 429,
+        json: async () => ({ error: "Too many requests" }),
+      }),
     );
     await expect(tryFetchWall(true)).resolves.toBeNull();
   });

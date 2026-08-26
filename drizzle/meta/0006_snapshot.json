@@ -104,12 +104,8 @@
           "name": "clicks_holder_id_holders_id_fk",
           "tableFrom": "clicks",
           "tableTo": "holders",
-          "columnsFrom": [
-            "holder_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["holder_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -329,12 +325,8 @@
           "name": "purchases_holder_id_holders_id_fk",
           "tableFrom": "purchases",
           "tableTo": "holders",
-          "columnsFrom": [
-            "holder_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["holder_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

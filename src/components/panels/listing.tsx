@@ -65,7 +65,14 @@ export function Listing() {
                   {standing.lastPurchaseAt !== null ? (
                     <span>bought {formatAgo(standing.lastPurchaseAt, state.generatedAt)}</span>
                   ) : null}
-                  {standing.capped ? <span className="text-primary">max size</span> : null}
+                  {standing.capped ? (
+                    <span
+                      className="text-primary"
+                      title="At the max size until others buy and it slips under the cap"
+                    >
+                      max size
+                    </span>
+                  ) : null}
                 </p>
               </div>
               <span className="mt-0.5 ml-0.5 flex shrink-0 items-center gap-0.5">
@@ -92,13 +99,8 @@ export function Listing() {
         ))}
       </ul>
       {shown < state.standings.length ? (
-        <div className="border-t border-border px-4 py-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={() => setShown((n) => n + PAGE)}
-          >
+        <div className="flex justify-center border-t border-border py-2">
+          <Button variant="ghost" size="xs" onClick={() => setShown((n) => n + PAGE)}>
             Show {Math.min(PAGE, state.standings.length - shown)} more
           </Button>
         </div>

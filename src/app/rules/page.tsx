@@ -57,7 +57,7 @@ export default function RulesPage() {
         <p>Clicks never change area. History never fades — you lose prominence, not the record.</p>
       </Section>
 
-      <Section title="The cap">
+      <Section title="The cap" id="the-cap">
         <p>
           Nobody can erase the wall. With two squares the largest is {CAP_YOUNG}%. That tightens as
           more squares arrive, and from {GROWN_AT} squares on it is {CAP_GROWN}%.

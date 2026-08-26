@@ -1,31 +1,24 @@
 "use client";
 
-import {
-  AREA_EXPONENT,
-  computeShares,
-  type HolderStanding,
-  MIN_TILE_AREA,
-  minShareFor,
-  previewContent,
-  shareAfterSpend,
-  squarify,
-} from "@holdit/core";
+import { computeShares, type HolderStanding, previewContent, shareAfterSpend } from "@holdit/core";
 import { useAtomValue } from "jotai";
 import { Maximize2, Minimize2, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RefreshButton } from "@/components/panels/refresh-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { flashAtom, previewAtom, previewHandleAtom, useWall } from "@/components/wall-provider";
 import { cn } from "@/lib/utils";
-import { formatInt, formatMoney, formatShare } from "@/lib/utils/format";
+import { formatMoney, formatShare } from "@/lib/utils/format";
+import { DownloadWallButton } from "./download-wall";
 import { onSquareFocus } from "./focus-square";
 import { type HoverTarget, MapTooltip } from "./map-tooltip";
+import { placeWall } from "./place-wall";
 import { ShareWallButton } from "./share-wall";
 import { TileLayer, tileBox } from "./tile-layer";
 
 const TOOLTIP_W = 190;
 const TOOLTIP_H = 122;
-const PREVIEW_ID = "__preview__";
 
 /**
  * The map. Every square on one canvas, area proportional to its share.
@@ -127,8 +120,8 @@ export function Treemap() {
   const canvasHeight = size.h;
 
   /*
-   * The preview tile answers "what would this buy" for the panel above the
-   * wall. Fullscreen hides that panel, so the dashed square becomes an
+   * The preview tile answers "what would this buy" for the form above the
+   * wall. Fullscreen hides that form, so the dashed square becomes an
    * unexplained hole in the map with a price on it and nothing to connect it to.
    */
   /*
@@ -173,48 +166,12 @@ export function Treemap() {
 
   const { tiles, byId, previewRect } = useMemo(() => {
     const byId = new Map(shown.map((s) => [s.holder.id, s]));
-    if (size.w === 0 || canvasHeight === 0) return { tiles: [], byId, previewRect: null };
-
-    // Existing squares are scaled down by exactly the share the preview would
-    // take. This is the product in one gesture: your square appears and every
-    // other square gets smaller in the same instant.
-    const scale = 1 - previewShare;
-    const weights = shown
-      .filter((s) => s.share > 0)
-      // The exponent compresses the range so the tail stays clickable.
-      .map((s) => ({ id: s.holder.id, liveCents: (s.share * scale) ** AREA_EXPONENT }));
-
-    if (previewShare > 0) {
-      weights.push({ id: PREVIEW_ID, liveCents: previewShare ** AREA_EXPONENT });
-    }
-
-    /*
-     * Floor the tail here rather than server-side. `MIN_TILE_AREA` is a pixel
-     * promise, and pixels only exist once the canvas is measured — which is why
-     * nothing ever passed `mapArea` to the query and the smallest square was
-     * landing at 198px², well under the 460px² it is owed.
-     *
-     * The floor applies to the *weights*, not the shares: `AREA_EXPONENT` means
-     * a tile's area is not proportional to its share, so flooring share would
-     * not floor area. `maxShare: 1` disables the 10% cap, which has already been
-     * applied upstream to the shares these weights come from — re-capping the
-     * normalised weight would shrink the biggest tiles for no reason.
-     */
-    const items = computeShares(weights, {
-      minShare: minShareFor(MIN_TILE_AREA, size.w * canvasHeight),
-      maxShare: 1,
-    })
-      .map((s) => ({ id: s.id, weight: s.share }))
-      .sort((a, b) => b.weight - a.weight);
-
-    const placed = squarify(items, { x: 0, y: 0, w: size.w, h: canvasHeight });
-    const previewTile = placed.find((t) => t.id === PREVIEW_ID) ?? null;
-
-    return {
-      tiles: placed.filter((t) => t.id !== PREVIEW_ID),
-      byId,
-      previewRect: previewTile,
-    };
+    const packed = placeWall(
+      shown.map((s) => ({ id: s.holder.id, share: s.share })),
+      { w: size.w, h: canvasHeight },
+      previewShare,
+    );
+    return { tiles: packed.tiles, byId, previewRect: packed.previewRect };
   }, [shown, size.w, canvasHeight, previewShare]);
 
   const onEnter = useCallback((standing: HolderStanding) => setHover({ standing }), []);
@@ -242,7 +199,9 @@ export function Treemap() {
    */
   const empty = state.counters.squaresLive === 0;
   const previewShareLabel = formatShare(previewShare);
-  const previewCaption = empty ? "Yours" : "your square";
+  const previewCaption =
+    toppingUp === null && previewHandle ? previewHandle : empty ? "Yours" : "your square";
+  const captionIsHandle = toppingUp === null && previewHandle !== null;
   const previewPriceLabel = empty ? "until the next square" : `for ${formatMoney(preview ?? 0)}`;
   const previewText = previewRect
     ? previewContent(
@@ -258,66 +217,51 @@ export function Treemap() {
     <div
       ref={shell}
       className={cn(
-        "flex min-h-0 flex-1 flex-col overflow-hidden bg-card",
+        "flex min-h-0 flex-1 flex-col overflow-hidden",
         isFullscreen && "h-screen rounded-none p-3",
       )}
     >
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 pt-3.5 pb-3 md:px-5 md:pt-4">
-        <div className="flex items-baseline gap-3">
-          <h2 className="text-sm font-bold">The wall</h2>
-          {state.counters.squaresLive > 0 ? (
-            <p className="num text-xs text-muted-foreground">
-              {formatInt(state.counters.squaresLive)}{" "}
-              {state.counters.squaresLive === 1 ? "square" : "squares"}
-            </p>
-          ) : null}
-        </div>
-
-        {/*
-          Search and the two actions are one unit. `w-full` on the field used to
-          shove the buttons onto their own row, right-aligned under an empty
-          stretch of chrome.
-        */}
-        <div className="flex min-w-0 flex-1 basis-64 items-center gap-2">
-          {state.counters.squaresLive > 0 ? (
-            <div className="relative min-w-[10.5rem] flex-1">
-              <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Find a square"
-                spellCheck={false}
-                autoComplete="off"
-                aria-label="Find a square"
-                className={cn("h-9 w-full pl-10 text-sm", needle ? "pr-20" : "pr-3")}
-              />
-              {needle ? (
-                <span className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center">
-                  <span className="num pointer-events-none px-1.5 text-[11px] text-muted-foreground">
-                    {matches}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="size-7 border-foreground/25 bg-muted text-foreground shadow-sm hover:bg-muted-foreground/15"
-                    aria-label="Clear search"
-                    title="Clear search"
-                    onClick={() => setQuery("")}
-                  >
-                    <X className="size-3.5" strokeWidth={2.5} />
-                  </Button>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 px-3 py-1.5 md:px-4">
+        {state.counters.squaresLive > 0 ? (
+          <div className="relative min-w-42 w-full max-w-xl flex-1 sm:w-auto">
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Find a square"
+              spellCheck={false}
+              autoComplete="off"
+              aria-label="Find a square"
+              className={cn("h-8 w-full pl-9 text-sm", needle ? "pr-20" : "pr-3")}
+            />
+            {needle ? (
+              <span className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center">
+                <span className="num pointer-events-none px-1.5 text-[11px] text-muted-foreground">
+                  {matches}
                 </span>
-              ) : null}
-            </div>
-          ) : (
-            <div className="min-w-0 flex-1" />
-          )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="size-7 border-foreground/25 bg-muted text-foreground shadow-sm hover:bg-muted-foreground/15"
+                  aria-label="Clear search"
+                  title="Clear search"
+                  onClick={() => setQuery("")}
+                >
+                  <X className="size-3.5" strokeWidth={2.5} />
+                </Button>
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        <div className="ml-auto flex shrink-0 items-center gap-x-2">
+          <RefreshButton />
+          <DownloadWallButton />
           <ShareWallButton compact />
           <Button
             variant="outline"
             size="icon"
-            className="size-9"
+            className="size-8"
             onClick={toggleFullscreen}
             aria-label={isFullscreen ? "Exit fullscreen" : "View fullscreen"}
           >
@@ -328,9 +272,8 @@ export function Treemap() {
 
       <div
         ref={frame}
-        data-fold={isFullscreen ? undefined : true}
         className={cn(
-          "map-canvas relative w-full bg-map-base",
+          "map-canvas relative w-full bg-map-grout",
           // Height comes from the flex parent in both modes, so the server
           // renders the final size and the map never jumps on load.
           // A floor low enough that flex can still shrink the wall on a short
@@ -363,7 +306,12 @@ export function Treemap() {
             {previewText?.sharePx ? (
               <>
                 {previewText.caption ? (
-                  <p className="text-[10px] font-bold tracking-[0.14em] text-primary/70 uppercase">
+                  <p
+                    className={cn(
+                      "text-[10px] font-bold text-primary/70",
+                      captionIsHandle ? "truncate" : "tracking-[0.14em] uppercase",
+                    )}
+                  >
                     {previewCaption}
                   </p>
                 ) : null}

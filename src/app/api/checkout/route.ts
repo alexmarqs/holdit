@@ -1,5 +1,6 @@
 import { clampSpend, HALF_LIFE_DAYS, MIN_SPEND_CENTS, TAGLINE_MAX_CHARS } from "@holdit/core";
 import { db } from "@holdit/db/client";
+import { getMapState } from "@holdit/db/queries/map";
 import { buy, InvalidTargetError } from "@holdit/db/queries/purchases";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -52,6 +53,17 @@ export async function POST(request: Request) {
 
   if (!normalized) {
     return NextResponse.json({ error: "That is not a domain or an @handle." }, { status: 400 });
+  }
+
+  const wall = await getMapState(db);
+  const existing = wall.standings.find((s) => s.holder.handle === normalized.handle);
+  if (existing?.capped) {
+    return NextResponse.json(
+      {
+        error: `${existing.holder.handle} is already at the max size. More spend cannot make the square bigger until others buy and it slips under the cap.`,
+      },
+      { status: 400 },
+    );
   }
 
   if (stripeClient) {

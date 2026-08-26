@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
-import { resetMapRowsCache } from "./queries/map";
 import { db } from "./client";
+import { resetMapRowsCache } from "./queries/map";
 
 /**
  * How a suite starts from nothing.

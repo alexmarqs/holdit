@@ -5,13 +5,7 @@ import { Loader2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { CopyShareButton, ShareWallButton } from "@/components/map/share-wall";
 import { SiteLogo } from "@/components/site-logo";
-import {
-  awaitingAtom,
-  claimedAtom,
-  dilutedAtom,
-  heldAtom,
-  useWall,
-} from "@/components/wall-provider";
+import { awaitingAtom, claimedAtom, dilutedAtom } from "@/components/wall-provider";
 import { publicEnv } from "@/lib/utils/env";
 import { formatShare } from "@/lib/utils/format";
 
@@ -28,7 +22,7 @@ function Banner({
     <div
       role="status"
       aria-live="polite"
-      className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-primary/30 bg-primary/8 px-4 py-2.5 text-sm md:px-5"
+      className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-primary/30 bg-primary/10 px-4 py-2 text-sm md:px-5"
     >
       <SiteLogo handle={handle} size={20} />
       <div className="min-w-0 flex-1">{children}</div>
@@ -52,13 +46,12 @@ function Banner({
 
 /**
  * Payment chase, the post-buy screenshot, then "you just shrank".
+ * Quiet ownership ("you hold X") lives on the square itself, not as a banner.
  */
 export function AwaitingSquare() {
   const awaiting = useAtomValue(awaitingAtom);
   const claimed = useAtomValue(claimedAtom);
   const diluted = useAtomValue(dilutedAtom);
-  const held = useAtomValue(heldAtom);
-  const wall = useWall();
   const setClaimed = useSetAtom(claimedAtom);
   const setDiluted = useSetAtom(dilutedAtom);
 
@@ -79,7 +72,7 @@ export function AwaitingSquare() {
       <div
         role="status"
         aria-live="polite"
-        className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-primary/30 bg-primary/8 px-4 py-2.5 text-sm md:px-5"
+        className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-primary/30 bg-primary/10 px-4 py-2 text-sm md:px-5"
       >
         <SiteLogo handle={awaiting.handle} size={20} />
         {awaiting.timedOut ? (
@@ -115,18 +108,6 @@ export function AwaitingSquare() {
             {formatShare(diluted.before)} → {formatShare(diluted.after)}
           </span>
           . Hold it again, or post it.
-        </p>
-      </Banner>
-    );
-  }
-
-  if (held) {
-    const share = wall.standings.find((s) => s.holder.handle === held)?.share;
-    if (share === undefined) return null;
-    return (
-      <Banner handle={held}>
-        <p>
-          You hold <b>{held}</b> at <span className="num font-bold">{formatShare(share)}</span>.
         </p>
       </Banner>
     );

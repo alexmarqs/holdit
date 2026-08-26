@@ -1,14 +1,13 @@
 import { db } from "@holdit/db/client";
 import { getMapState } from "@holdit/db/queries/map";
 import { Treemap } from "@/components/map/treemap";
-import { WallProvider } from "@/components/wall-provider";
 import { AwaitingSquare } from "@/components/panels/awaiting-square";
 import { BuyPanel } from "@/components/panels/buy-panel";
-import { CounterStrip } from "@/components/panels/counter-strip";
 import { Listing } from "@/components/panels/listing";
 import { ActivityCard, TrendingCard } from "@/components/panels/side-cards";
 import { StructuredData } from "@/components/structured-data";
 import { VisitBeacon } from "@/components/visit-beacon";
+import { WallProvider } from "@/components/wall-provider";
 
 /*
  * Prerendered and refreshed on a short interval, not rendered per visit.
@@ -35,32 +34,24 @@ export default async function MapPage() {
       <StructuredData state={state} />
       <VisitBeacon />
       {/*
-        The visible headline is an h2 because it changes with the amount, which
-        makes a poor document title. This gives the page one stable h1 for
-        crawlers and screen readers without putting a moving number in it.
+        The visible headline is an h2 so the claim line can stay short. This
+        keeps one stable h1 for crawlers and screen readers.
       */}
       <h1 className="sr-only">
         holdit.lol — a wall that forgets: new spend takes a slice sized to what they paid
       </h1>
 
-      <section className="flex min-h-[calc(100svh-var(--header-h))] flex-col lg:h-[calc(100svh-var(--header-h))] lg:min-h-[640px]">
-        <CounterStrip />
+      <section className="flex h-[calc(100svh-var(--header-h))] min-h-[540px] flex-col">
         <AwaitingSquare />
-
-        <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col px-4 pt-3 pb-5">
-          <div
-            id="claim"
-            className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-border"
-          >
-            <BuyPanel />
-            <div id="map" className="flex min-h-[330px] min-w-0 flex-1 flex-col lg:min-h-0">
-              <Treemap />
-            </div>
+        <div id="claim" className="flex min-h-0 flex-1 flex-col">
+          <BuyPanel />
+          <div id="map" className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <Treemap />
           </div>
         </div>
       </section>
 
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 pb-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 pt-6 pb-8">
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
           <ActivityCard />
           <TrendingCard />

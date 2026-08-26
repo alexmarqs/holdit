@@ -46,9 +46,9 @@ export type CardTheme = "light" | "dark";
 
 const PALETTES = {
   light: {
-    base: [231, 239, 238],
+    base: [228, 238, 236],
     hot: [53, 224, 208],
-    mixMax: 0.82,
+    mixMax: 0.88,
     page: "#f4f8f8",
     ink: "#14201f",
     muted: "#5f6f6d",
@@ -57,7 +57,7 @@ const PALETTES = {
   dark: {
     base: [26, 38, 37],
     hot: [53, 224, 208],
-    mixMax: 0.44,
+    mixMax: 0.52,
     page: "#0c1615",
     ink: "#edf4f3",
     muted: "#93a3a1",
@@ -151,8 +151,8 @@ export function wallCardModel(state: MapState, theme: CardTheme = "light"): Wall
     tiles: placed.flatMap((tile) => {
       const standing = byId.get(tile.id);
       if (!standing) return [];
-      const w = Math.max(0, tile.w - 4);
-      const h = Math.max(0, tile.h - 4);
+      const w = Math.max(0, tile.w - 2);
+      const h = Math.max(0, tile.h - 2);
       const handle = standing.holder.handle;
       const meta =
         standing.clicksAllTime >= MIN_SHOWN_TILE_CLICKS
@@ -167,8 +167,8 @@ export function wallCardModel(state: MapState, theme: CardTheme = "light"): Wall
       return [
         {
           id: standing.holder.id,
-          x: tile.x + 2,
-          y: tile.y + 2,
+          x: tile.x + 1,
+          y: tile.y + 1,
           w,
           h,
           handle,
