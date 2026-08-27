@@ -5,6 +5,11 @@ import type { ReactNode } from "react";
 import { useWall } from "@/hooks/use-wall";
 import { formatInt, formatMoney } from "@/lib/utils/format";
 
+/** A person looking at this hydrated page makes the visible count at least one. */
+export const visibleOnlineCount = (onlineNow: number | null | undefined): number => {
+  return Math.max(1, onlineNow ?? 0);
+};
+
 /**
  * Publishing your own numbers is the cheapest credibility move available.
  * Anything that cannot be measured is left out rather than estimated.
@@ -12,18 +17,17 @@ import { formatInt, formatMoney } from "@/lib/utils/format";
 export function StatsPill() {
   const { counters } = useWall();
   const parts: { key: string; node: ReactNode }[] = [];
+  const onlineNow = visibleOnlineCount(counters.onlineNow);
 
-  if ((counters.onlineNow ?? 0) > 0) {
-    parts.push({
-      key: "online",
-      node: (
-        <span className="inline-flex items-center gap-1.5 font-medium text-live">
-          <span aria-hidden className="size-1.5 rounded-full bg-live motion-safe:blip" />
-          <span className="num">{formatInt(counters.onlineNow ?? 0)}</span> online
-        </span>
-      ),
-    });
-  }
+  parts.push({
+    key: "online",
+    node: (
+      <span className="inline-flex items-center gap-1.5 font-medium text-live">
+        <span aria-hidden className="size-1.5 rounded-full bg-live motion-safe:blip" />
+        <span className="num">{formatInt(onlineNow)}</span> online
+      </span>
+    ),
+  });
 
   parts.push({
     key: "live",

@@ -2,9 +2,9 @@
 
 **A wall of everyone paying for attention, sized by live spend.**
 
-Your area is your spend as a share of everyone else's. New spend takes a slice
-sized to what they paid. Live spend is half every 14 days if nobody buys — until
-then, the wall does not change.
+Your share follows your live spend against everyone else's. New spend takes a
+slice sized to what they paid. Displayed spend is half every 14 days; headroom
+above the cap persists twice as long.
 
 No auction. Nobody outbid. Nobody pushed off. From $1.
 
@@ -63,7 +63,7 @@ the database degrades rather than failing.
 | `UPSTASH_REDIS_REST_URL` + `_TOKEN` | Rate limiting on checkout, state, clicks, visits, and a few other routes. |
 | `NEXT_PUBLIC_APP_URL` | Canonical production origin and checkout return URL. |
 | `CLICK_HASH_SALT` | Secret salt for privacy-preserving click fingerprints. |
-| `NEXT_PUBLIC_CONTACT_EMAIL` | Takedown and refund contact shown on the site. |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | Takedown and privacy contact shown on the site. |
 
 ## Layout
 
@@ -94,9 +94,10 @@ in by accident.
 ## The parts worth knowing
 
 **Decay with overflow persistence.** Live spend is half every 14 days if nobody buys,
-so shares stay put until new money arrives. Spend above the display cap fades at half
-rate, implemented statelessly in two passes: sum live spend at the normal half-life to
-get the wall total, then re-price each purchase as
+while spend above the display cap fades at half rate. Most positions fade together;
+capped positions can shift slowly because their headroom lasts longer. This is
+implemented statelessly in two passes: sum live spend at the normal half-life to get
+the wall total, then re-price each purchase as
 `min(p, cap)·0.5^(dt/H) + max(0, p−cap)·0.5^(dt/2H)`. The portion that could never have
 been displayed persists twice as long — big money buys persistence, not dominance.
 
@@ -108,9 +109,10 @@ not grow the tile.
 
 **No sockets, no in-process wall cache.** The page is ISR (`revalidate = 30`) and
 `revalidatePath("/")` on purchase. Refresh and chase hit `/api/state` (`s-maxage=10`;
-`?fresh=` is `no-store`). Online is visit beacons, not presence. `getMapState` only
-collapses in-flight loads on one instance — live requests share one query; a print
-stamp is keyed by `now` so it cannot steal that query. Nothing is kept after it
+`?fresh=` is `no-store`). “Online” is an approximate 15-minute visit window from the
+wall snapshot; the hydrated client shows at least the person viewing it. `getMapState`
+only collapses in-flight loads on one instance — live requests share one query; a
+print stamp is keyed by `now` so it cannot steal that query. Nothing is kept after it
 settles, so two instances cannot disagree about the same wall. TTLs live in
 `src/lib/http-cache.ts`.
 
@@ -138,3 +140,14 @@ If mail is needed: Resend or Cloudflare Email for transactional send. Loops for
 marketing and workflows.
 
 If monitoring is needed: Sentry for errors. PostHog for product analytics.
+
+If exact live presence becomes useful: use an Upstash sorted set keyed by the salted
+visitor hash, with the heartbeat timestamp as its score. The initial visit still
+upserts PostgreSQL for the durable visitor total and also marks presence in Upstash;
+five-minute heartbeats while the tab is visible update only Upstash. Count active
+visitors with `ZCOUNT` from `now - 15 minutes` through a small `GET /api/presence`
+response cached on Vercel's CDN for 30 seconds. Sorted-set members have no individual
+TTL: the timestamp defines expiry, and `ZREMRANGEBYSCORE` periodically deletes old
+members. Do not rely on an unload request to remove somebody — closed, crashed, and
+suspended tabs simply stop heartbeating and age out. The CDN collapses count reads,
+while heartbeat writes still count against the Upstash command allowance.
