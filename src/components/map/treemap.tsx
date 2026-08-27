@@ -219,7 +219,7 @@ export function Treemap() {
         <MapSearch />
         <div className="ml-auto flex shrink-0 items-center gap-x-2">
           {isFullscreen ? null : <PreviewSwitch />}
-          <RefreshButton />
+          {isFullscreen ? <RefreshButton /> : null}
           <DownloadWallButton />
           <ShareWallButton compact />
           <Button

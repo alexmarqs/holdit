@@ -1,12 +1,16 @@
 import { StatsPill } from "@/components/panels/counter-strip";
 import { FormBuyPanel } from "@/components/panels/form-buy-panel";
 import { GhostHint } from "@/components/panels/ghost-hint";
+import { RefreshButton } from "@/components/panels/refresh-button";
 
 export function BuyPanel() {
   return (
     <section className="border-b border-foreground/8 px-4 pt-7 pb-2 md:pt-6 md:pb-2 lg:py-6">
       <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
-        <StatsPill />
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5">
+          <StatsPill />
+          <RefreshButton />
+        </div>
 
         <h2 className="mt-4 text-[22px] leading-tight font-bold tracking-[-0.04em] sm:text-[26px]">
           <span className="relative inline-block">
