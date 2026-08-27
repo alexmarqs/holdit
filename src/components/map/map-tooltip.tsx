@@ -33,7 +33,7 @@ export function MapTooltip({
     ? []
     : ([
         ["Share", formatShare(target.standing.share)],
-        ["Counting", formatMoney(target.standing.liveCents)],
+        ["Live", formatMoney(target.standing.liveCents)],
         ["All time", formatMoney(target.standing.allTimeCents)],
         target.standing.clicksAllTime >= MIN_SHOWN_TILE_CLICKS
           ? (["Clicks", formatInt(target.standing.clicksAllTime)] as const)

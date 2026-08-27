@@ -46,9 +46,9 @@ export type CardTheme = "light" | "dark";
 
 const PALETTES = {
   light: {
-    base: [228, 238, 236],
-    hot: [53, 224, 208],
-    mixMax: 0.88,
+    base: [238, 245, 244],
+    hot: [106, 238, 228],
+    mixMax: 0.72,
     page: "#f4f8f8",
     ink: "#14201f",
     muted: "#5f6f6d",

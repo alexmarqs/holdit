@@ -16,6 +16,7 @@ import { onSquareFocus } from "./focus-square";
 import { type HoverTarget, MapTooltip } from "./map-tooltip";
 import { placeWall } from "./place-wall";
 import { mapPreviewActive } from "./preview";
+import { PreviewSwitch } from "./preview-switch";
 import { ShareWallButton } from "./share-wall";
 import { TileLayer, tileBox } from "./tile-layer";
 
@@ -258,22 +259,7 @@ export function Treemap() {
         ) : null}
         <div className="ml-auto flex shrink-0 items-center gap-x-2">
           {isFullscreen ? null : (
-            <Button
-              type="button"
-              variant="outline"
-              size="xs"
-              aria-pressed={wantPreview}
-              aria-label={
-                wantPreview
-                  ? "Hide purchase preview on the wall"
-                  : "Show purchase preview on the wall"
-              }
-              title={wantPreview ? "Hide the dashed square" : "Show what this amount would buy"}
-              className={wantPreview ? "border-primary/40 bg-primary/10" : undefined}
-              onClick={() => setWantPreview((on) => !on)}
-            >
-              Preview
-            </Button>
+            <PreviewSwitch on={wantPreview} onToggle={() => setWantPreview((value) => !value)} />
           )}
           <RefreshButton />
           <DownloadWallButton />

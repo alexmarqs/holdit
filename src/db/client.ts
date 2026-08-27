@@ -9,24 +9,16 @@ if (!serverEnv.databaseUrl) {
 
 const sql = postgres(serverEnv.databaseUrl, {
   /*
-   * Development only, and this is the price of holding the client in module
-   * scope rather than on `globalThis`.
+   * Production uses Supabase's transaction pooler. Prepared statements are
+   * session-scoped and break there; the purchase transaction still runs as one
+   * unit, so the advisory lock is fine.
    *
-   * `src/db` reaches the app through a path alias, so Next compiles it as app
-   * code and re-evaluates it on edit — and each re-evaluation builds a new pool
-   * while the old one keeps its sockets. postgres-js never closes an idle
-   * connection by default, so those orphans accumulate until the dev server
-   * restarts, and ten or so reloads is enough to exhaust `max_connections`.
-   *
-   * Thirty seconds is longer than an edit-and-reload cycle, so the live pool
-   * stays warm while you work, and short enough that an orphan is gone before
-   * the next few reloads can stack up.
-   *
-   * Left off in production, where there are no reloads to clean up after and a
-   * timer inside a suspended serverless instance is not something to reason
-   * about.
+   * Development idle_timeout is the price of holding the client in module
+   * scope rather than on `globalThis`. Next re-evaluates this module on edit
+   * and would otherwise leave orphan sockets until `max_connections` is gone.
+   * Thirty seconds outlives an edit-and-reload; production has no reloads.
    */
-  ...(isProduction ? {} : { idle_timeout: 30 }),
+  ...(isProduction ? { prepare: false } : { idle_timeout: 30 }),
 });
 
 export const db = drizzle(sql, { schema, casing: "snake_case" });

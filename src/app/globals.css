@@ -35,11 +35,11 @@
   --input: rgb(20 32 31 / 0.14);
   --ring: #0b9e96;
 
-  --map-base: #e4eeec;
-  --map-hot: #35e0d0;
-  --map-mix-max: 88%;
+  --map-base: #eef5f4;
+  --map-hot: #6aeee4;
+  --map-mix-max: 72%;
   --map-ink: #14201f;
-  --map-grout: #9aaca8;
+  --map-grout: #c2d2ce;
 
   --grid-line: rgb(11 158 150 / 0.09);
 
