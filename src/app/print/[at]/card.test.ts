@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { OG_SIZE } from "@/components/map/og-fonts";
 import { siteUrl } from "@/lib/utils/env";
 import { printCardHtml } from "./card";
 
@@ -11,6 +12,11 @@ describe("printCardHtml", () => {
     expect(html).toContain(`<meta property="og:image" content="${siteUrl}/api/og?at=${at}">`);
     expect(html).toContain(`<meta name="twitter:image" content="${siteUrl}/api/og?at=${at}">`);
     expect(html).toContain(`<meta property="og:url" content="${siteUrl}/print/${at}">`);
+  });
+
+  it("declares the rendered image dimensions", () => {
+    expect(html).toContain(`<meta property="og:image:width" content="${OG_SIZE.width}">`);
+    expect(html).toContain(`<meta property="og:image:height" content="${OG_SIZE.height}">`);
   });
 
   it("moves a person on to the live wall without a server redirect", () => {

@@ -1,13 +1,13 @@
 "use client";
 
 import { computeShares, type HolderStanding, previewContent, shareAfterSpend } from "@holdit/core";
-import { useAtomValue } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { Maximize2, Minimize2, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshButton } from "@/components/panels/refresh-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { flashAtom, previewAtom, previewHandleAtom } from "@/context/wall-atoms";
+import { flashAtom, mapPreviewOnAtom, previewAtom, previewHandleAtom } from "@/context/wall-atoms";
 import { useWall } from "@/hooks/use-wall";
 import { cn } from "@/lib/utils";
 import { formatMoney, formatShare } from "@/lib/utils/format";
@@ -15,6 +15,7 @@ import { DownloadWallButton } from "./download-wall";
 import { onSquareFocus } from "./focus-square";
 import { type HoverTarget, MapTooltip } from "./map-tooltip";
 import { placeWall } from "./place-wall";
+import { mapPreviewActive } from "./preview";
 import { ShareWallButton } from "./share-wall";
 import { TileLayer, tileBox } from "./tile-layer";
 
@@ -29,6 +30,7 @@ export function Treemap() {
   const flash = useAtomValue(flashAtom);
   const preview = useAtomValue(previewAtom);
   const previewHandle = useAtomValue(previewHandleAtom);
+  const [wantPreview, setWantPreview] = useAtom(mapPreviewOnAtom);
   const [query, setQuery] = useState("");
   const [hover, setHover] = useState<HoverTarget | null>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -130,10 +132,14 @@ export function Treemap() {
     previewHandle === null
       ? null
       : (state.standings.find((s) => s.holder.handle === previewHandle) ?? null);
-  const previewing = preview !== null && !isFullscreen;
+  const previewing = mapPreviewActive({
+    wantPreview,
+    amountCents: preview,
+    fullscreen: isFullscreen,
+  });
 
   const previewShare =
-    previewing && toppingUp === null
+    previewing && toppingUp === null && preview !== null
       ? shareAfterSpend(
           state.standings.map((s) => ({ id: s.holder.id, liveCents: s.liveCents })),
           preview,
@@ -150,7 +156,7 @@ export function Treemap() {
     if (!previewing || !toppingUp) return state.standings;
     const bumped = state.standings.map((s) => ({
       id: s.holder.id,
-      liveCents: s.liveCents + (s.holder.id === toppingUp.holder.id ? preview : 0),
+      liveCents: s.liveCents + (s.holder.id === toppingUp.holder.id ? (preview ?? 0) : 0),
     }));
     const after = new Map(computeShares(bumped).map((row) => [row.id, row.share]));
     return state.standings.map((s, i) => ({
@@ -251,6 +257,24 @@ export function Treemap() {
           </div>
         ) : null}
         <div className="ml-auto flex shrink-0 items-center gap-x-2">
+          {isFullscreen ? null : (
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              aria-pressed={wantPreview}
+              aria-label={
+                wantPreview
+                  ? "Hide purchase preview on the wall"
+                  : "Show purchase preview on the wall"
+              }
+              title={wantPreview ? "Hide the dashed square" : "Show what this amount would buy"}
+              className={wantPreview ? "border-primary/40 bg-primary/10" : undefined}
+              onClick={() => setWantPreview((on) => !on)}
+            >
+              Preview
+            </Button>
+          )}
           <RefreshButton />
           <DownloadWallButton />
           <ShareWallButton compact />

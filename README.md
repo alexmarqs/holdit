@@ -29,7 +29,7 @@ one — a failure that looks exactly like success.
 
 ```bash
 pnpm test              # unit tests; no database
-pnpm test:integration  # needs the container: four suites against real Postgres
+pnpm test:integration  # needs the container: five suites against real Postgres
 pnpm typecheck
 pnpm lint              # biome; `pnpm lint:fix` writes fixes
 pnpm build             # prerenders the wall, so it needs the database too
@@ -50,6 +50,11 @@ Run `pnpm stripe:listen` alongside `pnpm dev`, or nothing appears on the wall: t
 is created by the `checkout.session.completed` webhook, not by the redirect back. Put the
 secret it prints in `STRIPE_WEBHOOK_SECRET` — not the one on the Dashboard's endpoints
 page, which signs a different endpoint and fails every check here.
+
+A database failure returns `500` so Stripe retries the same Checkout Session. Purchase
+writes are idempotent on that session ID, so replay the failed webhook before intervening.
+If a paid order still cannot be fulfilled after recovery, reconcile it from the logged
+session ID and refund it manually.
 
 ## Going live
 
@@ -119,7 +124,9 @@ settles, so two instances cannot disagree about the same wall. TTLs live in
 **Prints are immutable.** `/print/{at}` tags and `/api/og?at=` images are one URL,
 one body, `immutable` for a year. A future or junk stamp is `no-store` so the CDN
 cannot freeze a 302 or the marketing poster under a URL that later becomes a real
-print. Bare `/api/og` is the marketing poster (`s-maxage=1d`, SWR).
+print. Every dataset query is capped at the print timestamp; current moderation still
+applies so a rejected square cannot reappear in a newly rendered old print. Bare
+`/api/og` is the marketing poster (`s-maxage=1d`, SWR).
 
 **Download logos.** The live wall hotlinks Google. A PNG cannot (no CORS), so Download
 points each mark at `GET /api/favicons/{domain}` — image bytes with `s-maxage=30d`.
@@ -129,8 +136,11 @@ the function does not run. OG still fetches Google in-process (`ImageResponse` n
 bytes, not a URL) into the Next Data Cache, so two prints of the same square do not
 pay Google twice.
 
-**Purchases are not a race.** No locks, no queue, no version counter, no boundary policy.
-Position is a share of a sum, so two simultaneous buyers cannot conflict.
+**Same-square purchases are serialized, wall reads are not.** A short PostgreSQL
+transaction and holder-scoped advisory lock protect the first destination, Stripe
+idempotency, and same-square top-ups. Different squares can still be purchased
+concurrently because position is a share of a sum. Their activity percentages are a
+best-effort snapshot; the money and resulting wall remain exact.
 
 ## Not built yet
 

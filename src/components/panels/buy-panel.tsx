@@ -10,14 +10,14 @@ import {
   shareAfterSpend,
   stepAmount,
 } from "@holdit/core";
-import { useSetAtom, useStore } from "jotai";
+import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { Globe, Minus, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { StatsPill } from "@/components/panels/counter-strip";
 import { GhostHint } from "@/components/panels/ghost-hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { previewAtom, previewHandleAtom } from "@/context/wall-atoms";
+import { mapPreviewOnAtom, previewAtom, previewHandleAtom } from "@/context/wall-atoms";
 import { useWall } from "@/hooks/use-wall";
 import { useWallRefresh } from "@/hooks/use-wall-refresh";
 import { apiClient } from "@/lib/api-client";
@@ -56,6 +56,7 @@ export function BuyPanel() {
   const { refresh } = useWallRefresh();
   const setPreview = useSetAtom(previewAtom);
   const setPreviewHandle = useSetAtom(previewHandleAtom);
+  const mapPreviewOn = useAtomValue(mapPreviewOnAtom);
   const [amount, setAmount] = useState(() => openingAmountCents(state.counters.squaresLive));
   const [draft, setDraft] = useState<string | null>(null);
   const [target, setTarget] = useState("");
@@ -167,7 +168,7 @@ export function BuyPanel() {
 
         <h2 className="mt-4 text-[22px] leading-tight font-bold tracking-[-0.04em] sm:text-[26px]">
           <span className="relative inline-block">
-            <GhostHint placement="hold" />
+            {mapPreviewOn ? <GhostHint placement="hold" /> : null}
             <span className="rounded-md bg-primary/15 px-1.5 text-primary">Hold</span>
           </span>{" "}
           a square for{" "}
@@ -325,7 +326,7 @@ export function BuyPanel() {
             <StripeWordmark />
           </a>
         )}
-        <GhostHint placement="map" />
+        {mapPreviewOn ? <GhostHint placement="map" /> : null}
       </div>
     </section>
   );

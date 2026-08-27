@@ -1,5 +1,5 @@
 import { siteUrl } from "@/lib/utils/env";
-import { WALL_CARD_SIZE } from "../../../components/map/wall-card";
+import { OG_SIZE } from "../../../components/map/og-fonts";
 
 const TITLE = "holdit.lol — hold your square of the wall";
 const DESCRIPTION = "Everyone paying for attention, sized by how much they're paying right now.";
@@ -45,8 +45,8 @@ export function printCardHtml(at: number): string {
 <meta property="og:title" content="${attr(TITLE)}">
 <meta property="og:description" content="${attr(DESCRIPTION)}">
 <meta property="og:image" content="${image}">
-<meta property="og:image:width" content="${WALL_CARD_SIZE.width}">
-<meta property="og:image:height" content="${WALL_CARD_SIZE.height}">
+<meta property="og:image:width" content="${OG_SIZE.width}">
+<meta property="og:image:height" content="${OG_SIZE.height}">
 <meta property="og:image:alt" content="${attr(IMAGE_ALT)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="holdit.lol">

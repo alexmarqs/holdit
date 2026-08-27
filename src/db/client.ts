@@ -32,3 +32,5 @@ const sql = postgres(serverEnv.databaseUrl, {
 export const db = drizzle(sql, { schema, casing: "snake_case" });
 
 export type Database = typeof db;
+export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+export type Queryable = Database | Transaction;

@@ -3,7 +3,7 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { Loader2, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { CopyShareButton, ShareWallButton } from "@/components/map/share-wall";
+import { ShareWallButton } from "@/components/map/share-wall";
 import { SiteLogo } from "@/components/site-logo";
 import { awaitingAtom, claimedAtom, dilutedAtom } from "@/context/wall-atoms";
 import { useForgetHeld } from "@/hooks/use-forget-held";
@@ -31,7 +31,6 @@ function Banner({
       <div className="min-w-0 flex-1">{children}</div>
       <span className="flex items-center gap-1.5">
         <ShareWallButton />
-        <CopyShareButton />
         {onDismiss ? (
           <button
             type="button"
