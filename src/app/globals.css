@@ -136,10 +136,10 @@
     background-color: var(--background);
     background-image:
       radial-gradient(
-        ellipse 78% 34% at 50% 168px,
+        ellipse 62% 32% at 50% 168px,
         color-mix(in srgb, var(--primary) 5%, var(--background)) 0%,
-        var(--background) 42%,
-        transparent 74%
+        var(--background) 38%,
+        transparent 70%
       ),
       linear-gradient(var(--grid-line) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
