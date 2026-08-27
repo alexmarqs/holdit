@@ -113,7 +113,7 @@ never above 60% on a young wall, 10% from 16 squares. Extra spend past the cap d
 not grow the tile.
 
 **No sockets, no in-process wall cache.** The page is ISR (`revalidate = 30`) and
-`revalidatePath("/")` on purchase. Refresh and chase hit `/api/state` (`s-maxage=10`;
+`revalidatePath("/")` on purchase. Refresh and the post-checkout wait hit `/api/state` (`s-maxage=10`;
 `?fresh=` is `no-store`). “Online” is an approximate 15-minute visit window from the
 wall snapshot; the hydrated client shows at least the person viewing it. `getMapState`
 only collapses in-flight loads on one instance — live requests share one query; a

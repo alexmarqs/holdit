@@ -1,4 +1,8 @@
+"use client";
+
+import { useAtomValue } from "jotai";
 import { Shantell_Sans } from "next/font/google";
+import { mapPreviewOnAtom } from "@/context/wall-atoms";
 
 const note = Shantell_Sans({
   subsets: ["latin"],
@@ -41,6 +45,9 @@ function DownArrow({ className }: { className: string }) {
  * form and points down at the wall so the note is never clipped.
  */
 export function GhostHint({ placement }: { placement: "hold" | "map" }) {
+  const on = useAtomValue(mapPreviewOnAtom);
+  if (!on) return null;
+
   if (placement === "map") {
     return (
       <aside

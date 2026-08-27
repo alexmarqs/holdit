@@ -8,7 +8,7 @@ import { clientIp } from "@/lib/utils/request";
 /**
  * The one payload every surface of the wall renders from.
  *
- * `?fresh=` is Refresh, chase, and a purchase that just landed: `private,
+ * `?fresh=` is Refresh, the post-checkout wait, and a purchase that just landed: `private,
  * no-store`, so the word Refresh means the wall as it is. That path is
  * rate-limited (10 / 10s); a 429 is an empty answer, not a new wall.
  *

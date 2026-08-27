@@ -18,7 +18,9 @@ const historicalCacheData = new Map<number, Promise<MapRows>>();
 export async function getMapState(db: Database, options: MapStateOptions = {}): Promise<MapState> {
   const stamped = options.now;
   const now = stamped ?? Date.now();
+
   const rows = await (stamped === undefined ? loadLive(db, now) : loadAt(db, stamped));
+
   return buildMapState({
     ...rows,
     now,
@@ -31,24 +33,20 @@ function loadLive(db: Database, now: number): Promise<MapRows> {
   liveCacheData ??= loadMapRows(db, now).finally(() => {
     liveCacheData = null;
   });
+
   return liveCacheData;
 }
 
 function loadAt(db: Database, at: number): Promise<MapRows> {
   const pending = historicalCacheData.get(at);
+
   if (pending) return pending;
+
   const load = loadMapRows(db, at, { includeOnline: false }).finally(() => {
     historicalCacheData.delete(at);
   });
-  historicalCacheData.set(at, load);
-  return load;
-}
 
-/**
- * Drops any in-flight load. Only tests need this: the promise can outlive a
- * suite's truncated database.
- */
-export function resetMapRowsCache(): void {
-  liveCacheData = null;
-  historicalCacheData.clear();
+  historicalCacheData.set(at, load);
+
+  return load;
 }

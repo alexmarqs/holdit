@@ -6,13 +6,13 @@ import { formatAgo } from "./format";
  * webhook is still landing. The tab asks for a newer wall rather than waiting
  * for Refresh: first look at 400ms (the webhook is rarely faster than that),
  * then every 1.5s. Forty seconds of silence reads as a lost payment, so the
- * chase stops and says so.
+ * wait stops and says so.
  */
-export const CHASE_FIRST_MS = 400;
-export const CHASE_GAP_MS = 1_500;
-export const CHASE_GIVE_UP_MS = 40_000;
+export const AWAITING_FIRST_MS = 400;
+export const AWAITING_GAP_MS = 1_500;
+export const AWAITING_GIVE_UP_MS = 40_000;
 
-/** Checkout returns `/?held=<handle>`. Empty or missing is not a chase. */
+/** Checkout returns `/?held=<handle>`. Empty or missing does not start awaiting. */
 export function heldHandleFromHref(href: string): string | null {
   const held = new URL(href).searchParams.get("held")?.trim() ?? "";
   return held.length > 0 ? held : null;
@@ -34,8 +34,8 @@ export function claimedSquare(
   return { handle, share: standing.share };
 }
 
-export function chaseTimedOut(startedAt: number, now: number): boolean {
-  return now - startedAt > CHASE_GIVE_UP_MS;
+export function awaitingTimedOut(startedAt: number, now: number): boolean {
+  return now - startedAt > AWAITING_GIVE_UP_MS;
 }
 
 /**

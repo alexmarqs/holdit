@@ -1,8 +1,9 @@
+import type { Metadata } from "next";
 import { PageHead, Section } from "@/components/prose";
 import { leafPage } from "@/lib/seo/metadata";
 import { publicEnv } from "@/lib/utils/env";
 
-export const metadata = leafPage({
+export const metadata: Metadata = leafPage({
   title: "Privacy",
   description:
     "What holdit.lol stores and what it does not. No accounts, no cookies for tracking, no card details, and IP addresses only as salted hashes.",

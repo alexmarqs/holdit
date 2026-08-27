@@ -10,9 +10,9 @@ import { useWall } from "@/hooks/use-wall";
 import { apiClient } from "@/lib/api-client";
 import { createWallQueryClient, writeWallCache } from "@/lib/utils/wall-query";
 import {
-  CHASE_FIRST_MS,
-  CHASE_GAP_MS,
-  chaseTimedOut,
+  AWAITING_FIRST_MS,
+  AWAITING_GAP_MS,
+  awaitingTimedOut,
   claimedSquare,
   heldHandleFromHref,
   hrefWithoutHeld,
@@ -20,7 +20,7 @@ import {
 
 /**
  * Everything this visit does on its own: reading the handle checkout sends back,
- * clearing a pulse, and chasing a paid square onto the wall. Renders nothing —
+ * clearing a pulse, and waiting for a paid square to appear. Renders nothing —
  * it exists to hold effects inside the stores.
  */
 function WallEffects() {
@@ -37,9 +37,9 @@ function WallEffects() {
   const setDiluted = useSetAtom(dilutedAtom);
   const lastShare = useRef<number | null>(null);
 
-  /** The handle worth chasing, or null. Narrowed so the loop below can depend
+  /** The handle still being waited for, or null. Narrowed so the loop below can depend
       on it without re-running for every other change to `awaiting`. */
-  const chasing = awaiting !== null && !awaiting.timedOut ? awaiting.handle : null;
+  const awaitingHandle = awaiting !== null && !awaiting.timedOut ? awaiting.handle : null;
 
   /*
    * Checkout sends a paid buyer back to `/?held=<handle>`, which is how the
@@ -70,7 +70,7 @@ function WallEffects() {
    * forty-second cap. Measured, that was a bypassed fetch about every 780ms and
    * a cap that never arrived — still going at 103 requests after 80 seconds.
    *
-   * No `timedOut` guard here on purpose: if a square turns up after the chase
+   * No `timedOut` guard here on purpose: if a square turns up after the wait
    * gave up, saying so beats leaving the buyer with the apology.
    */
   useEffect(() => {
@@ -108,35 +108,35 @@ function WallEffects() {
   /*
    * Stripe sends the buyer back before the webhook has written the square.
    * This loop asks `/api/state?fresh=` (the live wall, not the 10s CDN copy)
-   * until that handle appears. First ask at CHASE_FIRST_MS, then every
-   * CHASE_GAP_MS. At CHASE_GIVE_UP_MS it stops and the banner says the square
+   * until that handle appears. First ask at AWAITING_FIRST_MS, then every
+   * AWAITING_GAP_MS. At AWAITING_GIVE_UP_MS it stops and the banner says the square
    * is paid for but not on the wall yet — silence here reads as a lost payment.
    *
-   * The effect depends on `chasing` (the handle) alone. Depending on `awaiting`
+   * The effect depends on `awaitingHandle` alone. Depending on `awaiting`
    * or the wall restarted the loop every time a fetch landed, which burned
    * the rate limit and never reached the forty-second cap.
    */
   useEffect(() => {
-    if (chasing === null) return;
+    if (awaitingHandle === null) return;
     const started = Date.now();
     let live = true;
     let timer: ReturnType<typeof setTimeout>;
     const tick = async () => {
       if (!live) return;
-      if (chaseTimedOut(started, Date.now())) {
+      if (awaitingTimedOut(started, Date.now())) {
         setAwaiting((current) => (current ? { ...current, timedOut: true } : null));
         return;
       }
       const wall = await apiClient.tryFetchWall(true);
       if (wall) writeWallCache(queryClient, wall);
-      if (live) timer = setTimeout(tick, CHASE_GAP_MS);
+      if (live) timer = setTimeout(tick, AWAITING_GAP_MS);
     };
-    timer = setTimeout(tick, CHASE_FIRST_MS);
+    timer = setTimeout(tick, AWAITING_FIRST_MS);
     return () => {
       live = false;
       clearTimeout(timer);
     };
-  }, [chasing, queryClient, setAwaiting]);
+  }, [awaitingHandle, queryClient, setAwaiting]);
 
   return null;
 }

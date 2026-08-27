@@ -1,24 +1,29 @@
 "use client";
 
 import { computeShares, type HolderStanding, previewContent, shareAfterSpend } from "@holdit/core";
-import { useAtom, useAtomValue } from "jotai";
-import { Maximize2, Minimize2, Search, X } from "lucide-react";
+import { useAtomValue } from "jotai";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshButton } from "@/components/panels/refresh-button";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { flashAtom, mapPreviewOnAtom, previewAtom, previewHandleAtom } from "@/context/wall-atoms";
+import {
+  flashAtom,
+  mapPreviewOnAtom,
+  mapSearchAtom,
+  previewAtom,
+  previewHandleAtom,
+} from "@/context/wall-atoms";
 import { useWall } from "@/hooks/use-wall";
 import { cn } from "@/lib/utils";
 import { formatMoney, formatShare } from "@/lib/utils/format";
 import { DownloadWallButton } from "./download-wall";
-import { onSquareFocus } from "./focus-square";
+import { MapSearch } from "./map-search";
 import { type HoverTarget, MapTooltip } from "./map-tooltip";
 import { placeWall } from "./place-wall";
 import { mapPreviewActive } from "./preview";
 import { PreviewSwitch } from "./preview-switch";
 import { ShareWallButton } from "./share-wall";
-import { TileLayer, tileBox } from "./tile-layer";
+import { TileLayer, type TileLayerProps, tileBox } from "./tile-layer";
 
 const TOOLTIP_W = 190;
 const TOOLTIP_H = 122;
@@ -31,8 +36,7 @@ export function Treemap() {
   const flash = useAtomValue(flashAtom);
   const preview = useAtomValue(previewAtom);
   const previewHandle = useAtomValue(previewHandleAtom);
-  const [wantPreview, setWantPreview] = useAtom(mapPreviewOnAtom);
-  const [query, setQuery] = useState("");
+  const wantPreview = useAtomValue(mapPreviewOnAtom);
   const [hover, setHover] = useState<HoverTarget | null>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -42,15 +46,6 @@ export function Treemap() {
   const tooltip = useRef<HTMLDivElement>(null);
   const pending = useRef<number | null>(null);
   const cursor = useRef({ x: 0, y: 0 });
-
-  useEffect(
-    () =>
-      onSquareFocus(window, (handle) => {
-        setQuery(handle);
-        document.getElementById("map")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }),
-    [],
-  );
 
   useEffect(() => {
     const element = frame.current;
@@ -190,10 +185,6 @@ export function Treemap() {
     [place],
   );
 
-  const needle = query.trim().toLowerCase();
-  const matches = needle
-    ? state.standings.filter((s) => s.holder.handle.toLowerCase().includes(needle)).length
-    : 0;
   const previewBox = previewRect ? tileBox(previewRect, size) : null;
   /*
    * What the dashed square can say at the size it got. The share is the whole
@@ -225,42 +216,9 @@ export function Treemap() {
       )}
     >
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 px-3 py-1.5 md:px-4">
-        {state.counters.squaresLive > 0 ? (
-          <div className="relative min-w-42 w-full max-w-xl flex-1 sm:w-auto">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Find a square"
-              spellCheck={false}
-              autoComplete="off"
-              aria-label="Find a square"
-              className={cn("h-8 w-full pl-9 text-sm", needle ? "pr-20" : "pr-3")}
-            />
-            {needle ? (
-              <span className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center">
-                <span className="num pointer-events-none px-1.5 text-[11px] text-muted-foreground">
-                  {matches}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="size-7 border-foreground/25 bg-muted text-foreground shadow-sm hover:bg-muted-foreground/15"
-                  aria-label="Clear search"
-                  title="Clear search"
-                  onClick={() => setQuery("")}
-                >
-                  <X className="size-3.5" strokeWidth={2.5} />
-                </Button>
-              </span>
-            ) : null}
-          </div>
-        ) : null}
+        <MapSearch />
         <div className="ml-auto flex shrink-0 items-center gap-x-2">
-          {isFullscreen ? null : (
-            <PreviewSwitch on={wantPreview} onToggle={() => setWantPreview((value) => !value)} />
-          )}
+          {isFullscreen ? null : <PreviewSwitch />}
           <RefreshButton />
           <DownloadWallButton />
           <ShareWallButton compact />
@@ -280,11 +238,10 @@ export function Treemap() {
         ref={frame}
         className={cn("map-canvas relative w-full bg-map-grout", "min-h-50 flex-1 sm:min-h-70")}
       >
-        <TileLayer
+        <SearchedTileLayer
           tiles={tiles}
           byId={byId}
           canvas={size}
-          needle={needle}
           flash={flash}
           now={state.generatedAt}
           onEnter={onEnter}
@@ -334,4 +291,10 @@ export function Treemap() {
       <MapTooltip target={hover} now={state.generatedAt} elementRef={tooltip} />
     </div>
   );
+}
+
+/** Tiles subscribe to Find here so typing does not redraw the toolbar. */
+function SearchedTileLayer(props: Omit<TileLayerProps, "needle">) {
+  const query = useAtomValue(mapSearchAtom);
+  return <TileLayer {...props} needle={query.trim().toLowerCase()} />;
 }

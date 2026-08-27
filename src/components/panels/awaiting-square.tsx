@@ -47,7 +47,7 @@ function Banner({
 }
 
 /**
- * Payment chase, the post-buy screenshot, then "you just shrank".
+ * Waiting for the square, the post-buy screenshot, then "you just shrank".
  * Quiet ownership ("you hold X") lives on the square itself, not as a banner.
  */
 export function AwaitingSquare() {

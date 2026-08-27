@@ -1,10 +1,11 @@
 import { MIN_SPEND_CENTS } from "@holdit/core";
+import type { Metadata } from "next";
 import { PageHead, Section } from "@/components/prose";
 import { leafPage } from "@/lib/seo/metadata";
 import { publicEnv } from "@/lib/utils/env";
 import { formatMoney } from "@/lib/utils/format";
 
-export const metadata = leafPage({
+export const metadata: Metadata = leafPage({
   title: "Terms",
   description:
     "What you get when you buy a square on holdit.lol, what it costs, how live spend fades, and what is not allowed.",

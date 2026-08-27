@@ -24,6 +24,7 @@ export async function GET(request: Request) {
     limit: 40,
     windowSeconds: 60,
   });
+
   if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many image requests." },
@@ -32,6 +33,7 @@ export async function GET(request: Request) {
   }
 
   const at = parsePrintAt(params.get("at"));
+
   if (params.has("at") && at === null) {
     return new Response(null, { status: 404, headers: { "cache-control": CACHE.noStore } });
   }

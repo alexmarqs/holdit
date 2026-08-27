@@ -1,10 +1,12 @@
 "use client";
 
-import { useAtomValue } from "jotai";
+import type { MapState } from "@holdit/core";
+import { useQueryClient } from "@tanstack/react-query";
+import { useStore } from "jotai";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { claimedAtom, dilutedAtom } from "@/context/wall-atoms";
-import { useWall } from "@/hooks/use-wall";
+import { WALL_QUERY_KEY } from "@/lib/utils/wall-query";
 import {
   claimShareCopy,
   dilutionShareCopy,
@@ -14,11 +16,14 @@ import {
 } from "./share-copy";
 
 function useSharePayload() {
-  const state = useWall();
-  const claimed = useAtomValue(claimedAtom);
-  const diluted = useAtomValue(dilutedAtom);
+  const store = useStore();
+  const queryClient = useQueryClient();
 
-  return async () => {
+  return () => {
+    const state = queryClient.getQueryData<MapState>(WALL_QUERY_KEY);
+    if (state === undefined) return null;
+    const claimed = store.get(claimedAtom);
+    const diluted = store.get(dilutedAtom);
     const pageUrl = wallShareUrl(
       window.location.origin,
       state.generatedAt,
@@ -37,8 +42,9 @@ export function ShareWallButton({ compact = false }: { compact?: boolean }) {
   const payload = useSharePayload();
 
   async function postOnX() {
-    const { text, pageUrl } = await payload();
-    const href = tweetIntent(text, pageUrl);
+    const next = payload();
+    if (!next) return;
+    const href = tweetIntent(next.text, next.pageUrl);
     const popup = window.open(href, "_blank", "noopener,noreferrer");
     if (popup === null) window.location.assign(href);
   }
@@ -62,8 +68,9 @@ export function CopyShareButton() {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
-    const { text, pageUrl } = await payload();
-    const line = `${text}\n${pageUrl}`;
+    const next = payload();
+    if (!next) return;
+    const line = `${next.text}\n${next.pageUrl}`;
     try {
       await navigator.clipboard.writeText(line);
     } catch {

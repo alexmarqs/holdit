@@ -6,6 +6,7 @@ import {
   OVERFLOW_HALF_LIFE_MULTIPLIER,
   YOUNG_WALL_MAX_SHARE,
 } from "@holdit/core";
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { PageHead, Section } from "@/components/prose";
 import { leafPage } from "@/lib/seo/metadata";
@@ -18,7 +19,7 @@ const GROWN_AT = Math.round(CEILING_BUDGET / MAX_SHARE);
 const OVERFLOW_HALF_LIFE_DAYS = HALF_LIFE_DAYS * OVERFLOW_HALF_LIFE_MULTIPLIER;
 const TEN_K = formatMoney(1_000_000);
 
-export const metadata = leafPage({
+export const metadata: Metadata = leafPage({
   title: "Rules",
   description:
     "How a square works: spend from $1, live-spend shares, visual sizing, caps, decay, and moderation.",

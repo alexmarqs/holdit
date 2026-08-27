@@ -9,7 +9,7 @@ import { VisitBeacon } from "@/components/visit-beacon";
 import { WallProvider } from "@/context/wall-provider";
 import { JsonLdStructuredData } from "@/lib/seo/structured-data";
 
-export const revalidate = 30; // 30 seconds is the maximum time between revalidations
+export const revalidate = 30; // 30 seconds is the maximum time between revalidations for this page
 
 export default async function MapPage() {
   const state = await getMapState(db);

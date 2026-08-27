@@ -19,7 +19,7 @@ export async function fetchWall(fresh = false): Promise<MapState> {
 }
 
 /**
- * Refresh and chase: a 429 or a dead origin must not replace the wall or
+ * Refresh and the post-checkout wait: a 429 or a dead origin must not replace the wall or
  * surface an error. The rate limit on `/api/state` is 10 / 10s; pressing
  * through it just keeps what they already have.
  */

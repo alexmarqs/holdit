@@ -1,6 +1,5 @@
 import { db } from "@holdit/db/client";
 import { recordVisit } from "@holdit/db/queries/visits";
-import { NextResponse } from "next/server";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { clientIp } from "@/lib/utils/request";
 
@@ -24,6 +23,7 @@ export async function POST(request: Request) {
 
   // A page load is one beacon. This only stops somebody looping it.
   const limited = await rateLimit("visit", ip, { limit: 30, windowSeconds: 60 });
+
   if (!limited.ok) return new Response(null, { status: 204 });
 
   await recordVisit(db, { ip, userAgent: request.headers.get("user-agent") });
@@ -31,8 +31,4 @@ export async function POST(request: Request) {
   // 204 always: the caller is a fire-and-forget beacon with nothing to do with
   // the answer, and a failed count must never look like a failed page.
   return new Response(null, { status: 204 });
-}
-
-export function GET() {
-  return NextResponse.json({ error: "POST only" }, { status: 405 });
 }

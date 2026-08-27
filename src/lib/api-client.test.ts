@@ -31,7 +31,7 @@ describe("apiClient.fetchWall", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/state", { cache: "no-store" });
   });
 
-  it("skips stored copies when chasing a paid square", async () => {
+  it("skips stored copies when waiting for a paid square", async () => {
     vi.setSystemTime(NOW);
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
