@@ -3,7 +3,6 @@ import {
   HALF_LIFE_DAYS,
   MAX_SHARE,
   MIN_SPEND_CENTS,
-  OVERFLOW_HALF_LIFE_MULTIPLIER,
   YOUNG_WALL_MAX_SHARE,
 } from "@holdit/core";
 import type { Metadata } from "next";
@@ -16,7 +15,6 @@ import { formatMoney } from "@/lib/utils/format";
 const CAP_YOUNG = Math.round(YOUNG_WALL_MAX_SHARE * 100);
 const CAP_GROWN = Math.round(MAX_SHARE * 100);
 const GROWN_AT = Math.round(CEILING_BUDGET / MAX_SHARE);
-const OVERFLOW_HALF_LIFE_DAYS = HALF_LIFE_DAYS * OVERFLOW_HALF_LIFE_MULTIPLIER;
 const TEN_K = formatMoney(1_000_000);
 
 export const metadata: Metadata = leafPage({
@@ -73,19 +71,17 @@ export default function RulesPage() {
         </p>
         <p>
           You can still spend past the cap. Extra dollars do not grow the tile — they keep you at
-          the cap when others buy, and they fade more slowly than displayed spend. The first square
-          is the whole wall at any price, so {formatMoney(MIN_SPEND_CENTS)} is enough until somebody
-          else shows up.
+          the cap when others buy. The first square is the whole wall at any price, so{" "}
+          {formatMoney(MIN_SPEND_CENTS)} is enough until somebody else shows up.
         </p>
       </Section>
 
       <Section title="What actually fades" id="live-spend">
         <p>
-          Every {HALF_LIFE_DAYS} days, the part of live spend within the display cap is half — if
-          nobody buys. Spend above the cap is headroom and halves every {OVERFLOW_HALF_LIFE_DAYS}{" "}
-          days. That is how hard you are to knock down, not a countdown on the square. Most
-          positions fade together; capped positions can shift slowly because their headroom lasts
-          longer. New money changes the wall immediately, and old money is easier to beat.
+          Every {HALF_LIFE_DAYS} days, live spend is half — if nobody buys. That is how hard you are
+          to knock down, not a countdown on the square. Positions fade together, so the wall stays
+          still until somebody pays. New money changes the wall immediately, and old money is easier
+          to beat.
         </p>
         <ul className="space-y-2.5 pt-1">
           <Example title="You are alone.">

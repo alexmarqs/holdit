@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  claimPostText,
   claimShareCopy,
+  dilutionPostText,
   dilutionShareCopy,
   purchasePrintUrl,
   sharePageUrl,
@@ -52,6 +54,41 @@ describe("dilutionShareCopy", () => {
       title: "holdit.lol",
       text: "figma.com just went 10.0% → 8.4% on holdit.lol",
     });
+  });
+});
+
+/*
+ * What goes in the post body, as opposed to the card.
+ *
+ * X linkifies a bare domain, and both halves of "figma.com just took 8.4% of
+ * holdit.lol" are bare domains — so a post carrying that caption holds three
+ * links and the platform, not us, decides which one to unfurl. With a handle of
+ * "x.com" that is a coin flip on X's own domain.
+ *
+ * The card is where the handle belongs: `og:title` is plain text and stays
+ * plain. The body names no domain at all, so exactly one URL is present and
+ * exactly one card can be built from it.
+ */
+describe("post bodies carry no bare domain", () => {
+  const DOMAIN = /\b[a-z0-9-]+\.(?:com|lol|app|cloud|io|dev|net|org)\b/i;
+
+  it("states the claim without naming a domain", () => {
+    expect(claimPostText(0.3889)).toBe("Just took 38.89% of the wall");
+    expect(claimPostText(0.3889)).not.toMatch(DOMAIN);
+  });
+
+  it("states the shrink without naming a domain", () => {
+    expect(dilutionPostText(0.1, 0.084)).toBe("Just went 10.0% → 8.4% on the wall");
+    expect(dilutionPostText(0.1, 0.084)).not.toMatch(DOMAIN);
+  });
+
+  it("leaves the wall census alone, which never named one", () => {
+    expect(wallShareCopy({ squaresLive: 6, liveCents: 93_700 }).text).not.toMatch(DOMAIN);
+    expect(wallShareCopy({ squaresLive: 0, liveCents: 0 }).text).not.toMatch(DOMAIN);
+  });
+
+  it("keeps the handle on the card, where plain text stays plain", () => {
+    expect(claimShareCopy("x.com", 0.3889).text).toContain("x.com");
   });
 });
 

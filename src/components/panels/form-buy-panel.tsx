@@ -8,13 +8,13 @@ import {
   MAX_SPEND_CENTS,
   MIN_SPEND_CENTS,
   openingQuotedCents,
-  othersCanAddBeforeSlip,
   shareAfterSpend,
   stepAmount,
 } from "@holdit/core";
 import { useSetAtom, useStore } from "jotai";
 import { Globe, Minus, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { holdButtonLabel, holdCapCopy, topUpCopy } from "@/components/panels/buy-copy";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { previewAtom, previewHandleAtom } from "@/context/wall-atoms";
@@ -22,7 +22,7 @@ import { useWall } from "@/hooks/use-wall";
 import { useWallRefresh } from "@/hooks/use-wall-refresh";
 import { apiClient } from "@/lib/api-client";
 import { isValidTarget, normalizeTarget } from "@/lib/utils/domain";
-import { formatMoney, formatShare, moneyDraft } from "@/lib/utils/format";
+import { moneyDraft } from "@/lib/utils/format";
 
 /** Pause after a keystroke before the typed amount lands on the map. */
 const SETTLE_MS = 320;
@@ -62,23 +62,33 @@ export function FormBuyPanel() {
     ? state.standings.find((s) => s.holder.handle === normalized.handle)
     : undefined;
 
-  const rows = state.standings.map((s) => ({ id: s.holder.id, liveCents: s.liveCents }));
+  const rows = useMemo(
+    () => state.standings.map((s) => ({ id: s.holder.id, liveCents: s.liveCents })),
+    [state.standings],
+  );
 
   const ceilingAfter = ceilingFor(state.counters.squaresLive + (existing ? 0 : 1));
-  const ceilingCents = centsForShareOf(rows, ceilingAfter, existing?.holder.id);
-  const capSpend = Math.max(
-    MIN_SPEND_CENTS,
-    ceilingCents === null ? MIN_SPEND_CENTS : ceilToDollar(ceilingCents),
-  );
+
+  /*
+   * The bisection behind the ceiling price is the most expensive thing on this
+   * panel — forty passes of the whole share model, ~6ms on this wall and ~19ms
+   * on twenty-five squares — and it does not depend on the amount being typed.
+   * Unmemoised it ran on every keystroke, which is where the field's input lag
+   * came from. What a keystroke actually needs is one `shareAfterSpend`.
+   */
+  const capSpend = useMemo(() => {
+    const ceilingCents = centsForShareOf(rows, ceilingAfter, existing?.holder.id);
+    return Math.max(
+      MIN_SPEND_CENTS,
+      ceilingCents === null ? MIN_SPEND_CENTS : ceilToDollar(ceilingCents),
+    );
+  }, [rows, ceilingAfter, existing?.holder.id]);
   const [amount, setAmount] = useState(() =>
     openingQuotedCents(state.counters.squaresLive, capSpend, state.counters.liveCents),
   );
   const quotedAmount = draft === null ? amount : readAmount(draft, amount, MAX_SPEND_CENTS);
   const share = shareAfterSpend(rows, quotedAmount, existing?.holder.id);
   const atDisplayCap = ceilingAfter < 1 && share >= ceilingAfter - 1e-9;
-  const yoursAfter = (existing?.liveCents ?? 0) + quotedAmount;
-  const wallAfter = state.counters.liveCents + quotedAmount;
-  const othersAdd = othersCanAddBeforeSlip(yoursAfter, wallAfter, ceilingAfter);
 
   const store = useStore();
 
@@ -151,8 +161,7 @@ export function FormBuyPanel() {
     }
   }
 
-  const delta = existing && !atDisplayCap ? Math.max(0, share - existing.share) : share;
-  const shareLabel = existing && !atDisplayCap ? `+${formatShare(delta)}` : formatShare(share);
+  const buttonLabel = holdButtonLabel(share, existing?.share ?? null, atDisplayCap);
   const amountDigits = draft ?? moneyDraft(amount);
 
   return (
@@ -255,7 +264,7 @@ export function FormBuyPanel() {
           className="hold-cta w-full shrink-0 rounded-full px-3.5 tracking-[-0.02em] sm:w-auto"
           disabled={pending}
         >
-          {pending ? "Holding…" : `${existing ? "Add" : "Hold"} ${shareLabel}`}
+          {pending ? "Holding…" : buttonLabel}
         </Button>
       </form>
 
@@ -265,30 +274,27 @@ export function FormBuyPanel() {
         </p>
       ) : atDisplayCap ? (
         <p className="mt-2.5 max-w-md text-[13px] leading-snug text-muted-foreground">
-          <span className="font-medium text-foreground">{formatShare(share)} is the cap.</span>{" "}
-          <span className="num font-semibold text-foreground">{formatMoney(quotedAmount)}</span>{" "}
-          keeps {formatShare(share)} until others add{" "}
-          <span className="num font-semibold text-primary">{formatMoney(othersAdd)}</span>.{" "}
+          {holdCapCopy(quotedAmount, share)}.{" "}
           <a href="/rules#the-cap" className="text-primary hover:text-primary/80">
             Rules
           </a>
         </p>
       ) : existing ? (
         <p className="mt-2.5 max-w-md text-[12px] text-muted-foreground">
-          Topping up {existing.holder.handle}: {formatShare(existing.share)} → {formatShare(share)}
+          {topUpCopy(existing.holder.handle, existing.share, share)}
         </p>
-      ) : (
-        <a
-          href="https://stripe.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2.5 inline-flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Payments protected by Stripe"
-        >
-          Payments protected by
-          <StripeWordmark />
-        </a>
-      )}
+      ) : null}
+
+      <a
+        href="https://stripe.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`mt-4 inline-flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground`}
+        aria-label="Payments protected by Stripe"
+      >
+        Payments protected by
+        <StripeWordmark />
+      </a>
     </>
   );
 }

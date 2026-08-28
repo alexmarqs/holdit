@@ -17,7 +17,7 @@ export function BuyPanel() {
             <GhostHint placement="hold" />
             <span className="rounded-md bg-primary/15 px-1.5 text-primary">Hold</span>
           </span>{" "}
-          a square for{" "}
+          a square{" "}
           <span className="hold-who">
             <svg viewBox="0 0 180 8" preserveAspectRatio="none" aria-hidden>
               <path
@@ -25,7 +25,7 @@ export function BuyPanel() {
                 d="M2 5.4 C 32 2.6, 58 6.8, 90 4.4 S 138 7, 178 3.6"
               />
             </svg>
-            you, or your product.
+            of the wall.
           </span>
         </h2>
         <p className="mt-1.5 max-w-md text-[13px] leading-snug text-muted-foreground">

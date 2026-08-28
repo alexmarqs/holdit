@@ -31,23 +31,8 @@ describe("liveCentsForHolder", () => {
     expect(liveCentsForHolder([buy(50_000, 0, true)], NOW)).toBe(0);
   });
 
-  it("fades the portion above the cap at half rate", () => {
-    const purchase = [buy(100_000, 14)];
-    const uncapped = liveCentsForHolder(purchase, NOW);
-    const withCap = liveCentsForHolder(purchase, NOW, 20_000);
-
-    // $200 halves to $100; the $800 overflow keeps 0.5^0.5 of itself.
-    expect(uncapped).toBeCloseTo(50_000, 6);
-    expect(withCap).toBeCloseTo(10_000 + 80_000 * 0.5 ** 0.5, 6);
-    expect(withCap).toBeGreaterThan(uncapped);
-  });
-
-  it("leaves a purchase entirely under the cap untouched by the overflow rule", () => {
-    const purchase = [buy(1_000, 7)];
-    expect(liveCentsForHolder(purchase, NOW, 50_000)).toBeCloseTo(
-      liveCentsForHolder(purchase, NOW),
-      10,
-    );
+  it("halves a whale on the same clock as a dollar", () => {
+    expect(liveCentsForHolder([buy(100_000, 14)], NOW)).toBeCloseTo(50_000, 6);
   });
 });
 

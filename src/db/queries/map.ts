@@ -3,7 +3,6 @@ import type { Database } from "../client";
 import { loadMapRows, type MapRows } from "./dataset";
 
 export interface MapStateOptions {
-  mapArea?: number;
   onlineNow?: number | null;
   now?: number;
 }
@@ -24,7 +23,6 @@ export async function getMapState(db: Database, options: MapStateOptions = {}): 
   return buildMapState({
     ...rows,
     now,
-    mapArea: options.mapArea,
     onlineNow: options.onlineNow ?? rows.onlineNow,
   });
 }

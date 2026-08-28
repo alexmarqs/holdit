@@ -126,6 +126,22 @@ describe("computeShares", () => {
     }
   });
 
+  it("does not equalize the uncapped remainder after a long cap cascade", () => {
+    // A geometric ladder can pin many squares one pass at a time. The leftover
+    // pool must stay proportional, not flattened to one size.
+    const n = 18;
+    const rows = computeShares(
+      Array.from({ length: n }, (_, i) => ({
+        id: `s${i}`,
+        liveCents: Math.max(100, Math.round(100_000_000 / 2 ** i)),
+      })),
+    );
+    expect(sum(rows)).toBeCloseTo(1, 10);
+    const uncapped = rows.filter((r) => !r.capped).sort((a, b) => b.rawShare - a.rawShare);
+    expect(uncapped.length).toBeGreaterThan(1);
+    expect(uncapped[0]!.share).toBeGreaterThan(uncapped.at(-1)!.share * 1.5);
+  });
+
   it("settles on the display cap once the wall is grown", () => {
     for (const n of [16, 20, 50, 200]) {
       expect(ceilingFor(n), `n=${n}`).toBeCloseTo(MAX_SHARE, 10);

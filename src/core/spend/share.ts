@@ -57,7 +57,10 @@ export function computeShares(
   let pool = entries.map((e) => e.id);
   let remaining = new Big(1);
 
-  for (let pass = 0; pass < 8 && pool.length > 0; pass++) {
+  // Each pass caps at least one square, so `n` is the worst case. The loop
+  // itself assigns everyone — capped or scaled — and never equal-splits a
+  // leftover pool.
+  for (let pass = 0; pass < n && pool.length > 0; pass++) {
     const poolRaw = pool.reduce((sum, id) => sum.plus(raw.get(id) ?? 0), new Big(0));
     const scale = poolRaw.gt(0) ? remaining.div(poolRaw) : new Big(0);
     const over = pool.filter((id) => (raw.get(id) ?? new Big(0)).times(scale).gt(maxShare));
@@ -69,7 +72,6 @@ export function computeShares(
           poolRaw.gt(0) ? (raw.get(id) ?? new Big(0)).times(scale) : remaining.div(pool.length),
         );
       }
-      pool = [];
       break;
     }
 
@@ -80,11 +82,11 @@ export function computeShares(
     }
     pool = pool.filter((id) => !capped.has(id));
   }
-  for (const id of pool) share.set(id, remaining.div(pool.length));
 
   const floored = new Set<string>();
   if (minShare.gt(0)) {
-    for (let pass = 0; pass < 8; pass++) {
+    // Same bound as the cap: each pass floors at least one square.
+    for (let pass = 0; pass < n; pass++) {
       const below = entries
         .map((e) => e.id)
         .filter((id) => (share.get(id) ?? new Big(0)).lt(minShare.minus(EPS)));

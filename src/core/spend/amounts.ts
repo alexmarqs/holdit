@@ -56,9 +56,16 @@ function nearestLadderCents(cents: number): number {
 /**
  * What the buy field should show on first paint.
  *
- * The usual default is $10, a square you can see. If $10 already hits the cap,
- * size is sold out — opening there looks like leftover change. Quote twice
+ * The usual default is $10, a square you can see. If $10 is already past the
+ * cap, size is sold out — opening there looks like leftover change. Quote twice
  * live spend so the first number is a stay, not ten walls of money.
+ *
+ * An empty wall is the exception, and it used to fall through to the hold
+ * quote: with nothing live the cap price *is* the minimum, `usual === cap`, and
+ * the strict comparison read that as "sold out" and opened at $2 — on the one
+ * wall where a dollar buys the whole thing, on the first screen anyone sees,
+ * under a page promising "Spend from $1". Being priced out of a ceiling needs a
+ * ceiling to be priced out of.
  */
 export function openingQuotedCents(
   squaresLive: number,
@@ -66,8 +73,9 @@ export function openingQuotedCents(
   liveCents: number,
 ): number {
   const usual = openingAmountCents(squaresLive);
+  if (squaresLive <= 0) return usual;
   const cap = Math.max(MIN_SPEND_CENTS, capSpendCents);
-  if (usual <= cap) return usual;
+  if (usual < cap) return usual;
   return suggestedHoldCents(liveCents, cap);
 }
 
@@ -194,26 +202,9 @@ export const SHARE_TARGETS: readonly number[] = [0.01, 0.025, 0.05, 0.1, 0.25, 0
  * outgrows you, and it outgrows a bigger holder much later.
  *
  * Your share is `spend / total`, so it meets the ceiling exactly when the total
- * reaches `spend / ceiling`. Conservative, too: spend above the ceiling fades at
- * half rate, so in practice it holds a little longer than this says.
+ * reaches `spend / ceiling`.
  */
 export function wallSizeHeldTo(amountCents: number, ceiling: number): number {
   if (ceiling <= 0 || ceiling >= 1) return Number.POSITIVE_INFINITY;
   return amountCents / ceiling;
-}
-
-/**
- * How much other people can still pay before this spend drops under the cap.
- *
- * Rounded down to a whole dollar so the buy panel never names an amount
- * that has already slipped under the cap.
- */
-export function othersCanAddBeforeSlip(
-  yourCentsAfter: number,
-  wallCentsAfter: number,
-  ceiling: number,
-): number {
-  const heldTo = wallSizeHeldTo(yourCentsAfter, ceiling);
-  if (!Number.isFinite(heldTo)) return 0;
-  return Math.max(0, Math.floor((heldTo - wallCentsAfter) / 100) * 100);
 }

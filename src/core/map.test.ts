@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MS_PER_DAY } from "./config";
+import { HALF_LIFE_DAYS, MS_PER_DAY } from "./config";
 import { buildMapState } from "./map";
 import type { Holder, Purchase } from "./types";
 
@@ -88,19 +88,28 @@ describe("buildMapState", () => {
     expect(state.standings[0]?.lastPurchaseId).toBe("a-5000-2");
   });
 
-  it("applies a share floor once a canvas area is known", () => {
-    const rows: [string, number][] = [["whale", 50_000_000], ["dust", 1], ...filler(200)];
-    const dust = (state: ReturnType<typeof scenario>) =>
-      state.standings.find((s) => s.holder.id === "dust")?.share ?? 0;
-    expect(dust(scenario(rows, { mapArea: 880 * 560 }))).toBeGreaterThan(dust(scenario(rows)));
+  it("halves live spend on the nose even when a whale is over the cap", () => {
+    const paid = 100_000_000 + 20 * 10_000;
+    const later = scenario([["whale", 100_000_000], ...filler(20)], {
+      now: NOW + HALF_LIFE_DAYS * MS_PER_DAY,
+    });
+    expect(later.counters.liveCents).toBeCloseTo(paid / 2, 6);
+  });
+
+  it("does not move shares when time passes and nobody buys", () => {
+    const rows: [string, number][] = [["whale", 100_000_000], ...filler(20)];
+    const fresh = scenario(rows);
+    const later = scenario(rows, { now: NOW + HALF_LIFE_DAYS * MS_PER_DAY });
+    for (const standing of fresh.standings) {
+      const aged = later.standings.find((s) => s.holder.id === standing.holder.id);
+      expect(aged?.share, standing.holder.id).toBeCloseTo(standing.share, 10);
+    }
   });
 
   it("reports which squares were clamped, so the UI can say so", () => {
-    const state = scenario([["whale", 100_000_000], ["dust", 1], ...filler(200)], {
-      mapArea: 880 * 560,
-    });
+    const state = scenario([["whale", 100_000_000], ["dust", 1], ...filler(200)]);
     expect(state.standings.find((s) => s.holder.id === "whale")?.capped).toBe(true);
-    expect(state.standings.find((s) => s.holder.id === "dust")?.floored).toBe(true);
+    expect(state.standings.find((s) => s.holder.id === "dust")?.floored).toBe(false);
     expect(state.standings.find((s) => s.holder.id === "f5")?.capped).toBe(false);
   });
 

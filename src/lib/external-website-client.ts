@@ -43,17 +43,48 @@ const isUrlReadable = (url: URL): boolean => {
   return !BLOCKED_HOST.test(url.hostname);
 };
 
-const tidy = (raw: string): string | null => {
-  const text = raw
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
-    .trim();
-  return clipTagline(text);
+/** The named entities worth knowing in a meta description. */
+const NAMED_ENTITIES: Record<string, string> = {
+  quot: '"',
+  apos: "'",
+  lt: "<",
+  gt: ">",
+  nbsp: " ",
+  lsquo: "‘",
+  rsquo: "’",
+  ldquo: "“",
+  rdquo: "”",
+  ndash: "–",
+  mdash: "—",
+  hellip: "…",
+  // Last in the object, but order is irrelevant: one pass never rescans its own
+  // output, so `&amp;#x27;` decodes to `&#x27;` rather than all the way to `'`.
+  amp: "&",
 };
+
+/**
+ * Decode the entities a scraped description arrives with.
+ *
+ * This was a hardcoded list of six, which knew the decimal `&#39;` but not the
+ * hex `&#x27;` — and hex is what every framework that escapes an apostrophe
+ * emits, so a real scrape of anthropic.com put "that&#x27;s" on the wall, in
+ * the OG image and in the share copy. Numeric entities are a rule, not a list,
+ * so they are decoded as one and only the named ones are enumerated.
+ */
+export const decodeEntities = (raw: string): string =>
+  raw.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, body: string) => {
+    const token = body.toLowerCase();
+    if (token.startsWith("#")) {
+      const hex = token.startsWith("#x");
+      const code = Number.parseInt(hex ? token.slice(2) : token.slice(1), hex ? 16 : 10);
+      if (!Number.isInteger(code) || code <= 0 || code > 0x10ffff) return match;
+      return String.fromCodePoint(code);
+    }
+    return NAMED_ENTITIES[token] ?? match;
+  });
+
+const tidy = (raw: string): string | null =>
+  clipTagline(decodeEntities(raw).replace(/\s+/g, " ").trim());
 
 export interface FaviconResult {
   bytes: Uint8Array;

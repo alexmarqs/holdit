@@ -11,7 +11,6 @@ import {
   maxTargetShare,
   openingAmountCents,
   openingQuotedCents,
-  othersCanAddBeforeSlip,
   projectedShare,
   SHARE_TARGETS,
   stepAmount,
@@ -104,11 +103,28 @@ describe("openingQuotedCents", () => {
     expect(openingQuotedCents(0, 600, 0)).toBe(MIN_SPEND_CENTS);
   });
 
+  /*
+   * The founding square: an empty wall has no ceiling, so the cap price is the
+   * minimum itself and `usual === cap`. That read as "the minimum already hits
+   * the cap, size is sold out" and opened the field at $2, on the one wall where
+   * $1 buys the entire thing — and on the first screen anyone sees, under a page
+   * that promises "Spend from $1". The equality is left alone everywhere else:
+   * on a wall with money, opening at a cap price of $10 really does look like
+   * leftover change, which the test below pins.
+   */
+  it("opens at the minimum on an empty wall, as the pages promise", () => {
+    expect(openingQuotedCents(0, MIN_SPEND_CENTS, 0)).toBe(MIN_SPEND_CENTS);
+  });
+
   it("opens on a hold sized to live spend when $10 already hits the cap", () => {
     expect(openingQuotedCents(4, 600, 1_095)).toBe(2_000);
     expect(openingQuotedCents(4, 600, 5_000)).toBe(10_000);
     // The sandbox wall (~$117 live): twice is ~$234 → $250, not $1,000.
     expect(openingQuotedCents(5, 600, 11_691)).toBe(25_000);
+  });
+
+  it("does not open on leftover cap change when $10 is exactly the cap price", () => {
+    expect(openingQuotedCents(5, 1_000, 11_691)).toBe(25_000);
   });
 });
 
@@ -269,24 +285,5 @@ describe("the ceiling a buyer is quoted", () => {
         Number.POSITIVE_INFINITY,
       );
     }
-  });
-});
-
-describe("othersCanAddBeforeSlip", () => {
-  it("is how much others can pay before a capped square drops under the cap", () => {
-    // $100 into a ~$10.95 wall at a 32% cap holds until the wall is $100/0.32.
-    const yours = 10_000;
-    const wallAfter = 1_095 + 10_000;
-    expect(othersCanAddBeforeSlip(yours, wallAfter, 0.32)).toBe(20_100);
-  });
-
-  it("is only a couple of dollars when the spend just meets the cap", () => {
-    const yours = 600;
-    const wallAfter = 1_095 + 600;
-    expect(othersCanAddBeforeSlip(yours, wallAfter, 0.32)).toBe(100);
-  });
-
-  it("is nothing on a lone square, where the ceiling is the whole wall", () => {
-    expect(othersCanAddBeforeSlip(10_000, 10_000, 1)).toBe(0);
   });
 });

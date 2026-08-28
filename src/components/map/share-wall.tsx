@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { claimedAtom, dilutedAtom } from "@/context/wall-atoms";
 import { WALL_QUERY_KEY } from "@/lib/utils/wall-query";
 import {
-  claimShareCopy,
-  dilutionShareCopy,
+  claimPostText,
+  dilutionPostText,
   sharePageUrl,
   tweetIntent,
   wallShareCopy,
@@ -31,10 +31,12 @@ function useSharePayload() {
     const pageUrl = claimed?.purchaseId
       ? sharePageUrl(origin, squaresLive, { purchaseId: claimed.purchaseId })
       : sharePageUrl(origin, squaresLive, { at: Date.now() });
+    // Post bodies name no domain: see `claimPostText`. The handle travels on
+    // the card instead, where it cannot be turned into a competing link.
     const text = diluted
-      ? dilutionShareCopy(diluted.handle, diluted.before, diluted.after).text
+      ? dilutionPostText(diluted.before, diluted.after)
       : claimed
-        ? claimShareCopy(claimed.handle, claimed.share).text
+        ? claimPostText(claimed.share)
         : wallShareCopy(state.counters).text;
     return { text, pageUrl };
   };

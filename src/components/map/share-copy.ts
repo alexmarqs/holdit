@@ -52,6 +52,26 @@ export function dilutionShareCopy(
   };
 }
 
+/*
+ * The post body, as opposed to the caption on the card.
+ *
+ * A bare domain is a link on X, and both halves of "figma.com just took 8.4% of
+ * holdit.lol" are bare domains. A post carrying that caption holds three links,
+ * and the platform rather than us decides which to unfurl; with a handle of
+ * "x.com" that is a coin flip on X's own domain. Naming no domain leaves exactly
+ * one URL in the post, so exactly one card can be built from it.
+ *
+ * Nothing is lost. The handle is on the picture and in the card's `og:title`,
+ * where plain text stays plain, and the link itself shows the domain.
+ */
+export function claimPostText(share: number): string {
+  return `Just took ${formatShare(share)} of the wall`;
+}
+
+export function dilutionPostText(before: number, after: number): string {
+  return `Just went ${formatShare(before)} → ${formatShare(after)} on the wall`;
+}
+
 /** Prefills X's composer. The card image is the OG unfurl of `pageUrl`. */
 export function tweetIntent(text: string, pageUrl: string): string {
   return `https://x.com/intent/post?text=${encodeURIComponent(`${text}\n${pageUrl}`)}`;

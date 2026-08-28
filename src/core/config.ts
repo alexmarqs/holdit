@@ -25,9 +25,6 @@ export const MS_PER_DAY = 86_400_000;
  */
 export const HALF_LIFE_DAYS = 14;
 
-/** Spend above the display cap fades at half rate: twice the half-life. */
-export const OVERFLOW_HALF_LIFE_MULTIPLIER = 2;
-
 /** No square renders larger than this share — once there are enough squares for it to mean anything. */
 export const MAX_SHARE = 0.1;
 

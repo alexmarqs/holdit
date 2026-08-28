@@ -40,10 +40,46 @@ describe("printCardHtml", () => {
 });
 
 describe("printPurchaseCardHtml", () => {
+  const id = "11111111-1111-4111-8111-111111111111";
+
   it("points the card at that purchase, not a 30s time bucket", () => {
-    const id = "11111111-1111-4111-8111-111111111111";
     const paid = printPurchaseCardHtml(id);
     expect(paid).toContain(`<meta property="og:image" content="${siteUrl}/api/og?p=${id}">`);
     expect(paid).toContain(`<meta property="og:url" content="${siteUrl}/print/p/${id}">`);
+  });
+
+  /*
+   * The image on a post-pay card names the square and its share; the text beside
+   * it used to be the marketing line, so the most personal thing anyone shares
+   * unfurled anonymously. X and Slack print that title under the image, which
+   * made a buyer's own post read as an advert for the site rather than a claim.
+   */
+  it("names the square and its share when the purchase is known", () => {
+    const paid = printPurchaseCardHtml(id, { handle: "anthropic.com", share: 0.2667 });
+    expect(paid).toContain(
+      `<meta property="og:title" content="anthropic.com just took 26.67% of holdit.lol">`,
+    );
+    expect(paid).toContain(
+      `<meta name="twitter:title" content="anthropic.com just took 26.67% of holdit.lol">`,
+    );
+    expect(paid).toContain(`26.67% of holdit.lol`);
+  });
+
+  it("describes the picture rather than repeating the claim", () => {
+    const paid = printPurchaseCardHtml(id, { handle: "anthropic.com", share: 0.2667 });
+    expect(paid).toContain(
+      `<meta property="og:image:alt" content="The holdit.lol wall, with anthropic.com holding 26.67%">`,
+    );
+  });
+
+  it("falls back to the site's own line when the purchase cannot be read", () => {
+    const paid = printPurchaseCardHtml(id);
+    expect(paid).toContain(`<meta property="og:title" content="holdit.lol — hold your square`);
+  });
+
+  it("escapes a handle into the attribute", () => {
+    const paid = printPurchaseCardHtml(id, { handle: 'a"b.com', share: 0.1 });
+    expect(paid).not.toContain('content="a"b.com');
+    expect(paid).toContain("a&quot;b.com");
   });
 });

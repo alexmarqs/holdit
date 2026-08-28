@@ -23,7 +23,6 @@ export interface WallSpec {
   now: number;
   visitorsSinceLaunch?: number;
   onlineNow?: number | null;
-  mapArea?: number;
 }
 
 export function wallInput(squares: readonly SquareSpec[], spec: WallSpec): MapInput {
@@ -81,7 +80,6 @@ export function wallInput(squares: readonly SquareSpec[], spec: WallSpec): MapIn
     activity,
     visitorsSinceLaunch: spec.visitorsSinceLaunch ?? 0,
     onlineNow: spec.onlineNow ?? null,
-    mapArea: spec.mapArea,
     now: spec.now,
   };
 }

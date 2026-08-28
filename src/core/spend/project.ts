@@ -4,17 +4,6 @@ import { computeShares, type ShareResult } from "./share";
 
 /**
  * What a spend actually buys, computed the way the wall computes it.
- *
- * The panel used to quote `spend / total` clamped to the ceiling. That is a
- * closed form, and the wall is not: `computeShares` caps the biggest squares
- * and water-fills their overflow across everyone else, which lifts every
- * uncapped square a little. So the quote came in *under* what was delivered —
- * safe, but a buyer who was promised 2.5% and handed 2.6% has still been shown
- * two different numbers for the same purchase, seconds apart.
- *
- * There is no closed form for the water-fill, and there does not need to be:
- * the caller already holds every standing, so the real function can simply be
- * run with the purchase added.
  */
 export interface ProjectionRow {
   id: string;
@@ -23,19 +12,30 @@ export interface ProjectionRow {
 
 const NEW_SQUARE = "__projected__";
 
+function rowsAfterSpend(
+  standings: readonly ProjectionRow[],
+  amountCents: number,
+  holderId?: string,
+): { rows: ProjectionRow[]; buyerId: string } {
+  const rows = standings.map((row) => ({ id: row.id, liveCents: row.liveCents }));
+  const existing = holderId === undefined ? undefined : rows.find((row) => row.id === holderId);
+
+  if (existing) {
+    existing.liveCents += amountCents;
+    return { rows, buyerId: existing.id };
+  }
+  rows.push({ id: NEW_SQUARE, liveCents: amountCents });
+  return { rows, buyerId: NEW_SQUARE };
+}
+
 /** The wall after this spend, so the quote is the same function the tiles use. */
 export function projectSpend(
   standings: readonly ProjectionRow[],
   amountCents: number,
   holderId?: string,
 ): { standings: ShareResult[]; buyerId: string } {
-  const rows = standings.map((row) => ({ id: row.id, liveCents: row.liveCents }));
-  const existing = holderId === undefined ? undefined : rows.find((row) => row.id === holderId);
-
-  if (existing) existing.liveCents += amountCents;
-  else rows.push({ id: NEW_SQUARE, liveCents: amountCents });
-
-  return { standings: computeShares(rows), buyerId: existing?.id ?? NEW_SQUARE };
+  const { rows, buyerId } = rowsAfterSpend(standings, amountCents, holderId);
+  return { standings: computeShares(rows), buyerId };
 }
 
 export function shareAfterSpend(

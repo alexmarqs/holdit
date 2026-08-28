@@ -3,8 +3,9 @@
 **A wall of everyone paying for attention, sized by live spend.**
 
 Your share follows your live spend against everyone else's. New spend takes a
-slice sized to what they paid. Displayed spend is half every 14 days; headroom
-above the cap persists twice as long.
+slice sized to what they paid. Displayed spend is half every 14 days — one rate
+for every dollar. Extra spend past the cap does not fade slower; it holds the
+cap as others buy.
 
 No auction. Nobody outbid. Nobody pushed off. From $1.
 
@@ -98,19 +99,16 @@ in by accident.
 
 ## The parts worth knowing
 
-**Decay with overflow persistence.** Live spend is half every 14 days if nobody buys,
-while spend above the display cap fades at half rate. Most positions fade together;
-capped positions can shift slowly because their headroom lasts longer. This is
-implemented statelessly in two passes: sum live spend at the normal half-life to get
-the wall total, then re-price each purchase as
-`min(p, cap)·0.5^(dt/H) + max(0, p−cap)·0.5^(dt/2H)`. The portion that could never have
-been displayed persists twice as long — big money buys persistence, not dominance.
+**Decay.** Live spend is half every 14 days if nobody buys. One rate for every
+dollar, so shares stay still until someone else pays. Extra spend past the cap
+does not fade slower; it holds the cap as others buy.
 
-**Share.** Raw share, then the cap water-filled with its overflow redistributed across
-everyone still under it, then the minimum-size floor funded by those with headroom.
-The ceiling is `ceilingFor(n)` in `src/core/config.ts`: the whole wall at one square,
-never above 60% on a young wall, 10% from 16 squares. Extra spend past the cap does
-not grow the tile; it holds the cap as others buy.
+**Share.** Raw share, then the cap water-filled with its overflow redistributed
+across everyone still under it. The ceiling is `ceilingFor(n)` in
+`src/core/config.ts`: the whole wall at one square, never above 60% on a young
+wall, 10% from 16 squares. Extra spend past the cap does not grow the tile; it
+holds the cap as others buy. The minimum-tile floor is applied to *area* at
+layout time (`placeWall`), not to the numeric share.
 
 **No sockets, no in-process wall cache.** The page is ISR (`revalidate = 30`) and
 `revalidatePath("/")` on purchase. Refresh and the post-checkout wait hit `/api/state` (`s-maxage=10`;
