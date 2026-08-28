@@ -6,6 +6,7 @@ import { useStore } from "jotai";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { claimedAtom, dilutedAtom } from "@/context/wall-atoms";
+import { useWall } from "@/hooks/use-wall";
 import { WALL_QUERY_KEY } from "@/lib/utils/wall-query";
 import {
   claimPostText,
@@ -43,9 +44,12 @@ function useSharePayload() {
 }
 
 export function ShareWallButton({ compact = false }: { compact?: boolean }) {
+  const { counters } = useWall();
   const payload = useSharePayload();
+  const empty = counters.squaresLive === 0;
 
   async function postOnX() {
+    if (empty) return;
     const next = payload();
     if (!next) return;
     const href = tweetIntent(next.text, next.pageUrl);
@@ -58,8 +62,10 @@ export function ShareWallButton({ compact = false }: { compact?: boolean }) {
       variant="outline"
       size={compact ? "xs" : "sm"}
       className={compact ? "h-8 w-8 px-0 lg:h-6 lg:w-auto lg:px-2" : undefined}
+      disabled={empty}
       onClick={() => void postOnX()}
       aria-label="Post on X"
+      title="Post on X"
     >
       <XMark />
       <span className={compact ? "hidden lg:inline" : "hidden sm:inline"}>Post on X</span>

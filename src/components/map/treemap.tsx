@@ -39,7 +39,7 @@ export function Treemap() {
   const wantPreview = useAtomValue(mapPreviewOnAtom);
   const [hover, setHover] = useState<HoverTarget | null>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setFullscreen] = useState(false);
 
   const shell = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
@@ -58,7 +58,7 @@ export function Treemap() {
   }, []);
 
   useEffect(() => {
-    const onChange = () => setIsFullscreen(document.fullscreenElement === shell.current);
+    const onChange = () => setFullscreen(document.fullscreenElement === shell.current);
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
@@ -102,8 +102,6 @@ export function Treemap() {
   }, [place]);
 
   const toggleFullscreen = useCallback(() => {
-    // Both calls reject when the gesture is untrusted or the API is blocked; the
-    // map is perfectly usable inline, so a failure is not worth surfacing.
     if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
     else void shell.current?.requestFullscreen().catch(() => {});
   }, []);
@@ -124,6 +122,7 @@ export function Treemap() {
    * holder at 2% both their real square and a second one at 10% — twelve
    * percent of themselves, and a wall that redistributed twice over.
    */
+  const empty = state.counters.squaresLive === 0;
   const toppingUp =
     previewHandle === null
       ? null
@@ -132,6 +131,7 @@ export function Treemap() {
     wantPreview,
     amountCents: preview,
     fullscreen: isFullscreen,
+    empty,
   });
 
   const previewShare =
@@ -191,7 +191,6 @@ export function Treemap() {
    * point of it, so `previewContent` shrinks that line rather than dropping it —
    * the flat pixel gates this replaced drew an empty box at the default amount.
    */
-  const empty = state.counters.squaresLive === 0;
   const previewShareLabel = formatShare(previewShare);
   const previewCaption =
     toppingUp === null && previewHandle ? previewHandle : empty ? "Yours" : "your square";
@@ -218,14 +217,14 @@ export function Treemap() {
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 px-3 py-1.5 md:px-4">
         <MapSearch />
         <div className="ml-auto flex shrink-0 items-center gap-x-2">
-          {isFullscreen ? null : <PreviewSwitch />}
+          {empty || isFullscreen ? null : <PreviewSwitch />}
           {isFullscreen ? <RefreshButton /> : null}
           <DownloadWallButton />
           <ShareWallButton compact />
           <Button
             variant="outline"
             size="icon"
-            className="size-8"
+            className="max-md:hidden"
             onClick={toggleFullscreen}
             aria-label={isFullscreen ? "Exit fullscreen" : "View fullscreen"}
           >
