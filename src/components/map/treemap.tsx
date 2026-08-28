@@ -235,7 +235,7 @@ export function Treemap() {
 
       <div
         ref={frame}
-        className={cn("map-canvas relative w-full bg-map-grout", "min-h-50 flex-1 sm:min-h-70")}
+        className="map-canvas relative min-h-0 w-full flex-1 bg-map-grout"
       >
         <SearchedTileLayer
           tiles={tiles}

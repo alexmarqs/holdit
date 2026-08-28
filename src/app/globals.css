@@ -294,6 +294,8 @@
 
 .map-canvas {
   overflow: clip;
+  /* Outline sits on the padding edge; without this Safari clips the bottom dash. */
+  overflow-clip-margin: 2px;
 }
 
 /* Outer glow has to paint onto the grout. Clip except while a square is
@@ -388,7 +390,8 @@
     var(--map-base) 6px 13px
   );
   outline: 2px dashed var(--primary);
-  outline-offset: -2px;
+  /* Further inside than the 2px stroke so overflow:clip cannot eat the bottom. */
+  outline-offset: -3px;
   transition:
     transform 0.3s ease-out,
     width 0.3s ease-out,

@@ -17,7 +17,7 @@ No auction. Nobody outbid. Nobody pushed off. From $1.
 pnpm install
 pnpm db:local                 # Postgres on :55432
 cp .env.example .env.local
-pnpm db:migrate && pnpm db:seed
+pnpm db:migrate && pnpm db:seed   # first run, or after wiping the volume
 pnpm dev
 ```
 
@@ -27,6 +27,10 @@ than TypeScript the app could import. It puts the founding squares up, and the b
 map-resize loop works end to end from there. The database is required: there is no in-memory fallback, because a
 deployment that lost its `DATABASE_URL` would otherwise present a demo wall as a real
 one — a failure that looks exactly like success.
+
+Postgres data lives in a Docker volume, so `pnpm db:local` followed by `pnpm dev` is
+enough on later sessions. `pnpm db:migrate && pnpm db:seed` is only needed on a fresh
+volume (first checkout, or after `docker compose -f scripts/docker-compose.yaml down -v`).
 
 ```bash
 pnpm test              # unit tests; no database

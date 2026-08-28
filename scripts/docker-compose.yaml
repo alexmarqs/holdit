@@ -1,8 +1,9 @@
 # The local database, for `pnpm dev` and for the suites that talk to Postgres.
 #
 # There is no second backend any more: the app reads its wall from Postgres or
-# it refuses to start. `pnpm db:local` is the first step of a checkout, followed
-# by `pnpm db:migrate` and `pnpm db:seed`.
+# it refuses to start. `pnpm db:local` is the first step of a checkout. On a
+# fresh volume, follow with `pnpm db:migrate` and `pnpm db:seed`. After that
+# the named volume keeps the wall across container restarts.
 
 # Compose names the project after the directory holding this file, which is
 # `scripts/` now — pinned so the containers keep the name they had when this
@@ -19,13 +20,10 @@ services:
     ports:
       # Not 5432: a machine with its own Postgres should not have to stop it.
       - "55432:5432"
-    # The data is disposable — migrations and `db:seed` rebuild it — and memory
-    # is markedly faster for the test suite than a disk-backed volume.
-    tmpfs:
-      - /var/lib/postgresql/data
     volumes:
-      # Creates the separate `holdit_test` database. Runs on every start, since
-      # the tmpfs data directory is always fresh.
+      - postgres_data:/var/lib/postgresql/data
+      # Creates the separate `holdit_test` database. Runs only when the volume is
+      # empty (first start, or after `docker compose down -v`).
       - ./init-test-db.sql:/docker-entrypoint-initdb.d/00-test-db.sql:ro
       # The founding wall. Not an initdb script: the tables only exist once
       # `pnpm db:migrate` has run, so `pnpm db:seed` applies this afterwards.
@@ -35,3 +33,6 @@ services:
       interval: 2s
       timeout: 3s
       retries: 15
+
+volumes:
+  postgres_data:

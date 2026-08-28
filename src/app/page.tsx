@@ -22,11 +22,14 @@ export default async function MapPage() {
         holdit.lol — a wall that forgets: new spend takes a slice sized to what they paid
       </h1>
 
-      <section className="flex h-[calc(100svh-var(--header-h))] min-h-135 flex-col">
+      <section className="flex min-h-[max(33.75rem,calc(100svh-var(--header-h)))] flex-col">
         <AwaitingSquare />
-        <div id="claim" className="flex min-h-0 flex-1 flex-col">
+        <div id="claim" className="flex flex-1 flex-col">
           <BuyPanel />
-          <div id="map" className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div
+            id="map"
+            className="flex min-h-50 min-w-0 flex-1 flex-col sm:min-h-70"
+          >
             <Treemap />
           </div>
         </div>
