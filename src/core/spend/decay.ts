@@ -1,4 +1,5 @@
-import { HALF_LIFE_DAYS, MS_PER_DAY, OVERFLOW_HALF_LIFE_MULTIPLIER } from "../config";
+import { Big } from "../big";
+import { HALF_LIFE_DAYS, MS_PER_DAY } from "../config";
 import type { Purchase } from "../types";
 
 type Faded = Pick<Purchase, "amountCents" | "createdAt" | "refundedAt">;
@@ -30,45 +31,22 @@ export function decayFactor(ageMs: number, halfLifeDays: number = HALF_LIFE_DAYS
  * When live spend is half of what it is at `now`, if nobody buys.
  *
  * Same half-life as every purchase, so a sum of them halves on this instant
- * too — overflow (slower fade) can leave a little more than half, which is
- * why the strip says "if nobody buys" rather than promising the dollar.
+ * too.
  */
 export function halvesAt(now: number): number {
   return now + HALF_LIFE_DAYS * MS_PER_DAY;
 }
 
-/**
- * How much of one purchase still counts towards area.
- *
- * `capCents` is the largest amount the display cap could ever render. Anything
- * above that line was never going to be shown, so it fades at half rate instead
- * of being wasted — persistence rather than dominance. Pass Infinity to price a
- * purchase without the overflow rule, which is how the first pass finds the map
- * total.
- */
-export function liveCentsForPurchase(
-  purchase: Faded,
-  now: number,
-  capCents = Number.POSITIVE_INFINITY,
-): number {
+/** How much of one purchase still counts towards area. */
+export function liveCentsForPurchase(purchase: Faded, now: number): number {
   if (purchase.refundedAt !== null) return 0;
-  const age = now - purchase.createdAt;
-  const withinCap = Math.min(purchase.amountCents, capCents);
-  const overflow = Math.max(0, purchase.amountCents - capCents);
-  return (
-    withinCap * decayFactor(age) +
-    overflow * decayFactor(age, HALF_LIFE_DAYS * OVERFLOW_HALF_LIFE_MULTIPLIER)
-  );
+  return new Big(purchase.amountCents).times(decayFactor(now - purchase.createdAt)).toNumber();
 }
 
-export function liveCentsForHolder(
-  purchases: readonly Faded[],
-  now: number,
-  capCents = Number.POSITIVE_INFINITY,
-): number {
-  let total = 0;
-  for (const p of purchases) total += liveCentsForPurchase(p, now, capCents);
-  return total;
+export function liveCentsForHolder(purchases: readonly Faded[], now: number): number {
+  let total = new Big(0);
+  for (const p of purchases) total = total.plus(liveCentsForPurchase(p, now));
+  return total.toNumber();
 }
 
 /** Spend never fades in the record. All-time totals are permanent. */

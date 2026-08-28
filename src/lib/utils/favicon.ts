@@ -41,6 +41,30 @@ export function toFaviconProxyUrl(handle: string): string {
   return `/api/favicons/${encodeURIComponent(faviconDomain(handle))}`;
 }
 
+/**
+ * Google's miss is a 16×16 globe PNG, even when the request asked for 64 or
+ * 128. Live `<img>` will still paint a 404 body; download and print must not
+ * treat those bytes as a real mark either.
+ */
+export const FAVICON_PLACEHOLDER_PX = 16;
+
+const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] as const;
+
+function pngWidth(bytes: Uint8Array): number | null {
+  if (bytes.byteLength < 24) return null;
+  for (let i = 0; i < 8; i++) {
+    if (bytes[i] !== PNG_MAGIC[i]) return null;
+  }
+  return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(16);
+}
+
+/** A decoded width, or PNG bytes, that is Google's placeholder rather than a mark. */
+export function isFaviconPlaceholder(source: Uint8Array | number): boolean {
+  const width = typeof source === "number" ? source : pngWidth(source);
+  if (width === null) return false;
+  return width <= FAVICON_PLACEHOLDER_PX;
+}
+
 export function isFaviconDomain(value: string): boolean {
   if (value.length > 253 || !DOMAIN_RE.test(value)) return false;
   /*

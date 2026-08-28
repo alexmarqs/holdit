@@ -2,6 +2,7 @@
 
 import { MIN_SHOWN_CLICKS, MIN_SHOWN_VISITORS } from "@holdit/core";
 import type { ReactNode } from "react";
+import { LiveWord } from "@/components/live-word";
 import { useWall } from "@/hooks/use-wall";
 import { formatInt, formatMoney } from "@/lib/utils/format";
 
@@ -34,7 +35,7 @@ export function StatsPill() {
     node: (
       <span>
         <span className="num font-medium text-foreground">{formatMoney(counters.liveCents)}</span>{" "}
-        live
+        <LiveWord />
       </span>
     ),
   });

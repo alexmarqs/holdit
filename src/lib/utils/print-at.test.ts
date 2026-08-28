@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePrintAt } from "./print-at";
+import { parsePrintAt, printWallAt } from "./print-at";
 
 const NOW = Date.UTC(2026, 7, 22, 11, 37, 17);
 const BUCKET = Date.UTC(2026, 7, 22, 11, 37);
@@ -53,5 +53,18 @@ describe("parsePrintAt", () => {
   // after the first parse, so parsing it again has to be a no-op.
   it("is idempotent, so a bucketed stamp survives a second parse", () => {
     expect(parsePrintAt(String(BUCKET), NOW)).toBe(BUCKET);
+  });
+});
+
+describe("printWallAt", () => {
+  it("does not reconstruct earlier than a square that just landed", () => {
+    const bought = PAST + 15_000;
+    const bucket = parsePrintAt(String(bought), bought);
+    expect(bucket).toBe(PAST);
+    expect(printWallAt(bucket!, bought)).toBeGreaterThanOrEqual(bought);
+  });
+
+  it("still freezes a historical print at the end of its bucket, not today", () => {
+    expect(printWallAt(PAST, NOW)).toBe(PAST + 30_000 - 1);
   });
 });

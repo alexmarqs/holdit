@@ -1,33 +1,42 @@
 "use client";
 
-import { useAtomValue } from "jotai";
+import type { MapState } from "@holdit/core";
+import { useQueryClient } from "@tanstack/react-query";
+import { useStore } from "jotai";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { claimedAtom, dilutedAtom } from "@/context/wall-atoms";
-import { useWall } from "@/hooks/use-wall";
+import { WALL_QUERY_KEY } from "@/lib/utils/wall-query";
 import {
-  claimShareCopy,
-  dilutionShareCopy,
+  claimPostText,
+  dilutionPostText,
+  sharePageUrl,
   tweetIntent,
   wallShareCopy,
-  wallShareUrl,
 } from "./share-copy";
 
 function useSharePayload() {
-  const state = useWall();
-  const claimed = useAtomValue(claimedAtom);
-  const diluted = useAtomValue(dilutedAtom);
+  const store = useStore();
+  const queryClient = useQueryClient();
 
-  return async () => {
-    const pageUrl = wallShareUrl(
-      window.location.origin,
-      state.generatedAt,
-      state.counters.squaresLive,
-    );
+  return () => {
+    const state = queryClient.getQueryData<MapState>(WALL_QUERY_KEY);
+    if (state === undefined) return null;
+    const claimed = store.get(claimedAtom);
+    const diluted = store.get(dilutedAtom);
+    const origin = window.location.origin;
+    const squaresLive = state.counters.squaresLive;
+    // After checkout the banner must unfurl *this* purchase. Date.now() floors
+    // to a 30s OG bucket that may already be cached without the new square.
+    const pageUrl = claimed?.purchaseId
+      ? sharePageUrl(origin, squaresLive, { purchaseId: claimed.purchaseId })
+      : sharePageUrl(origin, squaresLive, { at: Date.now() });
+    // Post bodies name no domain: see `claimPostText`. The handle travels on
+    // the card instead, where it cannot be turned into a competing link.
     const text = diluted
-      ? dilutionShareCopy(diluted.handle, diluted.before, diluted.after).text
+      ? dilutionPostText(diluted.before, diluted.after)
       : claimed
-        ? claimShareCopy(claimed.handle, claimed.share).text
+        ? claimPostText(claimed.share)
         : wallShareCopy(state.counters).text;
     return { text, pageUrl };
   };
@@ -37,8 +46,9 @@ export function ShareWallButton({ compact = false }: { compact?: boolean }) {
   const payload = useSharePayload();
 
   async function postOnX() {
-    const { text, pageUrl } = await payload();
-    const href = tweetIntent(text, pageUrl);
+    const next = payload();
+    if (!next) return;
+    const href = tweetIntent(next.text, next.pageUrl);
     const popup = window.open(href, "_blank", "noopener,noreferrer");
     if (popup === null) window.location.assign(href);
   }
@@ -62,8 +72,9 @@ export function CopyShareButton() {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
-    const { text, pageUrl } = await payload();
-    const line = `${text}\n${pageUrl}`;
+    const next = payload();
+    if (!next) return;
+    const line = `${next.text}\n${next.pageUrl}`;
     try {
       await navigator.clipboard.writeText(line);
     } catch {

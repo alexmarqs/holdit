@@ -35,11 +35,11 @@
   --input: rgb(20 32 31 / 0.14);
   --ring: #0b9e96;
 
-  --map-base: #e4eeec;
-  --map-hot: #35e0d0;
-  --map-mix-max: 88%;
+  --map-base: #eef5f4;
+  --map-hot: #6aeee4;
+  --map-mix-max: 72%;
   --map-ink: #14201f;
-  --map-grout: #c9d6d3;
+  --map-grout: #c2d2ce;
 
   --grid-line: rgb(11 158 150 / 0.09);
 
@@ -136,10 +136,10 @@
     background-color: var(--background);
     background-image:
       radial-gradient(
-        ellipse 78% 34% at 50% 168px,
+        ellipse 62% 32% at 50% 168px,
         color-mix(in srgb, var(--primary) 5%, var(--background)) 0%,
-        var(--background) 42%,
-        transparent 74%
+        var(--background) 38%,
+        transparent 70%
       ),
       linear-gradient(var(--grid-line) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);

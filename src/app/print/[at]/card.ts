@@ -1,5 +1,7 @@
+import { claimShareCopy } from "@/components/map/share-copy";
 import { siteUrl } from "@/lib/utils/env";
-import { WALL_CARD_SIZE } from "../../../components/map/wall-card";
+import { formatShare } from "@/lib/utils/format";
+import { OG_SIZE } from "../../../components/map/og-fonts";
 
 const TITLE = "holdit.lol — hold your square of the wall";
 const DESCRIPTION = "Everyone paying for attention, sized by how much they're paying right now.";
@@ -30,31 +32,66 @@ function attr(value: string): string {
  *
  * Absolute URLs throughout: an unfurler will not resolve a relative `og:image`.
  */
-export function printCardHtml(at: number): string {
-  const image = `${siteUrl}/api/og?at=${at}`;
+/**
+ * What a post-pay card says beside its picture.
+ *
+ * The image already names the square and its share. The text did not, so the
+ * most personal link on the site unfurled as an advert for the site — and X and
+ * Slack print the title *under* the image, where the buyer's own claim belongs.
+ * The wording is `claimShareCopy`, the same sentence the Post-on-X button uses,
+ * so a share reads identically wherever it is composed.
+ */
+function claimCopy(claim: PrintClaim): { title: string; description: string; imageAlt: string } {
+  const share = formatShare(claim.share);
+  return {
+    title: claimShareCopy(claim.handle, claim.share).text,
+    description: `${claim.handle} holds ${share} of the wall. Live spend fades; the picture is this moment.`,
+    imageAlt: `The holdit.lol wall, with ${claim.handle} holding ${share}`,
+  };
+}
+
+/** The square a post-pay card belongs to, when the purchase could be read. */
+export interface PrintClaim {
+  handle: string;
+  share: number;
+}
+
+function printCardDocument(canonicalPath: string, imageUrl: string, claim?: PrintClaim): string {
+  const copy = claim ? claimCopy(claim) : null;
+  const title = copy?.title ?? TITLE;
+  const description = copy?.description ?? DESCRIPTION;
+  const imageAlt = copy?.imageAlt ?? IMAGE_ALT;
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="refresh" content="0;url=/">
-<title>${attr(TITLE)}</title>
+<title>${attr(title)}</title>
 <meta name="robots" content="noindex, follow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="holdit.lol">
-<meta property="og:url" content="${siteUrl}/print/${at}">
-<meta property="og:title" content="${attr(TITLE)}">
-<meta property="og:description" content="${attr(DESCRIPTION)}">
-<meta property="og:image" content="${image}">
-<meta property="og:image:width" content="${WALL_CARD_SIZE.width}">
-<meta property="og:image:height" content="${WALL_CARD_SIZE.height}">
-<meta property="og:image:alt" content="${attr(IMAGE_ALT)}">
+<meta property="og:url" content="${attr(`${siteUrl}${canonicalPath}`)}">
+<meta property="og:title" content="${attr(title)}">
+<meta property="og:description" content="${attr(description)}">
+<meta property="og:image" content="${attr(imageUrl)}">
+<meta property="og:image:width" content="${OG_SIZE.width}">
+<meta property="og:image:height" content="${OG_SIZE.height}">
+<meta property="og:image:alt" content="${attr(imageAlt)}">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="holdit.lol">
-<meta name="twitter:description" content="${attr(DESCRIPTION)}">
-<meta name="twitter:image" content="${image}">
-<meta name="twitter:image:alt" content="${attr(IMAGE_ALT)}">
+<meta name="twitter:title" content="${attr(title)}">
+<meta name="twitter:description" content="${attr(description)}">
+<meta name="twitter:image" content="${attr(imageUrl)}">
+<meta name="twitter:image:alt" content="${attr(imageAlt)}">
 </head>
 <body><a href="/">holdit.lol — the live wall</a></body>
 </html>
 `;
+}
+
+export function printCardHtml(at: number): string {
+  return printCardDocument(`/print/${at}`, `${siteUrl}/api/og?at=${at}`);
+}
+
+export function printPurchaseCardHtml(purchaseId: string, claim?: PrintClaim): string {
+  return printCardDocument(`/print/p/${purchaseId}`, `${siteUrl}/api/og?p=${purchaseId}`, claim);
 }

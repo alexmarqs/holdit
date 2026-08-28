@@ -3,8 +3,9 @@
 **A wall of everyone paying for attention, sized by live spend.**
 
 Your share follows your live spend against everyone else's. New spend takes a
-slice sized to what they paid. Displayed spend is half every 14 days; headroom
-above the cap persists twice as long.
+slice sized to what they paid. Displayed spend is half every 14 days — one rate
+for every dollar. Extra spend past the cap does not fade slower; it holds the
+cap as others buy.
 
 No auction. Nobody outbid. Nobody pushed off. From $1.
 
@@ -29,7 +30,7 @@ one — a failure that looks exactly like success.
 
 ```bash
 pnpm test              # unit tests; no database
-pnpm test:integration  # needs the container: four suites against real Postgres
+pnpm test:integration  # needs the container: five suites against real Postgres
 pnpm typecheck
 pnpm lint              # biome; `pnpm lint:fix` writes fixes
 pnpm build             # prerenders the wall, so it needs the database too
@@ -50,6 +51,11 @@ Run `pnpm stripe:listen` alongside `pnpm dev`, or nothing appears on the wall: t
 is created by the `checkout.session.completed` webhook, not by the redirect back. Put the
 secret it prints in `STRIPE_WEBHOOK_SECRET` — not the one on the Dashboard's endpoints
 page, which signs a different endpoint and fails every check here.
+
+A database failure returns `500` so Stripe retries the same Checkout Session. Purchase
+writes are idempotent on that session ID, so replay the failed webhook before intervening.
+If a paid order still cannot be fulfilled after recovery, reconcile it from the logged
+session ID and refund it manually.
 
 ## Going live
 
@@ -93,22 +99,19 @@ in by accident.
 
 ## The parts worth knowing
 
-**Decay with overflow persistence.** Live spend is half every 14 days if nobody buys,
-while spend above the display cap fades at half rate. Most positions fade together;
-capped positions can shift slowly because their headroom lasts longer. This is
-implemented statelessly in two passes: sum live spend at the normal half-life to get
-the wall total, then re-price each purchase as
-`min(p, cap)·0.5^(dt/H) + max(0, p−cap)·0.5^(dt/2H)`. The portion that could never have
-been displayed persists twice as long — big money buys persistence, not dominance.
+**Decay.** Live spend is half every 14 days if nobody buys. One rate for every
+dollar, so shares stay still until someone else pays. Extra spend past the cap
+does not fade slower; it holds the cap as others buy.
 
-**Share.** Raw share, then the cap water-filled with its overflow redistributed across
-everyone still under it, then the minimum-size floor funded by those with headroom.
-The ceiling is `ceilingFor(n)` in `src/core/config.ts`: the whole wall at one square,
-never above 60% on a young wall, 10% from 16 squares. Extra spend past the cap does
-not grow the tile.
+**Share.** Raw share, then the cap water-filled with its overflow redistributed
+across everyone still under it. The ceiling is `ceilingFor(n)` in
+`src/core/config.ts`: the whole wall at one square, never above 60% on a young
+wall, 10% from 16 squares. Extra spend past the cap does not grow the tile; it
+holds the cap as others buy. The minimum-tile floor is applied to *area* at
+layout time (`placeWall`), not to the numeric share.
 
 **No sockets, no in-process wall cache.** The page is ISR (`revalidate = 30`) and
-`revalidatePath("/")` on purchase. Refresh and chase hit `/api/state` (`s-maxage=10`;
+`revalidatePath("/")` on purchase. Refresh and the post-checkout wait hit `/api/state` (`s-maxage=10`;
 `?fresh=` is `no-store`). “Online” is an approximate 15-minute visit window from the
 wall snapshot; the hydrated client shows at least the person viewing it. `getMapState`
 only collapses in-flight loads on one instance — live requests share one query; a
@@ -116,10 +119,20 @@ print stamp is keyed by `now` so it cannot steal that query. Nothing is kept aft
 settles, so two instances cannot disagree about the same wall. TTLs live in
 `src/lib/http-cache.ts`.
 
+**Shares are Big.js.** Stripe and Postgres store integer cents. Decay is
+`0.5^(age/half-life)` — Big.pow is integer-only, so that factor stays IEEE.
+Every ratio after that (`1.6/n`, live/total, water-fill) is
+[big.js](https://github.com/mikemcl/big.js). Tile labels never round a measured
+share up; they may sum to 99.99% the way other treemaps and dashboards do.
+
 **Prints are immutable.** `/print/{at}` tags and `/api/og?at=` images are one URL,
-one body, `immutable` for a year. A future or junk stamp is `no-store` so the CDN
+one body, `immutable` for a year. A post-pay share from the checkout banner uses
+`/print/p/{purchaseId}` and `/api/og?p=` so the card is that buy — named and
+ringed on the wall — not a 30-second time bucket that may already be cached. A future or junk stamp is `no-store` so the CDN
 cannot freeze a 302 or the marketing poster under a URL that later becomes a real
-print. Bare `/api/og` is the marketing poster (`s-maxage=1d`, SWR).
+print. Every dataset query is capped at the print timestamp; current moderation still
+applies so a rejected square cannot reappear in a newly rendered old print. Bare
+`/api/og` is the marketing poster (`s-maxage=1d`, SWR).
 
 **Download logos.** The live wall hotlinks Google. A PNG cannot (no CORS), so Download
 points each mark at `GET /api/favicons/{domain}` — image bytes with `s-maxage=30d`.
@@ -129,8 +142,11 @@ the function does not run. OG still fetches Google in-process (`ImageResponse` n
 bytes, not a URL) into the Next Data Cache, so two prints of the same square do not
 pay Google twice.
 
-**Purchases are not a race.** No locks, no queue, no version counter, no boundary policy.
-Position is a share of a sum, so two simultaneous buyers cannot conflict.
+**Same-square purchases are serialized, wall reads are not.** A short PostgreSQL
+transaction and holder-scoped advisory lock protect the first destination, Stripe
+idempotency, and same-square top-ups. Different squares can still be purchased
+concurrently because position is a share of a sum. Their activity percentages are a
+best-effort snapshot; the money and resulting wall remain exact.
 
 ## Not built yet
 

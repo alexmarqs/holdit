@@ -22,7 +22,7 @@ const noopFocus = (_standing: HolderStanding, _element: HTMLElement) => {};
 
 /**
  * Photograph of the live wall — grout and real squares, no ghost, no Find dim
- * — with a census slip under it (day, live spend, square count).
+ * — with a census slip under it (UTC instant, live spend, square count).
  *
  * Captures an offscreen copy laid out at the on-screen size (live map never
  * flickers), then rasters at 3×. `opacity: 0` would photograph empty;

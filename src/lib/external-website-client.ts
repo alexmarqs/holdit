@@ -1,6 +1,12 @@
-import { TAGLINE_MAX_CHARS } from "@holdit/core";
+import { clipTagline } from "@holdit/core";
 import { FAVICON_DATA_REVALIDATE_SECONDS } from "./http-cache";
-import { type FaviconSize, faviconDomain, isFaviconDomain, toFaviconUrl } from "./utils/favicon";
+import {
+  type FaviconSize,
+  faviconDomain,
+  isFaviconDomain,
+  isFaviconPlaceholder,
+  toFaviconUrl,
+} from "./utils/favicon";
 
 /**
  * Outbound fetches: the tagline scrape at record time, and favicon bytes for
@@ -37,23 +43,48 @@ const isUrlReadable = (url: URL): boolean => {
   return !BLOCKED_HOST.test(url.hostname);
 };
 
-const tidy = (raw: string): string | null => {
-  const text = raw
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (text.length < 12) return null;
-  if (text.length <= TAGLINE_MAX_CHARS) return text;
-
-  const clipped = text.slice(0, TAGLINE_MAX_CHARS - 1);
-  const lastSpace = clipped.lastIndexOf(" ");
-  // Cutting mid-word looks like a bug; cutting mid-sentence looks deliberate.
-  return `${(lastSpace > 40 ? clipped.slice(0, lastSpace) : clipped).replace(/[,;:.\s]+$/, "")}…`;
+/** The named entities worth knowing in a meta description. */
+const NAMED_ENTITIES: Record<string, string> = {
+  quot: '"',
+  apos: "'",
+  lt: "<",
+  gt: ">",
+  nbsp: " ",
+  lsquo: "‘",
+  rsquo: "’",
+  ldquo: "“",
+  rdquo: "”",
+  ndash: "–",
+  mdash: "—",
+  hellip: "…",
+  // Last in the object, but order is irrelevant: one pass never rescans its own
+  // output, so `&amp;#x27;` decodes to `&#x27;` rather than all the way to `'`.
+  amp: "&",
 };
+
+/**
+ * Decode the entities a scraped description arrives with.
+ *
+ * This was a hardcoded list of six, which knew the decimal `&#39;` but not the
+ * hex `&#x27;` — and hex is what every framework that escapes an apostrophe
+ * emits, so a real scrape of anthropic.com put "that&#x27;s" on the wall, in
+ * the OG image and in the share copy. Numeric entities are a rule, not a list,
+ * so they are decoded as one and only the named ones are enumerated.
+ */
+export const decodeEntities = (raw: string): string =>
+  raw.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, body: string) => {
+    const token = body.toLowerCase();
+    if (token.startsWith("#")) {
+      const hex = token.startsWith("#x");
+      const code = Number.parseInt(hex ? token.slice(2) : token.slice(1), hex ? 16 : 10);
+      if (!Number.isInteger(code) || code <= 0 || code > 0x10ffff) return match;
+      return String.fromCodePoint(code);
+    }
+    return NAMED_ENTITIES[token] ?? match;
+  });
+
+const tidy = (raw: string): string | null =>
+  clipTagline(decodeEntities(raw).replace(/\s+/g, " ").trim());
 
 export interface FaviconResult {
   bytes: Uint8Array;
@@ -102,7 +133,12 @@ async function fetchFavicon(handle: string, size: FaviconSize): Promise<FaviconR
     // A handful of bytes is an error page or a 1px spacer, not a mark.
     if (buffer.byteLength < 32 || buffer.byteLength > FAVICON_MAX_BYTES) return null;
 
-    return { bytes: new Uint8Array(buffer), contentType };
+    const bytes = new Uint8Array(buffer);
+    // Google 404s with a 16px globe that still decodes. Live <img> paints it;
+    // a 200 of the same body must not land in download or print either.
+    if (isFaviconPlaceholder(bytes)) return null;
+
+    return { bytes, contentType };
   } catch {
     return null;
   }

@@ -1,7 +1,8 @@
 "use client";
 
-import { type HolderStanding, MIN_SHOWN_TILE_CLICKS } from "@holdit/core";
+import { HALF_LIFE_DAYS, type HolderStanding, MIN_SHOWN_TILE_CLICKS } from "@holdit/core";
 import type { RefObject } from "react";
+import { liveSpendHintShort } from "@/components/live-word";
 import { SiteLogo } from "@/components/site-logo";
 import { formatAgo, formatInt, formatMoney, formatShare } from "@/lib/utils/format";
 
@@ -33,7 +34,7 @@ export function MapTooltip({
     ? []
     : ([
         ["Share", formatShare(target.standing.share)],
-        ["Counting", formatMoney(target.standing.liveCents)],
+        ["Live", formatMoney(target.standing.liveCents)],
         ["All time", formatMoney(target.standing.allTimeCents)],
         target.standing.clicksAllTime >= MIN_SHOWN_TILE_CLICKS
           ? (["Clicks", formatInt(target.standing.clicksAllTime)] as const)
@@ -71,6 +72,9 @@ export function MapTooltip({
               </div>
             ))}
           </dl>
+          <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground">
+            {liveSpendHintShort(HALF_LIFE_DAYS)}
+          </p>
         </>
       ) : null}
     </div>

@@ -23,6 +23,7 @@ function standing(
     allTimeCents: Math.round(share * 100_000),
     clicksAllTime: 0,
     lastPurchaseAt: NOW,
+    lastPurchaseId: null,
     share,
     rawShare: share,
     capped: false,
@@ -52,7 +53,21 @@ describe("wallCardModel", () => {
     const card = wallCardModel(state([standing("acme.com", 0.7), standing("other.dev", 0.3)]));
     expect(card.stats).toBe("$12,400 live · 2 squares");
     expect(card.date).toBe("Aug 22, 2026, 11:37 UTC");
+    expect(card.claim).toBeNull();
+    expect(card.tiles.every((t) => t.highlight === false)).toBe(true);
     expect(card).not.toHaveProperty("footer");
+  });
+
+  it("names the square a purchase print is a picture of", () => {
+    const card = wallCardModel(
+      state([standing("acme.com", 0.7), standing("other.dev", 0.3)]),
+      "light",
+      "acme.com",
+    );
+    expect(card.claim).toBe("acme.com · 70.0%");
+    expect(card.tiles.find((t) => t.handle === "acme.com")?.highlight).toBe(true);
+    expect(card.tiles.find((t) => t.handle === "other.dev")?.highlight).toBe(false);
+    expect(card.date).toBe("Aug 22, 2026, 11:37 UTC");
   });
 
   it("gives the biggest share the biggest tile — the reason you save it", () => {

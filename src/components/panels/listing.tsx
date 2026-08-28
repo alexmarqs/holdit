@@ -2,14 +2,14 @@
 
 import { MIN_SHOWN_TILE_CLICKS } from "@holdit/core";
 import { useAtomValue } from "jotai";
-import { ExternalLink, LocateFixed, X } from "lucide-react";
+import { ExternalLink, LocateFixed } from "lucide-react";
 import { useState } from "react";
+import { LiveWord } from "@/components/live-word";
 import { emitSquareFocus } from "@/components/map/focus-square";
 import { SquareLink } from "@/components/map/square-link";
 import { SiteLogo } from "@/components/site-logo";
 import { Button } from "@/components/ui/button";
 import { heldAtom } from "@/context/wall-atoms";
-import { useForgetHeld } from "@/hooks/use-forget-held";
 import { useWall } from "@/hooks/use-wall";
 import { cn } from "@/lib/utils";
 import { formatAgo, formatInt, formatMoney, formatShare } from "@/lib/utils/format";
@@ -27,7 +27,6 @@ const action =
 export function Listing() {
   const state = useWall();
   const held = useAtomValue(heldAtom);
-  const forgetHeld = useForgetHeld();
   const [shown, setShown] = useState(PAGE);
   const rows = state.standings.slice(0, shown);
 
@@ -55,12 +54,14 @@ export function Listing() {
                   </span>
                 </div>
                 {standing.holder.tagline ? (
-                  <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
+                  <p className="mt-0.5 line-clamp-3 text-sm leading-snug text-pretty text-muted-foreground">
                     {standing.holder.tagline}
                   </p>
                 ) : null}
                 <p className="num mt-1.5 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                  <span>{formatMoney(standing.liveCents)} live</span>
+                  <span className="inline-flex items-center gap-0.5">
+                    {formatMoney(standing.liveCents)} <LiveWord />
+                  </span>
                   <span>{formatMoney(standing.allTimeCents)} all time</span>
                   {standing.clicksAllTime >= MIN_SHOWN_TILE_CLICKS ? (
                     <span>{formatInt(standing.clicksAllTime)} clicks</span>
@@ -71,7 +72,7 @@ export function Listing() {
                   {standing.capped ? (
                     <span
                       className="text-primary"
-                      title="At the max size until others buy and it slips under the cap"
+                      title="At the max size. More spend keeps you there when others buy"
                     >
                       max size
                     </span>
@@ -96,17 +97,6 @@ export function Listing() {
                 >
                   <LocateFixed className="size-3.5" />
                 </button>
-                {held === standing.holder.handle ? (
-                  <button
-                    type="button"
-                    className={action}
-                    aria-label="Forget this square"
-                    title="Forget this square"
-                    onClick={forgetHeld}
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                ) : null}
               </span>
             </div>
           </li>

@@ -1,10 +1,11 @@
 import { MIN_SPEND_CENTS } from "@holdit/core";
+import type { Metadata } from "next";
 import { PageHead, Section } from "@/components/prose";
 import { leafPage } from "@/lib/seo/metadata";
 import { publicEnv } from "@/lib/utils/env";
 import { formatMoney } from "@/lib/utils/format";
 
-export const metadata = leafPage({
+export const metadata: Metadata = leafPage({
   title: "Terms",
   description:
     "What you get when you buy a square on holdit.lol, what it costs, how live spend fades, and what is not allowed.",
@@ -40,8 +41,9 @@ export default function TermsPage() {
         </p>
         <p>
           You are not buying a fixed position, guaranteed size, duration, or amount of traffic. The
-          share shown before payment is an estimate based on the wall at that moment. The rules page
-          explains the mechanics in more detail.
+          share shown before payment is an estimate based on the wall at that moment. Paying past
+          the display cap does not buy a larger share; it helps the square hold the cap as others
+          buy. The rules page explains the mechanics in more detail.
         </p>
         <p>
           The smallest purchase is {formatMoney(MIN_SPEND_CENTS)}. Prices are in US dollars and

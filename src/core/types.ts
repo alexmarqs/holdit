@@ -23,6 +23,8 @@ export interface HolderStanding {
   allTimeCents: number;
   clicksAllTime: number;
   lastPurchaseAt: number | null;
+  /** Latest live purchase on this square — the print the buyer should share. */
+  lastPurchaseId: string | null;
   /** Share of the map, after the cap and the floor. */
   share: number;
   /** Share of live spend before anything was clamped. */

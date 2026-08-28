@@ -3,7 +3,8 @@ import { serverEnv } from "./env";
 
 /**
  * Click logs keep a salted hash rather than an address. Enough to dedupe one
- * visitor per holder per hour, not enough to identify anyone.
+ * visitor per holder during the configured dedupe window, not enough to
+ * identify anyone.
  */
 export function hashIp(ip: string): string {
   return createHash("sha256").update(`${serverEnv.clickHashSalt}:${ip}`).digest("hex").slice(0, 32);

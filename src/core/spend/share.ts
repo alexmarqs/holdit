@@ -1,3 +1,4 @@
+import { Big } from "../big";
 import { ceilingFor } from "../config";
 
 export interface ShareInput {
@@ -21,14 +22,15 @@ export interface ShareOptions {
   minShare?: number;
 }
 
+const EPS = new Big("1e-12");
+
 /**
  * Turn live spend into displayable shares: raw share, then the display cap with
  * its overflow water-filled across everyone still under it, then the
  * minimum-size floor funded by everyone with headroom.
  *
- * Below ten squares the 10% cap cannot be met — nine squares would leave a
- * tenth of the wall empty — so a looser ceiling applies instead of none. A big
- * spender still dominates a young wall; they just cannot erase it.
+ * Ratios are Big.js. The exponential decay that produced `liveCents` is not —
+ * Big.pow is integer-only — so IEEE stops at the factor, not at live/total.
  */
 export function computeShares(
   entries: readonly ShareInput[],
@@ -37,80 +39,87 @@ export function computeShares(
   const n = entries.length;
   if (n === 0) return [];
 
-  // Below ten squares the 10% cap is unsatisfiable, so a looser ceiling applies
-  // rather than none at all. It only bites on a square trying to exceed it —
-  // everyone under it keeps their exact proportions.
-  // An explicit maxShare is the caller overriding the wall's rule (the treemap
-  // passes 1 to disable capping on already-capped weights); otherwise the
-  // ceiling is whatever n makes satisfiable.
-  const maxShare = options.maxShare ?? ceilingFor(n);
-  const minShare = Math.min(options.minShare ?? 0, 1 / n);
+  const maxShare = new Big(options.maxShare ?? ceilingFor(n));
+  const oneOverN = new Big(1).div(n);
+  const askedMin = new Big(options.minShare ?? 0);
+  const minShare = askedMin.lt(oneOverN) ? askedMin : oneOverN;
 
-  const total = entries.reduce((sum, e) => sum + Math.max(0, e.liveCents), 0);
-  const raw = new Map<string, number>(
-    entries.map((e) => [e.id, total > 0 ? Math.max(0, e.liveCents) / total : 1 / n]),
+  const total = entries.reduce((sum, e) => sum.plus(Math.max(0, e.liveCents)), new Big(0));
+  const raw = new Map<string, Big>(
+    entries.map((e) => [
+      e.id,
+      total.gt(0) ? new Big(Math.max(0, e.liveCents)).div(total) : new Big(1).div(n),
+    ]),
   );
 
-  const share = new Map<string, number>();
+  const share = new Map<string, Big>();
   const capped = new Set<string>();
   let pool = entries.map((e) => e.id);
-  let remaining = 1;
+  let remaining = new Big(1);
 
-  for (let pass = 0; pass < 8 && pool.length > 0; pass++) {
-    const poolRaw = pool.reduce((sum, id) => sum + (raw.get(id) ?? 0), 0);
-    const scale = poolRaw > 0 ? remaining / poolRaw : 0;
-    const over = pool.filter((id) => (raw.get(id) ?? 0) * scale > maxShare);
+  // Each pass caps at least one square, so `n` is the worst case. The loop
+  // itself assigns everyone — capped or scaled — and never equal-splits a
+  // leftover pool.
+  for (let pass = 0; pass < n && pool.length > 0; pass++) {
+    const poolRaw = pool.reduce((sum, id) => sum.plus(raw.get(id) ?? 0), new Big(0));
+    const scale = poolRaw.gt(0) ? remaining.div(poolRaw) : new Big(0);
+    const over = pool.filter((id) => (raw.get(id) ?? new Big(0)).times(scale).gt(maxShare));
 
     if (over.length === 0) {
       for (const id of pool) {
-        share.set(id, poolRaw > 0 ? (raw.get(id) ?? 0) * scale : remaining / pool.length);
+        share.set(
+          id,
+          poolRaw.gt(0) ? (raw.get(id) ?? new Big(0)).times(scale) : remaining.div(pool.length),
+        );
       }
-      pool = [];
       break;
     }
 
     for (const id of over) {
       share.set(id, maxShare);
       capped.add(id);
-      remaining -= maxShare;
+      remaining = remaining.minus(maxShare);
     }
     pool = pool.filter((id) => !capped.has(id));
   }
-  for (const id of pool) share.set(id, remaining / pool.length);
 
   const floored = new Set<string>();
-  if (minShare > 0) {
-    for (let pass = 0; pass < 8; pass++) {
+  if (minShare.gt(0)) {
+    // Same bound as the cap: each pass floors at least one square.
+    for (let pass = 0; pass < n; pass++) {
       const below = entries
         .map((e) => e.id)
-        .filter((id) => (share.get(id) ?? 0) < minShare - 1e-12);
+        .filter((id) => (share.get(id) ?? new Big(0)).lt(minShare.minus(EPS)));
       if (below.length === 0) break;
 
-      let deficit = 0;
+      let deficit = new Big(0);
       for (const id of below) {
-        deficit += minShare - (share.get(id) ?? 0);
+        deficit = deficit.plus(minShare.minus(share.get(id) ?? 0));
         share.set(id, minShare);
         floored.add(id);
       }
 
       const donors = entries
         .map((e) => e.id)
-        .filter((id) => !floored.has(id) && (share.get(id) ?? 0) > minShare);
-      const headroom = donors.reduce((sum, id) => sum + ((share.get(id) ?? 0) - minShare), 0);
-      if (headroom <= 0) break;
+        .filter((id) => !floored.has(id) && (share.get(id) ?? new Big(0)).gt(minShare));
+      const headroom = donors.reduce(
+        (sum, id) => sum.plus((share.get(id) ?? new Big(0)).minus(minShare)),
+        new Big(0),
+      );
+      if (headroom.lte(0)) break;
 
-      const taken = Math.min(deficit, headroom);
+      const taken = deficit.lt(headroom) ? deficit : headroom;
       for (const id of donors) {
-        const s = share.get(id) ?? 0;
-        share.set(id, s - taken * ((s - minShare) / headroom));
+        const s = share.get(id) ?? new Big(0);
+        share.set(id, s.minus(taken.times(s.minus(minShare).div(headroom))));
       }
     }
   }
 
   return entries.map((e) => ({
     id: e.id,
-    share: share.get(e.id) ?? 0,
-    rawShare: raw.get(e.id) ?? 0,
+    share: (share.get(e.id) ?? new Big(0)).toNumber(),
+    rawShare: (raw.get(e.id) ?? new Big(0)).toNumber(),
     capped: capped.has(e.id),
     floored: floored.has(e.id),
   }));
@@ -119,5 +128,5 @@ export function computeShares(
 /** The share a tile of `minArea` occupies on a map of `mapArea` px². */
 export function minShareFor(minArea: number, mapArea: number): number {
   if (mapArea <= 0) return 0;
-  return minArea / mapArea;
+  return new Big(minArea).div(mapArea).toNumber();
 }

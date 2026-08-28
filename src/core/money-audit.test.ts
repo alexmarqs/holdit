@@ -49,10 +49,7 @@ describe("money audit", () => {
         { now: laterAt },
       ),
     );
-    out.push(
-      `  after ${HALF_LIFE_DAYS} days      ${$(later.counters.liveCents)}   ` +
-        `(plain half would be ${$(paid / 2)}; the excess is overflow fading at half rate)`,
-    );
+    out.push(`  after ${HALF_LIFE_DAYS} days      ${$(later.counters.liveCents)}`);
 
     // A lone square with nothing over the cap must halve exactly.
     const soloAt = T0 + HALF_LIFE_DAYS * MS_PER_DAY;
@@ -90,10 +87,7 @@ describe("money audit", () => {
     const capped = computeShares(rows);
     expect(capped.reduce((n, r) => n + r.share, 0)).toBeCloseTo(1, 12);
     expect(state.counters.liveCents).toBe(paid);
-    // Between a plain halving and no decay at all: overflow fades at half rate,
-    // so a wall carrying big holders keeps more than half its value.
-    expect(later.counters.liveCents).toBeGreaterThan(paid / 2);
-    expect(later.counters.liveCents).toBeLessThan(paid * 0.75);
+    expect(later.counters.liveCents).toBeCloseTo(paid / 2, 6);
 
     process.stderr.write(`\n${out.join("\n")}\n\n`);
   });

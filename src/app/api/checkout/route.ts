@@ -1,6 +1,11 @@
-import { clampSpend, HALF_LIFE_DAYS, MIN_SPEND_CENTS, TAGLINE_MAX_CHARS } from "@holdit/core";
+import {
+  clampSpend,
+  HALF_LIFE_DAYS,
+  MAX_SPEND_CENTS,
+  MIN_SPEND_CENTS,
+  TAGLINE_MAX_CHARS,
+} from "@holdit/core";
 import { db } from "@holdit/db/client";
-import { getMapState } from "@holdit/db/queries/map";
 import { buy, InvalidTargetError } from "@holdit/db/queries/purchases";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -12,9 +17,15 @@ import { formatMoney } from "@/lib/utils/format";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { clientIp } from "@/lib/utils/request";
 
+/*
+ * `amountCents` lands in Stripe's `unit_amount` verbatim, so both bounds are
+ * enforced here and not only in the field. The ladder's top is a real limit,
+ * not a UI convenience: a session quoting more than the wall ever offers is a
+ * price the product never named.
+ */
 const CreateCheckoutRequest = z.object({
   target: z.string().min(1).max(200),
-  amountCents: z.number().int().min(MIN_SPEND_CENTS),
+  amountCents: z.number().int().min(MIN_SPEND_CENTS).max(MAX_SPEND_CENTS),
   tagline: z.string().trim().max(TAGLINE_MAX_CHARS).optional(),
 });
 
@@ -42,7 +53,11 @@ export async function POST(request: Request) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: `Enter a domain and an amount of at least ${formatMoney(MIN_SPEND_CENTS)}.` },
+      {
+        error:
+          `Enter a domain and an amount between ` +
+          `${formatMoney(MIN_SPEND_CENTS)} and ${formatMoney(MAX_SPEND_CENTS)}.`,
+      },
       { status: 400 },
     );
   }
@@ -53,17 +68,6 @@ export async function POST(request: Request) {
 
   if (!normalized) {
     return NextResponse.json({ error: "That is not a domain or an @handle." }, { status: 400 });
-  }
-
-  const wall = await getMapState(db);
-  const existing = wall.standings.find((s) => s.holder.handle === normalized.handle);
-  if (existing?.capped) {
-    return NextResponse.json(
-      {
-        error: `${existing.holder.handle} is already at the max size. More spend cannot make the square bigger until others buy and it slips under the cap.`,
-      },
-      { status: 400 },
-    );
   }
 
   if (stripeClient) {

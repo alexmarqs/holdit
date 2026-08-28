@@ -1,3 +1,5 @@
+export const PRINT_BUCKET_MS = 30_000;
+
 const SKEW_MS = 120_000;
 const EARLIEST = Date.UTC(2020, 0, 1);
 
@@ -11,18 +13,10 @@ const EARLIEST = Date.UTC(2020, 0, 1);
  * seconds draw one image between them, and a flood of random stamps lands in a
  * bounded set of buckets, so the second request onward is a cache hit.
  *
- * Decay runs over days, so a wall rounded down thirty seconds is the same wall.
- * Thirty seconds is also tight enough that a square which just landed still
- * sits on the card — rounding back five minutes could drop it.
- */
-const BUCKET_MS = 30_000;
-
-/**
- * The instant a share was printed. Null means "use the live wall".
- *
- * Accepts unix milliseconds or ISO, so a tweet URL stays parseable if a human
- * edits it. Future stamps are refused — that would invent a wall that has not
- * happened.
+ * The URL stamp is the *start* of the bucket. Reconstruction must not use that
+ * start: flooring a share posted 15s after a buy would load the wall *before*
+ * the buy (`createdAt > at`) and freeze a card that is missing the square.
+ * `printWallAt` is the end of the bucket, clamped to now.
  */
 export function parsePrintAt(
   value: string | string[] | undefined | null,
@@ -36,5 +30,16 @@ export function parsePrintAt(
   if (parsed < EARLIEST) return null;
   // Down, never up: rounding forward could name an instant that has not
   // happened yet, which is the one thing the skew check exists to refuse.
-  return Math.floor(parsed / BUCKET_MS) * BUCKET_MS;
+  return Math.floor(parsed / PRINT_BUCKET_MS) * PRINT_BUCKET_MS;
+}
+
+/**
+ * Instant to reconstruct the wall for a print URL.
+ *
+ * The parsed stamp is the bucket start (CDN key). The wall is the bucket's
+ * last millisecond, or `now` if that end has not arrived — so a square bought
+ * in this window is still `createdAt <=` the reconstruction.
+ */
+export function printWallAt(bucketStart: number, now = Date.now()): number {
+  return Math.min(bucketStart + PRINT_BUCKET_MS - 1, now);
 }

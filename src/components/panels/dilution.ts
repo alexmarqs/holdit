@@ -21,7 +21,6 @@ export function recallHandle(storage: HandleStorage): string | null {
   return value && value.length > 0 ? value : null;
 }
 
-/** This browser is no longer watching that square for dilution. */
 export function forgetHandle(storage: HandleStorage): void {
   storage?.removeItem(HELD_KEY);
 }

@@ -2,8 +2,8 @@ import { buildMapState } from "@holdit/core";
 import { describe, expect, it } from "vitest";
 import { wallInput } from "@/core/wall-input";
 import {
-  CHASE_GIVE_UP_MS,
-  chaseTimedOut,
+  AWAITING_GIVE_UP_MS,
+  awaitingTimedOut,
   claimedSquare,
   heldHandleFromHref,
   hrefWithoutHeld,
@@ -27,7 +27,7 @@ describe("heldHandleFromHref", () => {
 });
 
 describe("hrefWithoutHeld", () => {
-  it("drops held so a reload does not chase again", () => {
+  it("drops held so a reload does not start awaiting again", () => {
     expect(hrefWithoutHeld("https://holdit.lol/?held=stripe.com")).toBe("/");
   });
 
@@ -51,6 +51,7 @@ describe("claimedSquare", () => {
     const claimed = claimedSquare(wall, "stripe.com");
     expect(claimed?.handle).toBe("stripe.com");
     expect(claimed?.share).toBeGreaterThan(0);
+    expect(claimed?.purchaseId).toBe("fixture-purchase-0");
   });
 
   it("is null while the square is still on its way", () => {
@@ -79,12 +80,12 @@ describe("wallStaleWarn", () => {
   });
 });
 
-describe("chaseTimedOut", () => {
+describe("awaitingTimedOut", () => {
   it("keeps asking through the forty-second window", () => {
-    expect(chaseTimedOut(NOW, NOW + CHASE_GIVE_UP_MS)).toBe(false);
+    expect(awaitingTimedOut(NOW, NOW + AWAITING_GIVE_UP_MS)).toBe(false);
   });
 
   it("gives up once silence would read as a lost payment", () => {
-    expect(chaseTimedOut(NOW, NOW + CHASE_GIVE_UP_MS + 1)).toBe(true);
+    expect(awaitingTimedOut(NOW, NOW + AWAITING_GIVE_UP_MS + 1)).toBe(true);
   });
 });

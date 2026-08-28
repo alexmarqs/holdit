@@ -27,12 +27,14 @@ export async function rateLimit(
 
   const key = `${bucket}:${options.limit}:${options.windowSeconds}`;
   let limiter = limiters.get(key);
+
   if (!limiter) {
     limiter = new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(options.limit, `${options.windowSeconds} s`),
       prefix: `holdit:${bucket}`,
     });
+
     limiters.set(key, limiter);
   }
 

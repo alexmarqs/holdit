@@ -3,15 +3,15 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "./client";
 import { loadMapRows } from "./queries/dataset";
 import { recordPurchase } from "./queries/purchases";
+import { holders } from "./schema";
 import { resetDatabase } from "./testing";
 
 const T0 = 1_700_000_000_000;
 
 /**
- * Simultaneous buyers. There is no lock, no queue and no version counter here,
- * because position is a share of a sum rather than a slot somebody occupies:
- * two people buying at once cannot conflict, they simply both land and everyone
- * else shrinks. These are the cases where that reasoning has to actually hold.
+ * Simultaneous buyers. Position is a share of a sum rather than a slot somebody
+ * occupies, so every payment can land; only writes to the same square wait.
+ * These are the cases where that reasoning has to hold.
  */
 describe("many buyers at once", () => {
   beforeEach(resetDatabase);
@@ -46,6 +46,56 @@ describe("many buyers at once", () => {
     expect(state.standings).toHaveLength(1);
     // Every payment counted — none dropped by the race.
     expect(state.counters.liveCents).toBe(20 * 500);
+  });
+
+  it("preserves one destination when simultaneous buyers claim the same domain", async () => {
+    const results = await Promise.all(
+      Array.from({ length: 20 }, (_, i) =>
+        recordPurchase(
+          db,
+          { handle: "same.com", url: `https://same.com/landing-${i}`, amountCents: 500 },
+          T0,
+        ),
+      ),
+    );
+
+    expect(new Set(results.map((result) => result.holder.url)).size).toBe(1);
+    expect((await wall()).standings[0]?.holder.url).toBe(results[0]?.holder.url);
+  });
+
+  it("converges simultaneous redeliveries on one completed purchase", async () => {
+    const order = {
+      handle: "same.com",
+      url: "https://same.com",
+      amountCents: 9_900,
+      externalOrderId: "cs_simultaneous",
+    };
+
+    const results = await Promise.all(
+      Array.from({ length: 20 }, () => recordPurchase(db, order, T0)),
+    );
+
+    expect(new Set(results.map((result) => result.purchase.id)).size).toBe(1);
+    expect(new Set(results.map((result) => result.shareAfter)).size).toBe(1);
+    expect(new Set(results.map((result) => result.isNew)).size).toBe(1);
+    expect(results[0]?.shareAfter).toBeGreaterThan(0);
+    expect((await wall()).counters.liveCents).toBe(9_900);
+  });
+
+  it("rolls back a failed purchase and accepts its safe retry", async () => {
+    const order = {
+      handle: "retry.com",
+      url: "https://retry.com",
+      amountCents: 2_147_483_648,
+      externalOrderId: "cs_retry",
+    };
+
+    await expect(recordPurchase(db, order, T0)).rejects.toThrow();
+    expect(await db.select().from(holders)).toHaveLength(0);
+
+    const retried = await recordPurchase(db, { ...order, amountCents: 500 }, T0);
+    expect(retried.holder.handle).toBe("retry.com");
+    expect((await wall()).counters.liveCents).toBe(500);
   });
 
   it("gives a big and a small buyer exactly their proportions, whoever lands first", async () => {

@@ -6,19 +6,21 @@ import {
   centsToReachShare,
   clampSpend,
   DEFAULT_AMOUNT_CENTS,
+  MAX_SPEND_CENTS,
   MIN_SPEND_CENTS,
   maxTargetShare,
   openingAmountCents,
+  openingQuotedCents,
   projectedShare,
   SHARE_TARGETS,
   stepAmount,
+  suggestedHoldCents,
   wallSizeHeldTo,
 } from "./amounts";
 
 describe("clampSpend", () => {
   it("does not record below the entry price", () => {
     expect(clampSpend(1)).toBe(MIN_SPEND_CENTS);
-    expect(clampSpend(9_999_999)).toBe(9_999_999);
     expect(clampSpend(4_321)).toBe(4_321);
   });
 
@@ -26,6 +28,16 @@ describe("clampSpend", () => {
     expect(clampSpend(Number.NaN)).toBe(MIN_SPEND_CENTS);
     expect(clampSpend(Number.POSITIVE_INFINITY)).toBe(MIN_SPEND_CENTS);
     expect(clampSpend(-50)).toBe(MIN_SPEND_CENTS);
+  });
+
+  it("does not silently shrink a hold past the last + rung", () => {
+    expect(clampSpend(2_000_001)).toBe(2_000_001);
+  });
+});
+
+describe("MAX_SPEND_CENTS", () => {
+  it("is the last + rung on the form, not a charge ceiling", () => {
+    expect(MAX_SPEND_CENTS).toBe(1_000_000);
   });
 });
 
@@ -70,6 +82,49 @@ describe("openingAmountCents", () => {
   it("keeps the usual default once a square exists", () => {
     expect(openingAmountCents(1)).toBe(DEFAULT_AMOUNT_CENTS);
     expect(openingAmountCents(45)).toBe(DEFAULT_AMOUNT_CENTS);
+  });
+});
+
+describe("suggestedHoldCents", () => {
+  it("quotes about twice what is already live, snapped to a ladder price", () => {
+    // ~$11 on the wall → ~$22 → $20. Same wall, more money → a bigger hold.
+    expect(suggestedHoldCents(1_095, 600)).toBe(2_000);
+    expect(suggestedHoldCents(5_000, 600)).toBe(10_000);
+  });
+
+  it("never opens on leftover cap change — at least the next rung above size", () => {
+    expect(suggestedHoldCents(0, 600)).toBe(1_000);
+  });
+});
+
+describe("openingQuotedCents", () => {
+  it("opens on the usual default while that amount still grows the square", () => {
+    expect(openingQuotedCents(4, 10_000, 50_000)).toBe(DEFAULT_AMOUNT_CENTS);
+    expect(openingQuotedCents(0, 600, 0)).toBe(MIN_SPEND_CENTS);
+  });
+
+  /*
+   * The founding square: an empty wall has no ceiling, so the cap price is the
+   * minimum itself and `usual === cap`. That read as "the minimum already hits
+   * the cap, size is sold out" and opened the field at $2, on the one wall where
+   * $1 buys the entire thing — and on the first screen anyone sees, under a page
+   * that promises "Spend from $1". The equality is left alone everywhere else:
+   * on a wall with money, opening at a cap price of $10 really does look like
+   * leftover change, which the test below pins.
+   */
+  it("opens at the minimum on an empty wall, as the pages promise", () => {
+    expect(openingQuotedCents(0, MIN_SPEND_CENTS, 0)).toBe(MIN_SPEND_CENTS);
+  });
+
+  it("opens on a hold sized to live spend when $10 already hits the cap", () => {
+    expect(openingQuotedCents(4, 600, 1_095)).toBe(2_000);
+    expect(openingQuotedCents(4, 600, 5_000)).toBe(10_000);
+    // The sandbox wall (~$117 live): twice is ~$234 → $250, not $1,000.
+    expect(openingQuotedCents(5, 600, 11_691)).toBe(25_000);
+  });
+
+  it("does not open on leftover cap change when $10 is exactly the cap price", () => {
+    expect(openingQuotedCents(5, 1_000, 11_691)).toBe(25_000);
   });
 });
 

@@ -50,6 +50,78 @@ describe("fetchSiteInfo", () => {
     ).resolves.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("keeps more than ninety characters when the site wrote a longer line", async () => {
+    const description =
+      "As an utility, municipal utility, grid operator & solution provider, digitize your energy processes from grid to consumer with one platform.";
+    expect(description.length).toBeGreaterThan(90);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => {
+        const response = new Response(
+          `<head><meta name="description" content="${description}"></head>`,
+          { headers: { "content-type": "text/html" } },
+        );
+        Object.defineProperty(response, "url", { value: "https://epilot.cloud/" });
+        return response;
+      }),
+    );
+    await expect(
+      externalWebsiteClient.fetchSiteInfo("epilot.cloud", "https://epilot.cloud", null),
+    ).resolves.toBe(description);
+  });
+
+  /*
+   * A real scrape of anthropic.com stored "that&#x27;s" and the wall printed the
+   * entity. The decoder only knew a handful of names and the decimal `&#39;`,
+   * and every framework that escapes apostrophes emits the hex form. Numeric
+   * entities are a rule rather than a list, so decode them as one.
+   */
+  it.each([
+    [
+      "Anthropic is an AI safety company that&#x27;s building reliable systems.",
+      "Anthropic is an AI safety company that's building reliable systems.",
+    ],
+    [
+      "Anthropic is an AI safety company that&#39;s building reliable systems.",
+      "Anthropic is an AI safety company that's building reliable systems.",
+    ],
+    [
+      "The design tool it&#x2019;s worth switching to, for teams of any size.",
+      "The design tool it’s worth switching to, for teams of any size.",
+    ],
+    [
+      "Energy software for&nbsp;utilities, from inquiry to service delivery.",
+      "Energy software for utilities, from inquiry to service delivery.",
+    ],
+    [
+      "The &ldquo;best in class&rdquo; platform for scheduling a demo today.",
+      "The “best in class” platform for scheduling a demo today.",
+    ],
+    [
+      "Bell &amp; Co have sold fine pianos since 1884, in London and Paris.",
+      "Bell & Co have sold fine pianos since 1884, in London and Paris.",
+    ],
+    // A double-escaped entity must decode exactly once, not twice.
+    [
+      "Our escaping guide explains &amp;#x27; and other HTML entities in full.",
+      "Our escaping guide explains &#x27; and other HTML entities in full.",
+    ],
+  ])("decodes entities in a scraped description: %s", async (raw, expected) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => {
+        const response = new Response(`<head><meta name="description" content="${raw}"></head>`, {
+          headers: { "content-type": "text/html" },
+        });
+        Object.defineProperty(response, "url", { value: "https://example.com/" });
+        return response;
+      }),
+    );
+    await expect(
+      externalWebsiteClient.fetchSiteInfo("example.com", "https://example.com", null),
+    ).resolves.toBe(expected);
+  });
 });
 
 describe("fetchFavicon", () => {
@@ -77,5 +149,20 @@ describe("fetchFavicon", () => {
       }),
     );
     expect(fetchMock.mock.calls[0]?.[1]).not.toHaveProperty("signal");
+  });
+
+  it("treats Google's 16px globe as a miss even when the status is 200", async () => {
+    const globe = new Uint8Array(64);
+    globe.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    new DataView(globe.buffer).setUint32(16, 16);
+    new DataView(globe.buffer).setUint32(20, 16);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(
+        async () => new Response(globe, { headers: { "content-type": "image/png" } }),
+      ),
+    );
+
+    await expect(externalWebsiteClient.fetchFavicon("missing.example", 128)).resolves.toBeNull();
   });
 });
