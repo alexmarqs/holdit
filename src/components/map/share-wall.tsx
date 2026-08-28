@@ -10,9 +10,9 @@ import { WALL_QUERY_KEY } from "@/lib/utils/wall-query";
 import {
   claimShareCopy,
   dilutionShareCopy,
+  sharePageUrl,
   tweetIntent,
   wallShareCopy,
-  wallShareUrl,
 } from "./share-copy";
 
 function useSharePayload() {
@@ -24,11 +24,13 @@ function useSharePayload() {
     if (state === undefined) return null;
     const claimed = store.get(claimedAtom);
     const diluted = store.get(dilutedAtom);
-    const pageUrl = wallShareUrl(
-      window.location.origin,
-      state.generatedAt,
-      state.counters.squaresLive,
-    );
+    const origin = window.location.origin;
+    const squaresLive = state.counters.squaresLive;
+    // After checkout the banner must unfurl *this* purchase. Date.now() floors
+    // to a 30s OG bucket that may already be cached without the new square.
+    const pageUrl = claimed?.purchaseId
+      ? sharePageUrl(origin, squaresLive, { purchaseId: claimed.purchaseId })
+      : sharePageUrl(origin, squaresLive, { at: Date.now() });
     const text = diluted
       ? dilutionShareCopy(diluted.handle, diluted.before, diluted.after).text
       : claimed

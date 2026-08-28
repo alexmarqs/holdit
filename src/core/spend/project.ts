@@ -1,5 +1,6 @@
+import { Big } from "../big";
 import { clampSpend, MIN_SPEND_CENTS } from "./amounts";
-import { computeShares } from "./share";
+import { computeShares, type ShareResult } from "./share";
 
 /**
  * What a spend actually buys, computed the way the wall computes it.
@@ -22,19 +23,28 @@ export interface ProjectionRow {
 
 const NEW_SQUARE = "__projected__";
 
-export function shareAfterSpend(
+/** The wall after this spend, so the quote is the same function the tiles use. */
+export function projectSpend(
   standings: readonly ProjectionRow[],
   amountCents: number,
   holderId?: string,
-): number {
+): { standings: ShareResult[]; buyerId: string } {
   const rows = standings.map((row) => ({ id: row.id, liveCents: row.liveCents }));
   const existing = holderId === undefined ? undefined : rows.find((row) => row.id === holderId);
 
   if (existing) existing.liveCents += amountCents;
   else rows.push({ id: NEW_SQUARE, liveCents: amountCents });
 
-  const id = existing?.id ?? NEW_SQUARE;
-  return computeShares(rows).find((row) => row.id === id)?.share ?? 0;
+  return { standings: computeShares(rows), buyerId: existing?.id ?? NEW_SQUARE };
+}
+
+export function shareAfterSpend(
+  standings: readonly ProjectionRow[],
+  amountCents: number,
+  holderId?: string,
+): number {
+  const after = projectSpend(standings, amountCents, holderId);
+  return after.standings.find((row) => row.id === after.buyerId)?.share ?? 0;
 }
 
 /**
@@ -62,8 +72,11 @@ export function centsForShareOf(
   const liveCents = standings.reduce((sum, row) => sum + row.liveCents, 0);
   const current =
     holderId === undefined ? 0 : (standings.find((row) => row.id === holderId)?.liveCents ?? 0);
-  const closed = (targetShare * liveCents - current) / (1 - targetShare);
-  const high = Math.max(MIN_SPEND_CENTS, Math.ceil(Math.max(0, closed) * 2));
+  const closed = new Big(targetShare)
+    .times(liveCents)
+    .minus(current)
+    .div(new Big(1).minus(targetShare));
+  const high = Math.max(MIN_SPEND_CENTS, Math.ceil(Math.max(0, closed.toNumber()) * 2));
   if (shareAfterSpend(standings, high, holderId) < targetShare) return null;
 
   let low = MIN_SPEND_CENTS;

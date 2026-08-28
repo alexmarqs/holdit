@@ -94,11 +94,15 @@ export interface WallCardTile {
   logoUrl: string | null;
   /** Shown on the largest tiles, exactly as the live wall shows it. */
   tagline: string | null;
+  /** Purchase print: this is the square the tweet is about. */
+  highlight: boolean;
 }
 
 export interface WallCard {
   stats: string;
   date: string;
+  /** Purchase print: who this card is a picture of. */
+  claim: string | null;
   theme: CardTheme;
   tiles: WallCardTile[];
   size: { width: number; height: number };
@@ -115,7 +119,11 @@ export function tileColor(level: number, theme: CardTheme = "light"): string {
 }
 
 /** The picture of the wall at one instant, as a tweet unfurls it. */
-export function wallCardModel(state: MapState, theme: CardTheme = "light"): WallCard {
+export function wallCardModel(
+  state: MapState,
+  theme: CardTheme = "light",
+  highlightHolderId?: string | null,
+): WallCard {
   const box = wallCardBox();
   const squares =
     state.counters.squaresLive === 1
@@ -140,10 +148,14 @@ export function wallCardModel(state: MapState, theme: CardTheme = "light"): Wall
     box.map,
   );
   const byId = new Map(state.standings.map((s) => [s.holder.id, s]));
+  const claimed = highlightHolderId
+    ? state.standings.find((s) => s.holder.id === highlightHolderId)
+    : undefined;
 
   return {
     stats: `${formatMoney(state.counters.liveCents)} live · ${squares}`,
     date: formatPrintDate(state.generatedAt),
+    claim: claimed ? `${claimed.holder.handle} · ${formatShare(claimed.share)}` : null,
     theme,
     size: box.size,
     header: box.header,
@@ -190,6 +202,7 @@ export function wallCardModel(state: MapState, theme: CardTheme = "light"): Wall
            */
           logoUrl: toFaviconUrl(handle, 128),
           tagline: face.tagline ? standing.holder.tagline : null,
+          highlight: highlightHolderId === standing.holder.id,
         },
       ];
     }),

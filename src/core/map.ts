@@ -81,17 +81,18 @@ export function buildMapState(input: MapInput): MapState {
   const standings: HolderStanding[] = live
     .map((row) => {
       const share = shareById.get(row.holder.id);
-      const lastPurchaseAt = row.purchases.reduce<number | null>(
-        (latest, p) =>
-          p.refundedAt === null && (latest === null || p.createdAt > latest) ? p.createdAt : latest,
-        null,
-      );
+      const last = row.purchases.reduce<{ at: number; id: string } | null>((latest, p) => {
+        if (p.refundedAt !== null) return latest;
+        if (latest === null || p.createdAt > latest.at) return { at: p.createdAt, id: p.id };
+        return latest;
+      }, null);
       return {
         holder: row.holder,
         liveCents: row.liveCents,
         allTimeCents: allTimeCents(row.purchases),
         clicksAllTime: clicksAll.get(row.holder.id) ?? 0,
-        lastPurchaseAt,
+        lastPurchaseAt: last?.at ?? null,
+        lastPurchaseId: last?.id ?? null,
         share: share?.share ?? 0,
         rawShare: share?.rawShare ?? 0,
         capped: share?.capped ?? false,

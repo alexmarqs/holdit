@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { faviconDomain, isFaviconDomain, toFaviconProxyUrl, toFaviconUrl } from "./favicon";
+import {
+  faviconDomain,
+  isFaviconDomain,
+  isFaviconPlaceholder,
+  toFaviconProxyUrl,
+  toFaviconUrl,
+} from "./favicon";
+
+function pngAt(width: number, height: number, length = 64): Uint8Array {
+  const bytes = new Uint8Array(length);
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(16, width);
+  view.setUint32(20, height);
+  return bytes;
+}
 
 /**
  * The domain never becomes a host we connect to — it is interpolated into a URL
@@ -56,6 +71,22 @@ describe("toFaviconUrl", () => {
 
   it("escapes the domain rather than interpolating it raw", () => {
     expect(toFaviconUrl("a b.com" as string)).toContain("a%20b.com");
+  });
+});
+
+describe("Google's placeholder globe", () => {
+  it("is a 16px PNG even when we asked for 64 or 128", () => {
+    expect(isFaviconPlaceholder(pngAt(16, 16))).toBe(true);
+    expect(isFaviconPlaceholder(16)).toBe(true);
+  });
+
+  it("keeps a mark that actually came back at the size we asked", () => {
+    expect(isFaviconPlaceholder(pngAt(64, 64))).toBe(false);
+    expect(isFaviconPlaceholder(64)).toBe(false);
+  });
+
+  it("does not reject bytes we cannot measure", () => {
+    expect(isFaviconPlaceholder(new Uint8Array(64).fill(9))).toBe(false);
   });
 });
 

@@ -219,3 +219,19 @@ export async function buy(db: Database, input: BuyInput): Promise<RecordPurchase
     Date.now(),
   );
 }
+
+/**
+ * Instant and square to reconstruct a post-pay print. The wall at this
+ * purchase, not a 30-second bucket that may already be cached without it.
+ */
+export async function purchasePrintAnchor(
+  db: Queryable,
+  id: string,
+): Promise<{ createdAt: number; holderId: string } | null> {
+  const [row] = await db
+    .select({ createdAt: purchases.createdAt, holderId: purchases.holderId })
+    .from(purchases)
+    .where(eq(purchases.id, id))
+    .limit(1);
+  return row ? { createdAt: row.createdAt.getTime(), holderId: row.holderId } : null;
+}

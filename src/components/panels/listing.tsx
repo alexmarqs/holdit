@@ -4,6 +4,7 @@ import { MIN_SHOWN_TILE_CLICKS } from "@holdit/core";
 import { useAtomValue } from "jotai";
 import { ExternalLink, LocateFixed } from "lucide-react";
 import { useState } from "react";
+import { LiveWord } from "@/components/live-word";
 import { emitSquareFocus } from "@/components/map/focus-square";
 import { SquareLink } from "@/components/map/square-link";
 import { SiteLogo } from "@/components/site-logo";
@@ -53,12 +54,14 @@ export function Listing() {
                   </span>
                 </div>
                 {standing.holder.tagline ? (
-                  <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
+                  <p className="mt-0.5 line-clamp-3 text-sm leading-snug text-pretty text-muted-foreground">
                     {standing.holder.tagline}
                   </p>
                 ) : null}
                 <p className="num mt-1.5 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                  <span>{formatMoney(standing.liveCents)} live</span>
+                  <span className="inline-flex items-center gap-0.5">
+                    {formatMoney(standing.liveCents)} <LiveWord />
+                  </span>
                   <span>{formatMoney(standing.allTimeCents)} all time</span>
                   {standing.clicksAllTime >= MIN_SHOWN_TILE_CLICKS ? (
                     <span>{formatInt(standing.clicksAllTime)} clicks</span>
@@ -69,7 +72,7 @@ export function Listing() {
                   {standing.capped ? (
                     <span
                       className="text-primary"
-                      title="At the max size until others buy and it slips under the cap"
+                      title="At the max size. More spend keeps you there when others buy"
                     >
                       max size
                     </span>

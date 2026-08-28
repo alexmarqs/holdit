@@ -59,8 +59,9 @@ export default function RulesPage() {
         </p>
         <p>
           The map compresses the difference between shares and gives tiny squares a minimum
-          footprint so every square stays visible. On-screen area is therefore a visual ranking, not
-          an exact percentage; the numeric share is exact.
+          footprint so every square stays visible. On-screen area is a visual ranking, not an exact
+          percentage. The number on a square is its share, printed without rounding up, so the
+          labels can add to a hair under 100%.
         </p>
         <p>Clicks never change area. History never fades — you lose prominence, not the record.</p>
       </Section>
@@ -71,14 +72,14 @@ export default function RulesPage() {
           more squares arrive, and from {GROWN_AT} squares on it is {CAP_GROWN}%.
         </p>
         <p>
-          Spend above the cap does not grow the tile. It acts as headroom, helping the square hold
-          the cap as the wall grows, and fades more slowly than displayed spend. The first square is
-          the whole wall at any price, so {formatMoney(MIN_SPEND_CENTS)} is enough until somebody
+          You can still spend past the cap. Extra dollars do not grow the tile — they keep you at
+          the cap when others buy, and they fade more slowly than displayed spend. The first square
+          is the whole wall at any price, so {formatMoney(MIN_SPEND_CENTS)} is enough until somebody
           else shows up.
         </p>
       </Section>
 
-      <Section title="What actually fades">
+      <Section title="What actually fades" id="live-spend">
         <p>
           Every {HALF_LIFE_DAYS} days, the part of live spend within the display cap is half — if
           nobody buys. Spend above the cap is headroom and halves every {OVERFLOW_HALF_LIFE_DAYS}{" "}
@@ -103,6 +104,10 @@ export default function RulesPage() {
             You pay {TEN_K}. Two weeks later they pay {formatMoney(500_000)}. Same live dollars, so
             you split the wall. On day one that {formatMoney(500_000)} would have left them the
             smaller square.
+          </Example>
+          <Example title="You pay past the cap.">
+            You already hold the largest the wall allows. You pay more anyway. The square stays the
+            same size. The next buyers have to add more before you shrink.
           </Example>
         </ul>
         <p>

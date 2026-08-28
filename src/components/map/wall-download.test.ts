@@ -19,15 +19,15 @@ describe("wallDownloadFilename", () => {
 describe("wallDownloadCaption", () => {
   const at = Date.UTC(2026, 7, 26, 0, 30);
 
-  it("uses the wall's UTC day, not the viewer's clock", () => {
+  it("uses the wall's UTC instant, named as UTC", () => {
     const { census } = wallDownloadCaption(at, { squaresLive: 46, liveCents: 256_128 });
-    expect(census.startsWith("26 Aug 2026")).toBe(true);
+    expect(census.startsWith("Aug 26, 2026, 00:30 UTC")).toBe(true);
   });
 
   it("is a census slip: live spend and how many squares", () => {
     const slip = wallDownloadCaption(at, { squaresLive: 46, liveCents: 256_128 });
     expect(slip.brand).toBe("holdit.lol");
-    expect(slip.census).toBe("26 Aug 2026 · $2,561.28 live · 46 squares");
+    expect(slip.census).toBe("Aug 26, 2026, 00:30 UTC · $2,561.28 live · 46 squares");
   });
 
   it("says 1 square when the wall is a single tile", () => {

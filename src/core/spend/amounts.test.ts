@@ -6,19 +6,22 @@ import {
   centsToReachShare,
   clampSpend,
   DEFAULT_AMOUNT_CENTS,
+  MAX_SPEND_CENTS,
   MIN_SPEND_CENTS,
   maxTargetShare,
   openingAmountCents,
+  openingQuotedCents,
+  othersCanAddBeforeSlip,
   projectedShare,
   SHARE_TARGETS,
   stepAmount,
+  suggestedHoldCents,
   wallSizeHeldTo,
 } from "./amounts";
 
 describe("clampSpend", () => {
   it("does not record below the entry price", () => {
     expect(clampSpend(1)).toBe(MIN_SPEND_CENTS);
-    expect(clampSpend(9_999_999)).toBe(9_999_999);
     expect(clampSpend(4_321)).toBe(4_321);
   });
 
@@ -26,6 +29,16 @@ describe("clampSpend", () => {
     expect(clampSpend(Number.NaN)).toBe(MIN_SPEND_CENTS);
     expect(clampSpend(Number.POSITIVE_INFINITY)).toBe(MIN_SPEND_CENTS);
     expect(clampSpend(-50)).toBe(MIN_SPEND_CENTS);
+  });
+
+  it("does not silently shrink a hold past the last + rung", () => {
+    expect(clampSpend(2_000_001)).toBe(2_000_001);
+  });
+});
+
+describe("MAX_SPEND_CENTS", () => {
+  it("is the last + rung on the form, not a charge ceiling", () => {
+    expect(MAX_SPEND_CENTS).toBe(1_000_000);
   });
 });
 
@@ -70,6 +83,32 @@ describe("openingAmountCents", () => {
   it("keeps the usual default once a square exists", () => {
     expect(openingAmountCents(1)).toBe(DEFAULT_AMOUNT_CENTS);
     expect(openingAmountCents(45)).toBe(DEFAULT_AMOUNT_CENTS);
+  });
+});
+
+describe("suggestedHoldCents", () => {
+  it("quotes about twice what is already live, snapped to a ladder price", () => {
+    // ~$11 on the wall → ~$22 → $20. Same wall, more money → a bigger hold.
+    expect(suggestedHoldCents(1_095, 600)).toBe(2_000);
+    expect(suggestedHoldCents(5_000, 600)).toBe(10_000);
+  });
+
+  it("never opens on leftover cap change — at least the next rung above size", () => {
+    expect(suggestedHoldCents(0, 600)).toBe(1_000);
+  });
+});
+
+describe("openingQuotedCents", () => {
+  it("opens on the usual default while that amount still grows the square", () => {
+    expect(openingQuotedCents(4, 10_000, 50_000)).toBe(DEFAULT_AMOUNT_CENTS);
+    expect(openingQuotedCents(0, 600, 0)).toBe(MIN_SPEND_CENTS);
+  });
+
+  it("opens on a hold sized to live spend when $10 already hits the cap", () => {
+    expect(openingQuotedCents(4, 600, 1_095)).toBe(2_000);
+    expect(openingQuotedCents(4, 600, 5_000)).toBe(10_000);
+    // The sandbox wall (~$117 live): twice is ~$234 → $250, not $1,000.
+    expect(openingQuotedCents(5, 600, 11_691)).toBe(25_000);
   });
 });
 
@@ -230,5 +269,24 @@ describe("the ceiling a buyer is quoted", () => {
         Number.POSITIVE_INFINITY,
       );
     }
+  });
+});
+
+describe("othersCanAddBeforeSlip", () => {
+  it("is how much others can pay before a capped square drops under the cap", () => {
+    // $100 into a ~$10.95 wall at a 32% cap holds until the wall is $100/0.32.
+    const yours = 10_000;
+    const wallAfter = 1_095 + 10_000;
+    expect(othersCanAddBeforeSlip(yours, wallAfter, 0.32)).toBe(20_100);
+  });
+
+  it("is only a couple of dollars when the spend just meets the cap", () => {
+    const yours = 600;
+    const wallAfter = 1_095 + 600;
+    expect(othersCanAddBeforeSlip(yours, wallAfter, 0.32)).toBe(100);
+  });
+
+  it("is nothing on a lone square, where the ceiling is the whole wall", () => {
+    expect(othersCanAddBeforeSlip(10_000, 10_000, 1)).toBe(0);
   });
 });

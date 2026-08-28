@@ -6,7 +6,7 @@ import { RefreshButton } from "@/components/panels/refresh-button";
 export function BuyPanel() {
   return (
     <section className="border-b border-foreground/8 px-4 pt-7 pb-2 md:pt-6 md:pb-2 lg:py-6">
-      <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
+      <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center md:max-w-3xl">
         <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5">
           <StatsPill />
           <RefreshButton />
@@ -29,8 +29,7 @@ export function BuyPanel() {
           </span>
         </h2>
         <p className="mt-1.5 max-w-md text-[13px] leading-snug text-muted-foreground">
-          From $1. No auction. Old spend gets cheaper to challenge. New money takes a slice from
-          everyone.
+          No auction. Old spend gets cheaper to challenge. New money takes a slice from everyone.
         </p>
 
         <FormBuyPanel />

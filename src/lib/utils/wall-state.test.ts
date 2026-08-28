@@ -51,6 +51,7 @@ describe("claimedSquare", () => {
     const claimed = claimedSquare(wall, "stripe.com");
     expect(claimed?.handle).toBe("stripe.com");
     expect(claimed?.share).toBeGreaterThan(0);
+    expect(claimed?.purchaseId).toBe("fixture-purchase-0");
   });
 
   it("is null while the square is still on its way", () => {

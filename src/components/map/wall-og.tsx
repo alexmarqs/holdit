@@ -143,13 +143,33 @@ export async function wallOgImage(card: WallCard) {
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
             marginLeft: px(12),
-            fontSize: px(32),
-            fontWeight: 700,
-            letterSpacing: -1.2 * OG_SCALE,
           }}
         >
-          holdit.lol
+          <div
+            style={{
+              display: "flex",
+              fontSize: px(32),
+              fontWeight: 700,
+              letterSpacing: -1.2 * OG_SCALE,
+            }}
+          >
+            holdit.lol
+          </div>
+          {card.claim ? (
+            <div
+              style={{
+                display: "flex",
+                marginTop: px(2),
+                fontSize: px(18),
+                fontWeight: 700,
+                color: "#0b9e96",
+              }}
+            >
+              {card.claim}
+            </div>
+          ) : null}
         </div>
         <div
           style={{
@@ -202,6 +222,7 @@ export async function wallOgImage(card: WallCard) {
                 padding: tiny ? 0 : `${px(CARD_TILE_PAD_Y)}px ${px(CARD_TILE_PAD_X)}px`,
                 background: tile.color,
                 overflow: "hidden",
+                ...(tile.highlight ? { border: `${px(4)}px solid #0b9e96` } : {}),
               }}
             >
               <div style={{ display: "flex", marginBottom: named || tile.spine ? px(6) : 0 }}>
@@ -269,7 +290,7 @@ export async function wallOgImage(card: WallCard) {
                     lineHeight: 1.35,
                     color: skin.tileInk,
                     opacity: 0.62,
-                    maxWidth: px(Math.min(tile.w - CARD_TILE_PAD_X * 2, 300)),
+                    maxWidth: px(tile.w - CARD_TILE_PAD_X * 2),
                   }}
                 >
                   {tile.tagline}

@@ -85,6 +85,7 @@ describe("buildMapState", () => {
       now: NOW,
     });
     expect(state.standings[0]?.lastPurchaseAt).toBe(daysAgo(2));
+    expect(state.standings[0]?.lastPurchaseId).toBe("a-5000-2");
   });
 
   it("applies a share floor once a canvas area is known", () => {

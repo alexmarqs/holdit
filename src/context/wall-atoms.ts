@@ -11,6 +11,10 @@ export const mapPreviewOnAtom = atom(true);
 /** Find-a-square needle. Empty is the live wall, undimmed. */
 export const mapSearchAtom = atom("");
 export const awaitingAtom = atom<{ handle: string; timedOut: boolean } | null>(null);
-export const claimedAtom = atom<{ handle: string; share: number } | null>(null);
+export const claimedAtom = atom<{
+  handle: string;
+  share: number;
+  purchaseId: string | null;
+} | null>(null);
 export const heldAtom = atom<string | null>(null);
 export const dilutedAtom = atom<{ handle: string; before: number; after: number } | null>(null);

@@ -1,3 +1,4 @@
+import { Big } from "../big";
 import { ceilingFor } from "../config";
 
 /**
@@ -11,6 +12,9 @@ export const AMOUNT_LADDER_CENTS: readonly number[] = [
 
 export const DEFAULT_AMOUNT_CENTS = 1_000;
 
+/** Last + rung on the buy field. Checkout does not silently shrink a larger amount. */
+export const MAX_SPEND_CENTS = AMOUNT_LADDER_CENTS[AMOUNT_LADDER_CENTS.length - 1]!;
+
 /**
  * What the buy panel opens on. An empty wall quotes 100% at any price, so the
  * default $10 would look like a bigger hold than $1 — it is not. Once somebody
@@ -18,6 +22,53 @@ export const DEFAULT_AMOUNT_CENTS = 1_000;
  */
 export function openingAmountCents(squaresLive: number): number {
   return squaresLive <= 0 ? MIN_SPEND_CENTS : DEFAULT_AMOUNT_CENTS;
+}
+
+/**
+ * How much hold to quote relative to money already on the wall.
+ * $10 on an $11 wall is the next buy; twice live is a stay.
+ */
+const HOLD_VS_LIVE = 2;
+
+/**
+ * A hold sized to the live wall, snapped to a price people tap.
+ * Grows as others add money. Never the leftover dollars that just hit the cap.
+ */
+export function suggestedHoldCents(liveCents: number, capSpendCents: number): number {
+  const live = Math.max(0, liveCents);
+  const cap = Math.max(MIN_SPEND_CENTS, capSpendCents);
+  const snapped = nearestLadderCents(HOLD_VS_LIVE * live);
+  const aboveCap = stepAmount(cap, 1);
+  return Math.max(snapped, aboveCap);
+}
+
+function nearestLadderCents(cents: number): number {
+  const target = clampSpend(cents);
+  let best = AMOUNT_LADDER_CENTS[0]!;
+  for (const step of AMOUNT_LADDER_CENTS) {
+    const closer = Math.abs(step - target) < Math.abs(best - target);
+    const tieHigher = Math.abs(step - target) === Math.abs(best - target) && step > best;
+    if (closer || tieHigher) best = step;
+  }
+  return best;
+}
+
+/**
+ * What the buy field should show on first paint.
+ *
+ * The usual default is $10, a square you can see. If $10 already hits the cap,
+ * size is sold out — opening there looks like leftover change. Quote twice
+ * live spend so the first number is a stay, not ten walls of money.
+ */
+export function openingQuotedCents(
+  squaresLive: number,
+  capSpendCents: number,
+  liveCents: number,
+): number {
+  const usual = openingAmountCents(squaresLive);
+  const cap = Math.max(MIN_SPEND_CENTS, capSpendCents);
+  if (usual <= cap) return usual;
+  return suggestedHoldCents(liveCents, cap);
 }
 
 export function clampSpend(cents: number): number {
@@ -63,10 +114,11 @@ export function projectedShare(
   currentCents = 0,
   squareCount = 0,
 ): number {
-  const total = liveCents + amountCents;
-  if (total <= 0) return 1;
-  const raw = (currentCents + amountCents) / total;
-  return Math.min(raw, ceilingFor(squareCount + (currentCents > 0 ? 0 : 1)));
+  const total = new Big(liveCents).plus(amountCents);
+  if (total.lte(0)) return 1;
+  const raw = new Big(currentCents).plus(amountCents).div(total);
+  const cap = new Big(ceilingFor(squareCount + (currentCents > 0 ? 0 : 1)));
+  return (raw.lt(cap) ? raw : cap).toNumber();
 }
 
 /**
@@ -103,8 +155,11 @@ export function centsToReachShare(
 ): number | null {
   if (targetShare <= 0 || targetShare >= 1) return null;
   if (liveCents <= 0) return MIN_SPEND_CENTS;
-  const needed = (targetShare * liveCents - currentCents) / (1 - targetShare);
-  return needed > 0 ? clampSpend(needed) : null;
+  const needed = new Big(targetShare)
+    .times(liveCents)
+    .minus(currentCents)
+    .div(new Big(1).minus(targetShare));
+  return needed.gt(0) ? clampSpend(needed.toNumber()) : null;
 }
 
 /**
@@ -145,4 +200,20 @@ export const SHARE_TARGETS: readonly number[] = [0.01, 0.025, 0.05, 0.1, 0.25, 0
 export function wallSizeHeldTo(amountCents: number, ceiling: number): number {
   if (ceiling <= 0 || ceiling >= 1) return Number.POSITIVE_INFINITY;
   return amountCents / ceiling;
+}
+
+/**
+ * How much other people can still pay before this spend drops under the cap.
+ *
+ * Rounded down to a whole dollar so the buy panel never names an amount
+ * that has already slipped under the cap.
+ */
+export function othersCanAddBeforeSlip(
+  yourCentsAfter: number,
+  wallCentsAfter: number,
+  ceiling: number,
+): number {
+  const heldTo = wallSizeHeldTo(yourCentsAfter, ceiling);
+  if (!Number.isFinite(heldTo)) return 0;
+  return Math.max(0, Math.floor((heldTo - wallCentsAfter) / 100) * 100);
 }

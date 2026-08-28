@@ -33,7 +33,7 @@ export function claimShareCopy(
 } {
   return {
     title: "holdit.lol",
-    text: `${handle} just took ${formatShare(share)} of holdit.lol — attention you rent, not own`,
+    text: `${handle} just took ${formatShare(share)} of holdit.lol`,
   };
 }
 
@@ -48,7 +48,7 @@ export function dilutionShareCopy(
 } {
   return {
     title: "holdit.lol",
-    text: `${handle} just shrank ${formatShare(before)} → ${formatShare(after)} on holdit.lol — hold it or lose it`,
+    text: `${handle} just went ${formatShare(before)} → ${formatShare(after)} on holdit.lol`,
   };
 }
 
@@ -67,6 +67,11 @@ export function wallPrintUrl(origin: string, generatedAt: number): string {
   return new URL(`/print/${generatedAt}`, origin).toString();
 }
 
+/** Post-pay share: one purchase, one card, not a 30-second bucket. */
+export function purchasePrintUrl(origin: string, purchaseId: string): string {
+  return new URL(`/print/p/${purchaseId}`, origin).toString();
+}
+
 /**
  * Where a census share should unfurl. An empty print is a blank treemap; the
  * marketing poster is the card until somebody is actually on the wall.
@@ -74,4 +79,15 @@ export function wallPrintUrl(origin: string, generatedAt: number): string {
 export function wallShareUrl(origin: string, generatedAt: number, squaresLive: number): string {
   if (squaresLive <= 0) return new URL("/", origin).toString();
   return wallPrintUrl(origin, generatedAt);
+}
+
+/** Paid banner uses the purchase; the toolbar still uses the time bucket. */
+export function sharePageUrl(
+  origin: string,
+  squaresLive: number,
+  stamp: { purchaseId: string } | { at: number },
+): string {
+  if (squaresLive <= 0) return new URL("/", origin).toString();
+  if ("purchaseId" in stamp) return purchasePrintUrl(origin, stamp.purchaseId);
+  return wallPrintUrl(origin, stamp.at);
 }

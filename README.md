@@ -110,7 +110,7 @@ been displayed persists twice as long — big money buys persistence, not domina
 everyone still under it, then the minimum-size floor funded by those with headroom.
 The ceiling is `ceilingFor(n)` in `src/core/config.ts`: the whole wall at one square,
 never above 60% on a young wall, 10% from 16 squares. Extra spend past the cap does
-not grow the tile.
+not grow the tile; it holds the cap as others buy.
 
 **No sockets, no in-process wall cache.** The page is ISR (`revalidate = 30`) and
 `revalidatePath("/")` on purchase. Refresh and the post-checkout wait hit `/api/state` (`s-maxage=10`;
@@ -121,8 +121,16 @@ print stamp is keyed by `now` so it cannot steal that query. Nothing is kept aft
 settles, so two instances cannot disagree about the same wall. TTLs live in
 `src/lib/http-cache.ts`.
 
+**Shares are Big.js.** Stripe and Postgres store integer cents. Decay is
+`0.5^(age/half-life)` — Big.pow is integer-only, so that factor stays IEEE.
+Every ratio after that (`1.6/n`, live/total, water-fill) is
+[big.js](https://github.com/mikemcl/big.js). Tile labels never round a measured
+share up; they may sum to 99.99% the way other treemaps and dashboards do.
+
 **Prints are immutable.** `/print/{at}` tags and `/api/og?at=` images are one URL,
-one body, `immutable` for a year. A future or junk stamp is `no-store` so the CDN
+one body, `immutable` for a year. A post-pay share from the checkout banner uses
+`/print/p/{purchaseId}` and `/api/og?p=` so the card is that buy — named and
+ringed on the wall — not a 30-second time bucket that may already be cached. A future or junk stamp is `no-store` so the CDN
 cannot freeze a 302 or the marketing poster under a URL that later becomes a real
 print. Every dataset query is capped at the print timestamp; current moderation still
 applies so a rejected square cannot reappear in a newly rendered old print. Bare

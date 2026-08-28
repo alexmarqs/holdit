@@ -50,6 +50,26 @@ describe("fetchSiteInfo", () => {
     ).resolves.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("keeps more than ninety characters when the site wrote a longer line", async () => {
+    const description =
+      "As an utility, municipal utility, grid operator & solution provider, digitize your energy processes from grid to consumer with one platform.";
+    expect(description.length).toBeGreaterThan(90);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => {
+        const response = new Response(
+          `<head><meta name="description" content="${description}"></head>`,
+          { headers: { "content-type": "text/html" } },
+        );
+        Object.defineProperty(response, "url", { value: "https://epilot.cloud/" });
+        return response;
+      }),
+    );
+    await expect(
+      externalWebsiteClient.fetchSiteInfo("epilot.cloud", "https://epilot.cloud", null),
+    ).resolves.toBe(description);
+  });
 });
 
 describe("fetchFavicon", () => {
@@ -77,5 +97,20 @@ describe("fetchFavicon", () => {
       }),
     );
     expect(fetchMock.mock.calls[0]?.[1]).not.toHaveProperty("signal");
+  });
+
+  it("treats Google's 16px globe as a miss even when the status is 200", async () => {
+    const globe = new Uint8Array(64);
+    globe.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    new DataView(globe.buffer).setUint32(16, 16);
+    new DataView(globe.buffer).setUint32(20, 16);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(
+        async () => new Response(globe, { headers: { "content-type": "image/png" } }),
+      ),
+    );
+
+    await expect(externalWebsiteClient.fetchFavicon("missing.example", 128)).resolves.toBeNull();
   });
 });

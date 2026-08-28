@@ -3,16 +3,15 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { monogram } from "@/lib/utils/domain";
-import { toFaviconUrl } from "@/lib/utils/favicon";
+import { isFaviconPlaceholder, toFaviconUrl } from "@/lib/utils/favicon";
 
 /**
  * Favicon with a monogram fallback. Roughly one site in six has no usable
  * favicon, and a broken image on a paid square is not acceptable.
  *
- * Google often answers a globe at 16px instead of an error, so `onError` is
- * not enough on its own. A 1px spacer still loads as success; natural width
- * is the signal, checked on load and again by ref if the cache finished
- * before React attached the handler.
+ * Google answers a miss with a 16px globe (often as HTTP 404 whose body still
+ * decodes). `onError` does not fire. Width is the signal, checked on load and
+ * again by ref if the cache finished before React attached the handler.
  */
 export function SiteLogo({
   handle,
@@ -61,10 +60,10 @@ export function SiteLogo({
       decoding="async"
       onError={() => setFailed(true)}
       onLoad={(event) => {
-        if (event.currentTarget.naturalWidth <= 1) setFailed(true);
+        if (isFaviconPlaceholder(event.currentTarget.naturalWidth)) setFailed(true);
       }}
       ref={(node) => {
-        if (node?.complete && node.naturalWidth <= 1) setFailed(true);
+        if (node?.complete && isFaviconPlaceholder(node.naturalWidth)) setFailed(true);
       }}
       className={cn(shared, className)}
       style={{ width: size, height: size }}

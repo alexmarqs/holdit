@@ -41,8 +41,9 @@ export default function TermsPage() {
         </p>
         <p>
           You are not buying a fixed position, guaranteed size, duration, or amount of traffic. The
-          share shown before payment is an estimate based on the wall at that moment. The rules page
-          explains the mechanics in more detail.
+          share shown before payment is an estimate based on the wall at that moment. Paying past
+          the display cap does not buy a larger share; it helps the square hold the cap as others
+          buy. The rules page explains the mechanics in more detail.
         </p>
         <p>
           The smallest purchase is {formatMoney(MIN_SPEND_CENTS)}. Prices are in US dollars and

@@ -30,8 +30,7 @@ function attr(value: string): string {
  *
  * Absolute URLs throughout: an unfurler will not resolve a relative `og:image`.
  */
-export function printCardHtml(at: number): string {
-  const image = `${siteUrl}/api/og?at=${at}`;
+function printCardDocument(canonicalPath: string, imageUrl: string): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -41,20 +40,28 @@ export function printCardHtml(at: number): string {
 <meta name="robots" content="noindex, follow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="holdit.lol">
-<meta property="og:url" content="${siteUrl}/print/${at}">
+<meta property="og:url" content="${attr(`${siteUrl}${canonicalPath}`)}">
 <meta property="og:title" content="${attr(TITLE)}">
 <meta property="og:description" content="${attr(DESCRIPTION)}">
-<meta property="og:image" content="${image}">
+<meta property="og:image" content="${attr(imageUrl)}">
 <meta property="og:image:width" content="${OG_SIZE.width}">
 <meta property="og:image:height" content="${OG_SIZE.height}">
 <meta property="og:image:alt" content="${attr(IMAGE_ALT)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="holdit.lol">
 <meta name="twitter:description" content="${attr(DESCRIPTION)}">
-<meta name="twitter:image" content="${image}">
+<meta name="twitter:image" content="${attr(imageUrl)}">
 <meta name="twitter:image:alt" content="${attr(IMAGE_ALT)}">
 </head>
 <body><a href="/">holdit.lol — the live wall</a></body>
 </html>
 `;
+}
+
+export function printCardHtml(at: number): string {
+  return printCardDocument(`/print/${at}`, `${siteUrl}/api/og?at=${at}`);
+}
+
+export function printPurchaseCardHtml(purchaseId: string): string {
+  return printCardDocument(`/print/p/${purchaseId}`, `${siteUrl}/api/og?p=${purchaseId}`);
 }

@@ -24,6 +24,17 @@ describe("activityLine", () => {
     ).toBe("2.1% → 8.4% · everyone else shrank");
   });
 
+  it("does not claim everyone else shrank when the tile did not grow", () => {
+    expect(
+      activityLine({
+        kind: "topped_up",
+        shareBefore: 0.32,
+        shareAfter: 0.32,
+        amountCents: 10_000,
+      }),
+    ).toBe("held 32.0% · $100");
+  });
+
   it("does not pretend a founding buy took 0%", () => {
     expect(
       activityLine({

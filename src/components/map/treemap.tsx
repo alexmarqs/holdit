@@ -26,7 +26,7 @@ import { ShareWallButton } from "./share-wall";
 import { TileLayer, type TileLayerProps, tileBox } from "./tile-layer";
 
 const TOOLTIP_W = 190;
-const TOOLTIP_H = 122;
+const TOOLTIP_H = 148;
 
 /**
  * The map. Every square on one canvas, area proportional to its share.

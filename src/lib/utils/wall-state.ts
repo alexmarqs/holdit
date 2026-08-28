@@ -28,10 +28,10 @@ export function hrefWithoutHeld(href: string): string {
 export function claimedSquare(
   wall: MapState,
   handle: string,
-): { handle: string; share: number } | null {
+): { handle: string; share: number; purchaseId: string | null } | null {
   const standing = wall.standings.find((s) => s.holder.handle === handle);
   if (!standing) return null;
-  return { handle, share: standing.share };
+  return { handle, share: standing.share, purchaseId: standing.lastPurchaseId };
 }
 
 export function awaitingTimedOut(startedAt: number, now: number): boolean {

@@ -1,6 +1,12 @@
-import { TAGLINE_MAX_CHARS } from "@holdit/core";
+import { clipTagline } from "@holdit/core";
 import { FAVICON_DATA_REVALIDATE_SECONDS } from "./http-cache";
-import { type FaviconSize, faviconDomain, isFaviconDomain, toFaviconUrl } from "./utils/favicon";
+import {
+  type FaviconSize,
+  faviconDomain,
+  isFaviconDomain,
+  isFaviconPlaceholder,
+  toFaviconUrl,
+} from "./utils/favicon";
 
 /**
  * Outbound fetches: the tagline scrape at record time, and favicon bytes for
@@ -46,13 +52,7 @@ const tidy = (raw: string): string | null => {
     .replace(/&gt;/g, ">")
     .replace(/\s+/g, " ")
     .trim();
-  if (text.length < 12) return null;
-  if (text.length <= TAGLINE_MAX_CHARS) return text;
-
-  const clipped = text.slice(0, TAGLINE_MAX_CHARS - 1);
-  const lastSpace = clipped.lastIndexOf(" ");
-  // Cutting mid-word looks like a bug; cutting mid-sentence looks deliberate.
-  return `${(lastSpace > 40 ? clipped.slice(0, lastSpace) : clipped).replace(/[,;:.\s]+$/, "")}…`;
+  return clipTagline(text);
 };
 
 export interface FaviconResult {
@@ -102,7 +102,12 @@ async function fetchFavicon(handle: string, size: FaviconSize): Promise<FaviconR
     // A handful of bytes is an error page or a 1px spacer, not a mark.
     if (buffer.byteLength < 32 || buffer.byteLength > FAVICON_MAX_BYTES) return null;
 
-    return { bytes: new Uint8Array(buffer), contentType };
+    const bytes = new Uint8Array(buffer);
+    // Google 404s with a 16px globe that still decodes. Live <img> paints it;
+    // a 200 of the same body must not land in download or print either.
+    if (isFaviconPlaceholder(bytes)) return null;
+
+    return { bytes, contentType };
   } catch {
     return null;
   }

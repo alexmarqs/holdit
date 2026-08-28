@@ -3,6 +3,8 @@
  * are meant to be tuned once the map has real traffic.
  */
 
+import { Big } from "./big";
+
 export const MS_PER_DAY = 86_400_000;
 
 /**
@@ -120,7 +122,10 @@ export function ceilingFor(n: number): number {
   // part of the wall belonging to nobody, and the founding square rendering
   // "60.0%" of a wall it wholly occupied.
   if (n <= 1) return 1;
-  return Math.min(YOUNG_WALL_MAX_SHARE, Math.max(MAX_SHARE, CEILING_BUDGET / n));
+  const budget = new Big(String(CEILING_BUDGET)).div(n);
+  const floor = budget.gt(MAX_SHARE) ? budget : new Big(String(MAX_SHARE));
+  const young = new Big(String(YOUNG_WALL_MAX_SHARE));
+  return (floor.gt(young) ? young : floor).toNumber();
 }
 
 /*
@@ -152,5 +157,26 @@ export const MIN_SHOWN_TILE_CLICKS = 10;
  */
 export const TRENDING_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-/** One line under the name on a large square; longer simply will not fit. */
-export const TAGLINE_MAX_CHARS = 90;
+/**
+ * How much of a site's own line we store.
+ *
+ * Ninety characters was one line under the name on a large square, so the
+ * listing and a wide tile both clipped in empty space. Three wrapped lines
+ * is what those surfaces actually hold; CSS clamps from there.
+ */
+export const TAGLINE_MAX_CHARS = 220;
+
+const TAGLINE_MIN_CHARS = 12;
+
+/**
+ * A site's description, cut at a word so a stored ellipsis is a sentence
+ * ending rather than a mid-word glitch.
+ */
+export function clipTagline(text: string): string | null {
+  const trimmed = text.replace(/\s+/g, " ").trim();
+  if (trimmed.length < TAGLINE_MIN_CHARS) return null;
+  if (trimmed.length <= TAGLINE_MAX_CHARS) return trimmed;
+  const clipped = trimmed.slice(0, TAGLINE_MAX_CHARS - 1);
+  const lastSpace = clipped.lastIndexOf(" ");
+  return `${(lastSpace > 40 ? clipped.slice(0, lastSpace) : clipped).replace(/[,;:.\s]+$/, "")}…`;
+}

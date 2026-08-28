@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { OG_SIZE } from "@/components/map/og-fonts";
 import { siteUrl } from "@/lib/utils/env";
-import { printCardHtml } from "./card";
+import { printCardHtml, printPurchaseCardHtml } from "./card";
 
 describe("printCardHtml", () => {
   const at = Date.UTC(2026, 7, 22, 11, 37);
@@ -36,5 +36,14 @@ describe("printCardHtml", () => {
   it("stays a card and not a document", () => {
     // The page form spent 14KB of app shell to deliver these tags.
     expect(html.length).toBeLessThan(2_000);
+  });
+});
+
+describe("printPurchaseCardHtml", () => {
+  it("points the card at that purchase, not a 30s time bucket", () => {
+    const id = "11111111-1111-4111-8111-111111111111";
+    const paid = printPurchaseCardHtml(id);
+    expect(paid).toContain(`<meta property="og:image" content="${siteUrl}/api/og?p=${id}">`);
+    expect(paid).toContain(`<meta property="og:url" content="${siteUrl}/print/p/${id}">`);
   });
 });

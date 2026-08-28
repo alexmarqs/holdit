@@ -5,8 +5,10 @@ import {
   ceilToDollar,
   centsForShareOf,
   clampSpend,
+  MAX_SPEND_CENTS,
   MIN_SPEND_CENTS,
-  openingAmountCents,
+  openingQuotedCents,
+  othersCanAddBeforeSlip,
   shareAfterSpend,
   stepAmount,
 } from "@holdit/core";
@@ -20,14 +22,10 @@ import { useWall } from "@/hooks/use-wall";
 import { useWallRefresh } from "@/hooks/use-wall-refresh";
 import { apiClient } from "@/lib/api-client";
 import { isValidTarget, normalizeTarget } from "@/lib/utils/domain";
-import { formatShare, moneyDraft } from "@/lib/utils/format";
+import { formatMoney, formatShare, moneyDraft } from "@/lib/utils/format";
 
 /** Pause after a keystroke before the typed amount lands on the map. */
 const SETTLE_MS = 320;
-
-function maxSizeCopy(handle: string, share: number) {
-  return `${handle} is already at the max size (${formatShare(share)}). More spend cannot make the square bigger until others buy and it slips under the cap.`;
-}
 
 /** Official Stripe wordmark. Blurple on paper, white in the dark. */
 function StripeWordmark() {
@@ -42,10 +40,10 @@ function StripeWordmark() {
   );
 }
 
-function readAmount(draft: string | null, current: number, maxUseful: number): number {
+function readAmount(draft: string | null, current: number, maxSpend: number): number {
   const dollars = Number(String(draft ?? "").replace(/[$,\s]/g, ""));
-  if (!Number.isFinite(dollars) || dollars <= 0) return Math.min(current, maxUseful);
-  return Math.min(maxUseful, clampSpend(Math.round(dollars * 100)));
+  if (!Number.isFinite(dollars) || dollars <= 0) return Math.min(current, maxSpend);
+  return Math.min(maxSpend, clampSpend(Math.round(dollars * 100)));
 }
 
 export function FormBuyPanel() {
@@ -54,9 +52,8 @@ export function FormBuyPanel() {
   const { refresh } = useWallRefresh();
   const setPreview = useSetAtom(previewAtom);
   const setPreviewHandle = useSetAtom(previewHandleAtom);
-  const [amount, setAmount] = useState(() => openingAmountCents(state.counters.squaresLive));
-  const [draft, setDraft] = useState<string | null>(null);
   const [target, setTarget] = useState("");
+  const [draft, setDraft] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,17 +66,19 @@ export function FormBuyPanel() {
 
   const ceilingAfter = ceilingFor(state.counters.squaresLive + (existing ? 0 : 1));
   const ceilingCents = centsForShareOf(rows, ceilingAfter, existing?.holder.id);
-  const atCeiling = existing !== undefined && (existing.capped || ceilingCents === null);
-  const maxUseful = Math.max(
+  const capSpend = Math.max(
     MIN_SPEND_CENTS,
     ceilingCents === null ? MIN_SPEND_CENTS : ceilToDollar(ceilingCents),
   );
-  const quotedAmount = draft === null ? amount : readAmount(draft, amount, maxUseful);
+  const [amount, setAmount] = useState(() =>
+    openingQuotedCents(state.counters.squaresLive, capSpend, state.counters.liveCents),
+  );
+  const quotedAmount = draft === null ? amount : readAmount(draft, amount, MAX_SPEND_CENTS);
   const share = shareAfterSpend(rows, quotedAmount, existing?.holder.id);
-
-  useEffect(() => {
-    setAmount((value) => Math.min(value, maxUseful));
-  }, [maxUseful]);
+  const atDisplayCap = ceilingAfter < 1 && share >= ceilingAfter - 1e-9;
+  const yoursAfter = (existing?.liveCents ?? 0) + quotedAmount;
+  const wallAfter = state.counters.liveCents + quotedAmount;
+  const othersAdd = othersCanAddBeforeSlip(yoursAfter, wallAfter, ceilingAfter);
 
   const store = useStore();
 
@@ -94,11 +93,11 @@ export function FormBuyPanel() {
 
   useEffect(() => {
     if (draft === null) return;
-    const next = readAmount(draft, amount, maxUseful);
+    const next = readAmount(draft, amount, MAX_SPEND_CENTS);
     if (next === amount) return;
     const timer = setTimeout(() => setAmount(next), SETTLE_MS);
     return () => clearTimeout(timer);
-  }, [amount, draft, maxUseful]);
+  }, [amount, draft]);
 
   const previewName = normalized?.handle ?? null;
   useEffect(() => {
@@ -121,10 +120,6 @@ export function FormBuyPanel() {
     }
     if (!isValidTarget(target)) {
       setError(`"${target.trim()}" is not a domain or an @handle.`);
-      return;
-    }
-    if (atCeiling && existing) {
-      setError(maxSizeCopy(existing.holder.handle, existing.share));
       return;
     }
 
@@ -156,8 +151,8 @@ export function FormBuyPanel() {
     }
   }
 
-  const delta = existing && !atCeiling ? Math.max(0, share - existing.share) : share;
-  const shareLabel = existing && !atCeiling ? `+${formatShare(delta)}` : formatShare(share);
+  const delta = existing && !atDisplayCap ? Math.max(0, share - existing.share) : share;
+  const shareLabel = existing && !atDisplayCap ? `+${formatShare(delta)}` : formatShare(share);
   const amountDigits = draft ?? moneyDraft(amount);
 
   return (
@@ -169,7 +164,7 @@ export function FormBuyPanel() {
           void submit();
         }}
       >
-        <span className="inline-flex items-center justify-center gap-1.5">
+        <span className="inline-flex shrink-0 items-center justify-center gap-1.5">
           <Button
             type="button"
             variant="outline"
@@ -193,15 +188,15 @@ export function FormBuyPanel() {
               onChange={(event) => setDraft(event.target.value)}
               onFocus={() => setDraft(moneyDraft(amount))}
               onBlur={() => {
-                setAmount(readAmount(draft, amount, maxUseful));
+                setAmount(readAmount(draft, amount, MAX_SPEND_CENTS));
                 setDraft(null);
               }}
               onKeyDown={(event) => {
                 if (event.key === "ArrowUp" || event.key === "ArrowDown") {
                   event.preventDefault();
-                  const base = readAmount(draft, amount, maxUseful);
+                  const base = readAmount(draft, amount, MAX_SPEND_CENTS);
                   const next = Math.min(
-                    maxUseful,
+                    MAX_SPEND_CENTS,
                     clampSpend(base + (event.key === "ArrowUp" ? 100 : -100)),
                   );
                   setAmount(next);
@@ -210,7 +205,7 @@ export function FormBuyPanel() {
                 }
                 if (event.key !== "Enter") return;
                 event.preventDefault();
-                setAmount(readAmount(draft, amount, maxUseful));
+                setAmount(readAmount(draft, amount, MAX_SPEND_CENTS));
                 setDraft(null);
                 event.currentTarget.blur();
               }}
@@ -226,21 +221,18 @@ export function FormBuyPanel() {
             variant="outline"
             size="icon"
             aria-label="Spend more"
-            title={
-              atCeiling ? "Already at the max size — it can grow again after others buy" : undefined
-            }
             className="size-11"
-            disabled={quotedAmount >= maxUseful}
+            disabled={quotedAmount >= MAX_SPEND_CENTS}
             onClick={() => {
               setDraft(null);
-              setAmount(Math.min(maxUseful, stepAmount(quotedAmount, 1)));
+              setAmount(Math.min(MAX_SPEND_CENTS, stepAmount(quotedAmount, 1)));
             }}
           >
             <Plus />
           </Button>
         </span>
 
-        <div className="relative w-full min-w-0 sm:min-w-48 sm:flex-1 sm:basis-48">
+        <div className="relative w-full min-w-0 sm:min-w-[19.5rem] sm:flex-1 sm:basis-[19.5rem]">
           <Globe className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={target}
@@ -260,14 +252,10 @@ export function FormBuyPanel() {
         <Button
           type="submit"
           size="lg"
-          className="hold-cta w-full rounded-full px-3.5 tracking-[-0.02em] sm:w-auto"
-          disabled={pending || atCeiling}
+          className="hold-cta w-full shrink-0 rounded-full px-3.5 tracking-[-0.02em] sm:w-auto"
+          disabled={pending}
         >
-          {pending
-            ? "Holding…"
-            : atCeiling
-              ? "Max size"
-              : `${existing ? "Add" : "Hold"} ${shareLabel}`}
+          {pending ? "Holding…" : `${existing ? "Add" : "Hold"} ${shareLabel}`}
         </Button>
       </form>
 
@@ -275,9 +263,12 @@ export function FormBuyPanel() {
         <p className="mt-2.5 max-w-md text-[12px] font-bold text-destructive" role="alert">
           {error}
         </p>
-      ) : atCeiling && existing ? (
-        <p className="mt-2.5 max-w-md text-[12px] text-muted-foreground">
-          {maxSizeCopy(existing.holder.handle, existing.share)}{" "}
+      ) : atDisplayCap ? (
+        <p className="mt-2.5 max-w-md text-[13px] leading-snug text-muted-foreground">
+          <span className="font-medium text-foreground">{formatShare(share)} is the cap.</span>{" "}
+          <span className="num font-semibold text-foreground">{formatMoney(quotedAmount)}</span>{" "}
+          keeps {formatShare(share)} until others add{" "}
+          <span className="num font-semibold text-primary">{formatMoney(othersAdd)}</span>.{" "}
           <a href="/rules#the-cap" className="text-primary hover:text-primary/80">
             Rules
           </a>

@@ -1,3 +1,4 @@
+import { Big } from "../big";
 import { HALF_LIFE_DAYS, MS_PER_DAY, OVERFLOW_HALF_LIFE_MULTIPLIER } from "../config";
 import type { Purchase } from "../types";
 
@@ -55,10 +56,10 @@ export function liveCentsForPurchase(
   const age = now - purchase.createdAt;
   const withinCap = Math.min(purchase.amountCents, capCents);
   const overflow = Math.max(0, purchase.amountCents - capCents);
-  return (
-    withinCap * decayFactor(age) +
-    overflow * decayFactor(age, HALF_LIFE_DAYS * OVERFLOW_HALF_LIFE_MULTIPLIER)
-  );
+  return new Big(withinCap)
+    .times(decayFactor(age))
+    .plus(new Big(overflow).times(decayFactor(age, HALF_LIFE_DAYS * OVERFLOW_HALF_LIFE_MULTIPLIER)))
+    .toNumber();
 }
 
 export function liveCentsForHolder(
@@ -66,9 +67,9 @@ export function liveCentsForHolder(
   now: number,
   capCents = Number.POSITIVE_INFINITY,
 ): number {
-  let total = 0;
-  for (const p of purchases) total += liveCentsForPurchase(p, now, capCents);
-  return total;
+  let total = new Big(0);
+  for (const p of purchases) total = total.plus(liveCentsForPurchase(p, now, capCents));
+  return total.toNumber();
 }
 
 /** Spend never fades in the record. All-time totals are permanent. */

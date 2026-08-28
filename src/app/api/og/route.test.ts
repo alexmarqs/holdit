@@ -1,19 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CACHE } from "@/lib/http-cache";
+import { PRINT_BUCKET_MS } from "@/lib/utils/print-at";
 
 const getMapState = vi.fn();
+const purchasePrintAnchor = vi.fn();
+const wallCardModel = vi.fn(() => ({ tiles: [] }));
 const marketingOgImage = vi.fn();
 const wallOgImage = vi.fn();
 const rateLimit = vi.fn();
 
 vi.mock("@holdit/db/client", () => ({ db: {} }));
 vi.mock("@holdit/db/queries/map", () => ({ getMapState }));
+vi.mock("@holdit/db/queries/purchases", () => ({ purchasePrintAnchor }));
 vi.mock("@/components/map/marketing-og", () => ({ marketingOgImage }));
 vi.mock("@/components/map/wall-og", () => ({
   resolveCardLogos: vi.fn(async (card: unknown) => card),
   wallOgImage,
 }));
-vi.mock("@/components/map/wall-card", () => ({ wallCardModel: vi.fn(() => ({ tiles: [] })) }));
+vi.mock("@/components/map/wall-card", () => ({ wallCardModel }));
 vi.mock("@/lib/utils/rate-limit", () => ({ rateLimit }));
 vi.mock("@/lib/utils/request", () => ({ clientIp: () => "127.0.0.1" }));
 
@@ -32,6 +36,10 @@ describe("GET /api/og", () => {
   beforeEach(() => {
     getMapState.mockReset();
     getMapState.mockResolvedValue({ standings: [] });
+    purchasePrintAnchor.mockReset();
+    purchasePrintAnchor.mockResolvedValue(null);
+    wallCardModel.mockReset();
+    wallCardModel.mockReturnValue({ tiles: [] });
     marketingOgImage.mockReset();
     marketingOgImage.mockResolvedValue(png());
     wallOgImage.mockReset();
@@ -49,7 +57,8 @@ describe("GET /api/og", () => {
   it("freezes a print image forever — one stamp, same pixels", async () => {
     const response = await GET(new Request(`https://holdit.lol/api/og?at=${AT}`));
     expect(response.headers.get("cache-control")).toBe(CACHE.printImage);
-    expect(getMapState).toHaveBeenCalledWith(expect.anything(), { now: AT });
+    expect(getMapState).toHaveBeenCalledWith(expect.anything(), { now: AT + PRINT_BUCKET_MS - 1 });
+    expect(wallCardModel).toHaveBeenCalledWith(expect.anything());
     expect(marketingOgImage).not.toHaveBeenCalled();
   });
 
@@ -67,5 +76,24 @@ describe("GET /api/og", () => {
     expect(response.status).toBe(404);
     expect(response.headers.get("cache-control")).toBe(CACHE.noStore);
     expect(marketingOgImage).not.toHaveBeenCalled();
+  });
+
+  it("freezes a purchase print at that buy, not the 30s bucket", async () => {
+    const id = "11111111-1111-4111-8111-111111111111";
+    const bought = AT + 15_000;
+    purchasePrintAnchor.mockResolvedValue({ createdAt: bought, holderId: "holder-1" });
+    const response = await GET(new Request(`https://holdit.lol/api/og?p=${id}`));
+    expect(response.headers.get("cache-control")).toBe(CACHE.printImage);
+    expect(getMapState).toHaveBeenCalledWith(expect.anything(), { now: bought });
+    expect(wallCardModel).toHaveBeenCalledWith(expect.anything(), "light", "holder-1");
+    expect(marketingOgImage).not.toHaveBeenCalled();
+  });
+
+  it("does not cache a miss for an unknown purchase", async () => {
+    const id = "11111111-1111-4111-8111-111111111111";
+    const response = await GET(new Request(`https://holdit.lol/api/og?p=${id}`));
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe(CACHE.noStore);
+    expect(getMapState).not.toHaveBeenCalled();
   });
 });

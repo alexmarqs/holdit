@@ -46,18 +46,15 @@ describe("POST /api/checkout", () => {
     createSession.mockResolvedValue({ url: "https://checkout.stripe.com/session" });
   });
 
-  it("refuses to charge a square that is already at the max size", async () => {
+  it("still charges a square that is already at the max size — extra is hold, not size", async () => {
     getMapState.mockResolvedValue({
+      counters: { squaresLive: 16 },
       standings: [{ holder: { handle: "linear.app" }, capped: true, share: 0.1 }],
     });
 
-    const response = await post({ target: "linear.app", amountCents: 100 });
-    expect(response.status).toBe(400);
-    const body = (await response.json()) as { error: string };
-    expect(body.error.toLowerCase()).toContain("max size");
-    expect(body.error.toLowerCase()).toContain("others buy");
-    expect(createSession).not.toHaveBeenCalled();
-    expect(buy).not.toHaveBeenCalled();
+    const response = await post({ target: "linear.app", amountCents: 10_000 });
+    expect(response.status).toBe(200);
+    expect(createSession).toHaveBeenCalledOnce();
   });
 
   it("still charges a square that can grow", async () => {
