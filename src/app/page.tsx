@@ -26,10 +26,7 @@ export default async function MapPage() {
         <AwaitingSquare />
         <div id="claim" className="flex flex-1 flex-col">
           <BuyPanel />
-          <div
-            id="map"
-            className="flex min-h-50 min-w-0 flex-1 flex-col sm:min-h-70"
-          >
+          <div id="map" className="flex min-h-50 min-w-0 flex-1 flex-col sm:min-h-70">
             <Treemap />
           </div>
         </div>
