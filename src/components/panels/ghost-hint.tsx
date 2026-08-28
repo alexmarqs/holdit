@@ -3,6 +3,7 @@
 import { useAtomValue } from "jotai";
 import { Shantell_Sans } from "next/font/google";
 import { mapPreviewOnAtom } from "@/context/wall-atoms";
+import { useWall } from "@/hooks/use-wall";
 
 const note = Shantell_Sans({
   subsets: ["latin"],
@@ -46,7 +47,8 @@ function DownArrow({ className }: { className: string }) {
  */
 export function GhostHint({ placement }: { placement: "hold" | "map" }) {
   const on = useAtomValue(mapPreviewOnAtom);
-  if (!on) return null;
+  const empty = useWall().counters.squaresLive === 0;
+  if (!on && !empty) return null;
 
   if (placement === "map") {
     return (
