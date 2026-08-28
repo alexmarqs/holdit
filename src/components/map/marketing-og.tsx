@@ -106,7 +106,7 @@ export async function marketingOgImage() {
               lineHeight: 1.05,
             }}
           >
-            Rent your square of the wall.
+            Hold your square of the wall.
           </div>
           <div
             style={{
