@@ -56,7 +56,6 @@ describe("timestamped map datasets", () => {
     expect(rows.holders.map((holder) => holder.handle)).toEqual(["early.com"]);
     expect(rows.purchasesByHolder.has(late.holder.id)).toBe(false);
     expect(rows.clicksAllTimeByHolder.get(early.holder.id)).toBe(1);
-    expect(rows.clicksLastHourByHolder.get(early.holder.id)).toBe(1);
     expect(rows.visitorsSinceLaunch).toBe(1);
     expect(rows.activity.map((event) => event.handle)).toEqual(["early.com"]);
   });

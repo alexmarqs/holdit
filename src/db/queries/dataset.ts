@@ -1,10 +1,4 @@
-import {
-  type ActivityEvent,
-  type Holder,
-  ONLINE_WINDOW_MS,
-  type Purchase,
-  TRENDING_WINDOW_MS,
-} from "@holdit/core";
+import { type ActivityEvent, type Holder, ONLINE_WINDOW_MS, type Purchase } from "@holdit/core";
 import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import type { Queryable } from "../client";
 import { num, toHolder, toPurchase } from "../rows";
@@ -21,7 +15,6 @@ export interface MapRows {
   holders: Holder[];
   purchasesByHolder: Map<string, Purchase[]>;
   clicksAllTimeByHolder: Map<string, number>;
-  clicksLastHourByHolder: Map<string, number>;
   activity: ActivityEvent[];
   visitorsSinceLaunch: number;
   /** Distinct visitors seen inside `ONLINE_WINDOW_MS`. */
@@ -62,20 +55,12 @@ export async function loadMapRows(
   options: { includeOnline?: boolean } = {},
 ): Promise<MapRows> {
   const at = new Date(now);
-  const trendingSince = new Date(now - TRENDING_WINDOW_MS);
 
-  const countsQuery = (since?: Date) => {
-    const where = and(
-      eq(clicks.uaClass, "browser"),
-      ...(since ? [gte(clicks.ts, since)] : []),
-      lte(clicks.ts, at),
-    );
-    return db
-      .select({ holderId: clicks.holderId, n: sql<number>`count(*)::int` })
-      .from(clicks)
-      .where(where)
-      .groupBy(clicks.holderId);
-  };
+  const clickTotalsQuery = db
+    .select({ holderId: clicks.holderId, n: sql<number>`count(*)::int` })
+    .from(clicks)
+    .where(and(eq(clicks.uaClass, "browser"), lte(clicks.ts, at)))
+    .groupBy(clicks.holderId);
 
   const onlineQuery =
     options.includeOnline === false
@@ -90,10 +75,9 @@ export async function loadMapRows(
             ),
           );
 
-  const [wallRows, clickTotals, clickHour, visitCount, onlineCount, feed] = await Promise.all([
+  const [wallRows, clickTotals, visitCount, onlineCount, feed] = await Promise.all([
     loadWallRows(db, now),
-    countsQuery(),
-    countsQuery(trendingSince),
+    clickTotalsQuery,
     db.select({ n: sql<number>`count(*)::int` }).from(visits).where(lte(visits.firstSeenAt, at)),
     onlineQuery,
     db
@@ -128,7 +112,6 @@ export async function loadMapRows(
   return {
     ...wallRows,
     clicksAllTimeByHolder: counts(clickTotals),
-    clicksLastHourByHolder: counts(clickHour),
     activity,
     visitorsSinceLaunch: visitCount[0]?.n ?? 0,
     onlineNow: onlineCount[0]?.n ?? 0,

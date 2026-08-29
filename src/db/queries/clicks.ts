@@ -13,9 +13,10 @@ export interface TrackClickInput {
 
 /**
  * Click counts never affect area, so nothing here defends the map. They do rank
- * the Trending card, which is the one thing a click buys and the reason the
- * dedupe window exists — "informational only, so there is nothing to farm for"
- * was the old justification here and it was not true while Trending shipped.
+ * the Trending card (all-time), which is the one thing a click buys and the
+ * reason the dedupe window exists — "informational only, so there is nothing
+ * to farm for" was the old justification here and it was not true while
+ * Trending shipped.
  *
  * Dedupe is one per address per holder per `CLICK_DEDUPE_WINDOW_MS`, bots are
  * classified out, and the raw rows stay owner-only.

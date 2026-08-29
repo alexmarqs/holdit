@@ -13,7 +13,6 @@ export interface MapInput {
   holders: readonly Holder[];
   purchasesByHolder: ReadonlyMap<string, readonly Purchase[]>;
   clicksAllTimeByHolder?: ReadonlyMap<string, number>;
-  clicksLastHourByHolder?: ReadonlyMap<string, number>;
   activity?: readonly ActivityEvent[];
   visitorsSinceLaunch?: number;
   /**
@@ -34,7 +33,6 @@ export interface MapInput {
 export function buildMapState(input: MapInput): MapState {
   const now = input.now;
   const clicksAll = input.clicksAllTimeByHolder ?? new Map();
-  const clicksHour = input.clicksLastHourByHolder ?? new Map();
   const purchasesByHolder = new Map(
     [...input.purchasesByHolder].map(([id, list]) => [id, purchasesAsOf(list, now)]),
   );
@@ -72,16 +70,18 @@ export function buildMapState(input: MapInput): MapState {
     })
     .sort((a, b) => b.share - a.share || a.holder.handle.localeCompare(b.holder.handle));
 
-  // Trending is deliberately not size order — a small square with good copy can
-  // top it, which is the argument that copy beats budget.
+  // Trending is all-time clicks, not a sliding window. A day with no new
+  // clicks used to empty the card even when the wall had a real history —
+  // the section vanished for a quiet night. All-time still ranks a small
+  // square with good copy above a big quiet one.
   const trending: TrendingRow[] = standings
     .map((s) => ({
       handle: s.holder.handle,
-      clicksInWindow: clicksHour.get(s.holder.id) ?? 0,
+      clicks: s.clicksAllTime,
       share: s.share,
     }))
-    .filter((row) => row.clicksInWindow > 0)
-    .sort((a, b) => b.clicksInWindow - a.clicksInWindow)
+    .filter((row) => row.clicks > 0)
+    .sort((a, b) => b.clicks - a.clicks)
     .slice(0, 5);
 
   return {
