@@ -12,6 +12,7 @@ import {
   wallShareCopy,
   wallShareUrl,
   wallTweetIntent,
+  xShareWebFallback,
 } from "./share-copy";
 
 const LIVE = { squaresLive: 115, liveCents: 1_240_000 };
@@ -157,6 +158,28 @@ describe("prefersXApp", () => {
         maxTouchPoints: 5,
       }),
     ).toBe(true);
+  });
+});
+
+describe("xShareWebFallback", () => {
+  const iphone = {
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+  };
+  const android = {
+    userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/120.0.0.0",
+  };
+  const ipadOs = {
+    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+    maxTouchPoints: 5,
+  };
+
+  it("does not open x.com after a successful iPhone hand-off", () => {
+    expect(xShareWebFallback(iphone)).toBe(false);
+    expect(xShareWebFallback(ipadOs)).toBe(false);
+  });
+
+  it("still falls back to the website on Android, which can see the page hide", () => {
+    expect(xShareWebFallback(android)).toBe(true);
   });
 });
 
