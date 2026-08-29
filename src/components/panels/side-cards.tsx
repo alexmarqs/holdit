@@ -42,8 +42,9 @@ function RowActions({ handle, holder }: { handle: string; holder?: Holder }) {
 
 /*
  * Both cards remove themselves when they have nothing to say. A heading over
- * "No clicks in the last hour" is a hole in the page, and on launch day both
- * would be holes — the honest empty state still reads as a dead site.
+ * an empty list is a hole in the page, and on launch day both would be holes
+ * — the honest empty state still reads as a dead site. Trending is all-time
+ * clicks, so a quiet day does not take the section down.
  */
 export function TrendingCard() {
   const state = useWall();
@@ -62,7 +63,7 @@ export function TrendingCard() {
               <SiteLogo handle={row.handle} size={18} />
               <span className="truncate font-medium">{row.handle}</span>
               <span className="num ml-auto text-xs text-muted-foreground">
-                {formatInt(row.clicksInWindow)}
+                {formatInt(row.clicks)}
               </span>
               <RowActions handle={row.handle} holder={holders.get(row.handle)} />
             </div>

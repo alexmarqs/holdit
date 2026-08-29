@@ -66,8 +66,8 @@ export interface MapCounters {
 
 export interface TrendingRow {
   handle: string;
-  /** Counted clicks inside `TRENDING_WINDOW_MS`, not a per-hour rate. */
-  clicksInWindow: number;
+  /** Every counted click on this square. The card disappears when this is zero. */
+  clicks: number;
   share: number;
 }
 

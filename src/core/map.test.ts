@@ -113,15 +113,23 @@ describe("buildMapState", () => {
     expect(state.standings.find((s) => s.holder.id === "f5")?.capped).toBe(false);
   });
 
-  it("ranks trending by clicks per hour, not by size", () => {
+  it("ranks trending by all-time clicks, not by size", () => {
     const state = scenario([["big", 500_000], ["small", 10_000], ...filler(200)], {
-      clicksLastHourByHolder: new Map([
+      clicksAllTimeByHolder: new Map([
         ["big", 3],
         ["small", 400],
       ]),
     });
     expect(state.trending[0]?.handle).toBe("small.dev");
+    expect(state.trending[0]?.clicks).toBe(400);
     expect(state.trending).toHaveLength(2);
+  });
+
+  it("keeps trending up when the last day was quiet", () => {
+    const state = scenario([["old", 10_000]], {
+      clicksAllTimeByHolder: new Map([["old", 80]]),
+    });
+    expect(state.trending).toEqual([{ handle: "old.dev", clicks: 80, share: 1 }]);
   });
 
   it("totals clicks across every square", () => {

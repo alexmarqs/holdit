@@ -16,7 +16,6 @@ export interface SquareSpec {
   /** When the purchase(s) landed. Defaults to `now`. */
   at?: number | number[];
   clicksAllTime?: number;
-  clicksLastHour?: number;
 }
 
 export interface WallSpec {
@@ -29,7 +28,6 @@ export function wallInput(squares: readonly SquareSpec[], spec: WallSpec): MapIn
   const holders: Holder[] = [];
   const purchasesByHolder = new Map<string, Purchase[]>();
   const clicksAllTimeByHolder = new Map<string, number>();
-  const clicksLastHourByHolder = new Map<string, number>();
   const activity: ActivityEvent[] = [];
   let seq = 0;
 
@@ -55,7 +53,6 @@ export function wallInput(squares: readonly SquareSpec[], spec: WallSpec): MapIn
     purchasesByHolder.set(id, rows);
 
     if (square.clicksAllTime) clicksAllTimeByHolder.set(id, square.clicksAllTime);
-    if (square.clicksLastHour) clicksLastHourByHolder.set(id, square.clicksLastHour);
 
     for (const [i, row] of rows.entries()) {
       activity.push({
@@ -76,7 +73,6 @@ export function wallInput(squares: readonly SquareSpec[], spec: WallSpec): MapIn
     holders,
     purchasesByHolder,
     clicksAllTimeByHolder,
-    clicksLastHourByHolder,
     activity,
     visitorsSinceLaunch: spec.visitorsSinceLaunch ?? 0,
     onlineNow: spec.onlineNow ?? null,

@@ -145,16 +145,6 @@ export const MIN_SHOWN_VISITORS = 250;
 export const MIN_SHOWN_TILE_CLICKS = 10;
 
 /**
- * The window "trending" measures over.
- *
- * One hour is the right unit for a busy wall and useless for a new one: a site
- * with a few hundred clicks a day is empty in most hours, so the card blinked
- * in and out at random and was usually missing entirely. A day is long enough
- * to always have something to say and short enough that it still moves.
- */
-export const TRENDING_WINDOW_MS = 24 * 60 * 60 * 1000;
-
-/**
  * How much of a site's own line we store.
  *
  * Ninety characters was one line under the name on a large square, so the

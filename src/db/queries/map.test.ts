@@ -12,7 +12,6 @@ const empty = () => ({
   holders: [],
   purchasesByHolder: new Map(),
   clicksAllTimeByHolder: new Map(),
-  clicksLastHourByHolder: new Map(),
   activity: [],
   visitorsSinceLaunch: 0,
   onlineNow: 0,
