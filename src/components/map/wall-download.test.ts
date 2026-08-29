@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { PREVIEW_ID, placeWall } from "./place-wall";
 import {
   downloadLogoSrc,
+  inlineDownloadLogo,
+  inlineDownloadLogos,
   logoDataUrl,
   wallCaptureOptions,
   wallDownloadCaption,
@@ -82,6 +84,48 @@ describe("wall capture logos", () => {
 
   it("does not ask the proxy for a host we would not hotlink", () => {
     expect(downloadLogoSrc("127.0.0.1")).toMatch(/^data:image\/svg\+xml/);
+  });
+
+  it("inlines proxy bytes as a data URL so Safari can paint the mark", async () => {
+    const png = new Uint8Array(64).fill(7);
+    png.set([137, 80, 78, 71, 13, 10, 26, 10]);
+    const fetchImpl: typeof fetch = async (input) => {
+      expect(String(input)).toBe("/api/favicons/linear.app");
+      return new Response(png, { headers: { "content-type": "image/png" } });
+    };
+    const url = await inlineDownloadLogo("linear.app", fetchImpl);
+    expect(url.startsWith("data:image/png;base64,")).toBe(true);
+    expect(url).not.toContain(TRANSPARENT_GIF);
+  });
+
+  it("falls back to a monogram when the GET has nothing", async () => {
+    const fetchImpl: typeof fetch = async () => new Response(null, { status: 404 });
+    const url = await inlineDownloadLogo("linear.app", fetchImpl);
+    expect(url.startsWith("data:image/svg+xml")).toBe(true);
+    expect(decodeURIComponent(url)).toContain("LI");
+  });
+
+  it("does not fetch a host we would not hotlink", async () => {
+    const fetchImpl: typeof fetch = async () => {
+      throw new Error("should not fetch");
+    };
+    const url = await inlineDownloadLogo("127.0.0.1", fetchImpl);
+    expect(url.startsWith("data:image/svg+xml")).toBe(true);
+  });
+
+  it("fetches each distinct handle once", async () => {
+    const png = new Uint8Array(64).fill(7);
+    png.set([137, 80, 78, 71, 13, 10, 26, 10]);
+    let hits = 0;
+    const fetchImpl: typeof fetch = async () => {
+      hits += 1;
+      return new Response(png, { headers: { "content-type": "image/png" } });
+    };
+    const logos = await inlineDownloadLogos(["linear.app", "linear.app", "@someone"], fetchImpl);
+    expect(hits).toBe(2);
+    expect(logos.size).toBe(2);
+    expect(logos.get("linear.app")?.startsWith("data:image/png;base64,")).toBe(true);
+    expect(logos.get("@someone")?.startsWith("data:image/png;base64,")).toBe(true);
   });
 
   it("keeps fetched bytes as a data URL when OG already has them in process", () => {

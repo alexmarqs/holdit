@@ -10,7 +10,7 @@ import { useWall } from "@/hooks/use-wall";
 import { placeWall } from "./place-wall";
 import { TileLayer } from "./tile-layer";
 import {
-  downloadLogoSrc,
+  inlineDownloadLogos,
   logoDataUrl,
   wallCaptureOptions,
   wallDownloadCaption,
@@ -104,8 +104,12 @@ export function DownloadWallButton() {
       const link = document.createElement("a");
       link.href = href;
       link.download = wallDownloadFilename(state.generatedAt);
+      // iOS presents Preview / Download after click returns, and reads the
+      // blob asynchronously. Revoking now leaves Quick Look a dead object URL.
+      document.body.appendChild(link);
       link.click();
-      URL.revokeObjectURL(href);
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(href), 60_000);
     } catch (error) {
       console.error("Wall download failed", error);
     } finally {
@@ -140,40 +144,35 @@ async function paintLogos(root: ParentNode): Promise<void> {
   const imgs = [...root.querySelectorAll("img")];
   if (imgs.length === 0) return;
 
-  for (const img of imgs) {
-    const handle = tileHandle(img);
-    if (!handle) continue;
-    img.loading = "eager";
-    img.removeAttribute("srcset");
-    img.src = downloadLogoSrc(handle);
-    img.addEventListener(
-      "error",
-      () => {
-        img.src = logoDataUrl(handle, null);
-      },
-      { once: true },
-    );
-  }
+  const handles = [...new Set(imgs.map(tileHandle).filter((h): h is string => h !== null))];
+  const logos = await inlineDownloadLogos(handles);
 
-  await waitForImages(root);
+  await Promise.all(
+    imgs.map(async (img) => {
+      const handle = tileHandle(img);
+      if (!handle) return;
+      img.loading = "eager";
+      img.decoding = "sync";
+      img.removeAttribute("srcset");
+      img.src = logos.get(handle) ?? logoDataUrl(handle, null);
+      await settleImage(img);
+    }),
+  );
 }
 
-function waitForImages(root: ParentNode, ms = 4_000): Promise<void> {
-  // Cold origin fetch is 2.5s; a hundred parallel GETs still need to land
-  // before html-to-image snapshots. Warm CDN is far shorter.
-  const imgs = [...root.querySelectorAll("img")];
-  if (imgs.length === 0) return Promise.resolve();
-  return Promise.race([
-    Promise.all(
-      imgs.map((img) =>
-        img.complete
-          ? Promise.resolve()
-          : new Promise<void>((resolve) => {
-              img.addEventListener("load", () => resolve(), { once: true });
-              img.addEventListener("error", () => resolve(), { once: true });
-            }),
-      ),
-    ).then(() => undefined),
-    new Promise<void>((resolve) => setTimeout(resolve, ms)),
-  ]);
+/** Data URLs can fire `load` before the pixels exist. `decode()` waits for that. */
+async function settleImage(img: HTMLImageElement): Promise<void> {
+  try {
+    if (typeof img.decode === "function") {
+      await img.decode();
+      return;
+    }
+  } catch {
+    return;
+  }
+  if (img.complete) return;
+  await new Promise<void>((resolve) => {
+    img.addEventListener("load", () => resolve(), { once: true });
+    img.addEventListener("error", () => resolve(), { once: true });
+  });
 }
