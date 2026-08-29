@@ -5,7 +5,7 @@ import { RefreshButton } from "@/components/panels/refresh-button";
 
 export function BuyPanel() {
   return (
-    <section className="shrink-0 border-b border-foreground/8 px-4 pt-7 pb-2 md:pt-6 md:pb-2 lg:py-6">
+    <section className="relative shrink-0 border-b border-foreground/8 px-4 pt-7 pb-2 md:pt-6 md:pb-2 lg:py-6">
       <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center md:max-w-3xl">
         <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5">
           <StatsPill />
