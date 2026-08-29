@@ -4,6 +4,7 @@ import { computeShares, type HolderStanding, previewContent, shareAfterSpend } f
 import { useAtomValue } from "jotai";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { GhostHint } from "@/components/panels/ghost-hint";
 import { RefreshButton } from "@/components/panels/refresh-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -234,6 +235,7 @@ export function Treemap() {
       </div>
 
       <div ref={frame} className="map-canvas relative min-h-0 w-full flex-1 bg-map-grout">
+        {isFullscreen ? null : <GhostHint placement="map" />}
         <SearchedTileLayer
           tiles={tiles}
           byId={byId}
