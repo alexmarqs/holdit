@@ -11,9 +11,8 @@ import { WALL_QUERY_KEY } from "@/lib/utils/wall-query";
 import {
   claimPostText,
   dilutionPostText,
-  prefersNativeXApp,
+  prefersOsShare,
   sharePageUrl,
-  tweetAppIntent,
   tweetIntent,
   wallShareCopy,
 } from "./share-copy";
@@ -54,32 +53,26 @@ export function ShareWallButton({ compact = false }: { compact?: boolean }) {
     if (empty) return;
     const next = payload();
     if (!next) return;
-    const web = tweetIntent(next.text, next.pageUrl);
+    // On a phone the official intent is still x.com. The share sheet is how
+    // other sites reach the installed app — MDN and web.dev both do this,
+    // then fall back to the Web Intent. The user picks X from their apps.
     if (
-      !prefersNativeXApp({
+      prefersOsShare({
         userAgent: navigator.userAgent,
         maxTouchPoints: navigator.maxTouchPoints,
-      })
+      }) &&
+      typeof navigator.share === "function"
     ) {
-      const popup = window.open(web, "_blank", "noopener,noreferrer");
-      if (popup === null) window.location.assign(web);
-      return;
+      try {
+        await navigator.share({ text: next.text, url: next.pageUrl });
+        return;
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+      }
     }
-    // The app scheme is what actually opens the X app. If this page is still
-    // visible after a beat, the app is not installed and the website is the
-    // fallback. Leaving the page cancels that, so a successful hand-off does
-    // not also dump the user on x.com when they come back.
-    const app = tweetAppIntent(next.text, next.pageUrl);
-    const fallback = window.setTimeout(() => {
-      if (document.visibilityState === "visible") window.location.assign(web);
-    }, 1_200);
-    const cancel = () => {
-      if (document.visibilityState === "visible") return;
-      window.clearTimeout(fallback);
-      document.removeEventListener("visibilitychange", cancel);
-    };
-    document.addEventListener("visibilitychange", cancel);
-    window.location.assign(app);
+    const web = tweetIntent(next.text, next.pageUrl);
+    const popup = window.open(web, "_blank", "noopener,noreferrer");
+    if (popup === null) window.location.assign(web);
   }
 
   return (

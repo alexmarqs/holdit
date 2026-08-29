@@ -4,10 +4,9 @@ import {
   claimShareCopy,
   dilutionPostText,
   dilutionShareCopy,
-  prefersNativeXApp,
+  prefersOsShare,
   purchasePrintUrl,
   sharePageUrl,
-  tweetAppIntent,
   wallPrintUrl,
   wallShareCopy,
   wallShareUrl,
@@ -103,48 +102,23 @@ describe("wallTweetIntent", () => {
   });
 });
 
-describe("tweetAppIntent", () => {
-  it("addresses the native composer, not the website", () => {
-    const href = tweetAppIntent(
-      "115 squares holding · $12,400 on the wall right now",
-      "https://holdit.lol/",
-    );
-    expect(href.startsWith("twitter://post?message=")).toBe(true);
-    expect(href).not.toContain("x.com/intent");
-    const text = decodeURIComponent(href.slice("twitter://post?message=".length));
-    expect(text).toBe("115 squares holding · $12,400 on the wall right now\nhttps://holdit.lol/");
-  });
-
-  it("carries the same caption the web intent would have posted", () => {
-    const text = wallShareCopy(LIVE).text;
-    const page = "https://holdit.lol/print/1";
-    const web = decodeURIComponent(
-      new URL(wallTweetIntent(LIVE, page)).searchParams.get("text") ?? "",
-    );
-    const app = decodeURIComponent(
-      tweetAppIntent(text, page).slice("twitter://post?message=".length),
-    );
-    expect(app).toBe(web);
-  });
-});
-
-describe("prefersNativeXApp", () => {
-  it("hands a phone to the app scheme", () => {
+describe("prefersOsShare", () => {
+  it("hands a phone to the OS share sheet", () => {
     expect(
-      prefersNativeXApp({
+      prefersOsShare({
         userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
       }),
     ).toBe(true);
     expect(
-      prefersNativeXApp({
+      prefersOsShare({
         userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/120.0.0.0",
       }),
     ).toBe(true);
   });
 
-  it("leaves a desktop on the web intent", () => {
+  it("leaves a desktop on the official web intent", () => {
     expect(
-      prefersNativeXApp({
+      prefersOsShare({
         userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
       }),
     ).toBe(false);
@@ -152,7 +126,7 @@ describe("prefersNativeXApp", () => {
 
   it("treats iPadOS Safari as a phone even though it claims to be a Mac", () => {
     expect(
-      prefersNativeXApp({
+      prefersOsShare({
         userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
         maxTouchPoints: 5,
       }),
