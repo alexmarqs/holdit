@@ -4,12 +4,15 @@ import {
   claimShareCopy,
   dilutionPostText,
   dilutionShareCopy,
+  prefersXApp,
   purchasePrintUrl,
   sharePageUrl,
+  tweetAppIntent,
   wallPrintUrl,
   wallShareCopy,
   wallShareUrl,
   wallTweetIntent,
+  xShareWebFallback,
 } from "./share-copy";
 
 const LIVE = { squaresLive: 115, liveCents: 1_240_000 };
@@ -98,6 +101,85 @@ describe("wallTweetIntent", () => {
     expect(href.startsWith("https://x.com/intent/post?text=")).toBe(true);
     const text = decodeURIComponent(new URL(href).searchParams.get("text") ?? "");
     expect(text).toBe("115 squares holding · $12,400 on the wall right now\nhttps://holdit.lol/");
+  });
+});
+
+describe("tweetAppIntent", () => {
+  it("addresses the X app, not a generic share", () => {
+    const href = tweetAppIntent(
+      "115 squares holding · $12,400 on the wall right now",
+      "https://holdit.lol/",
+    );
+    expect(href.startsWith("twitter://post?message=")).toBe(true);
+    expect(href).not.toContain("x.com/intent");
+    const text = decodeURIComponent(href.slice("twitter://post?message=".length));
+    expect(text).toBe("115 squares holding · $12,400 on the wall right now\nhttps://holdit.lol/");
+  });
+
+  it("carries the same caption the web intent would have posted", () => {
+    const text = wallShareCopy(LIVE).text;
+    const page = "https://holdit.lol/print/1";
+    const web = decodeURIComponent(
+      new URL(wallTweetIntent(LIVE, page)).searchParams.get("text") ?? "",
+    );
+    const app = decodeURIComponent(
+      tweetAppIntent(text, page).slice("twitter://post?message=".length),
+    );
+    expect(app).toBe(web);
+  });
+});
+
+describe("prefersXApp", () => {
+  it("hands a phone to the X app", () => {
+    expect(
+      prefersXApp({
+        userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+      }),
+    ).toBe(true);
+    expect(
+      prefersXApp({
+        userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/120.0.0.0",
+      }),
+    ).toBe(true);
+  });
+
+  it("leaves a desktop on the web intent", () => {
+    expect(
+      prefersXApp({
+        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+      }),
+    ).toBe(false);
+  });
+
+  it("treats iPadOS Safari as a phone even though it claims to be a Mac", () => {
+    expect(
+      prefersXApp({
+        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+        maxTouchPoints: 5,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("xShareWebFallback", () => {
+  const iphone = {
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+  };
+  const android = {
+    userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/120.0.0.0",
+  };
+  const ipadOs = {
+    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+    maxTouchPoints: 5,
+  };
+
+  it("does not open x.com after a successful iPhone hand-off", () => {
+    expect(xShareWebFallback(iphone)).toBe(false);
+    expect(xShareWebFallback(ipadOs)).toBe(false);
+  });
+
+  it("still falls back to the website on Android, which can see the page hide", () => {
+    expect(xShareWebFallback(android)).toBe(true);
   });
 });
 

@@ -72,9 +72,51 @@ export function dilutionPostText(before: number, after: number): string {
   return `Just went ${formatShare(before)} → ${formatShare(after)} on the wall`;
 }
 
-/** Prefills X's composer. The card image is the OG unfurl of `pageUrl`. */
+/**
+ * Prefills X's *web* composer. The card image is the OG unfurl of `pageUrl`.
+ *
+ * Official Web Intent. On a desktop this is the right destination. On a phone
+ * it is still a website, so phones use `tweetAppIntent` instead.
+ */
 export function tweetIntent(text: string, pageUrl: string): string {
   return `https://x.com/intent/post?text=${encodeURIComponent(`${text}\n${pageUrl}`)}`;
+}
+
+/**
+ * Native X composer. This button is Post on X, not a generic share — the OS
+ * share sheet is the wrong product. X does not document a scheme, but the
+ * app still claims `twitter://post?message=` and there is no `x://` equivalent.
+ * Same caption as `tweetIntent`, so an Android website fallback posts the
+ * same words.
+ */
+export function tweetAppIntent(text: string, pageUrl: string): string {
+  return `twitter://post?message=${encodeURIComponent(`${text}\n${pageUrl}`)}`;
+}
+
+export type ShareDevice = { userAgent: string; maxTouchPoints?: number };
+
+/**
+ * Phones have an X app to hand off to. A desktop window is just a browser.
+ *
+ * iPadOS Safari reports itself as Macintosh; the touch points are how you
+ * tell it from a real Mac.
+ */
+export function prefersXApp(input: ShareDevice): boolean {
+  if (/iPhone|iPad|iPod|Android/i.test(input.userAgent)) return true;
+  return (input.maxTouchPoints ?? 0) > 1 && /Macintosh/i.test(input.userAgent);
+}
+
+/**
+ * iPhone Safari stays `visibilityState === "visible"` after a successful
+ * `twitter://` hand-off. A timeout that then opens x.com is how the app
+ * and the website both appear. Android backgrounds the page, so a fallback
+ * there can tell the app was missing. iOS cannot, so it must not try.
+ */
+export function xShareWebFallback(input: ShareDevice): boolean {
+  if (!prefersXApp(input)) return false;
+  if (/iPhone|iPad|iPod/i.test(input.userAgent)) return false;
+  if ((input.maxTouchPoints ?? 0) > 1 && /Macintosh/i.test(input.userAgent)) return false;
+  return true;
 }
 
 export function wallTweetIntent(counters: WallCounters, pageUrl: string): string {

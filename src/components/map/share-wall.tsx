@@ -11,9 +11,12 @@ import { WALL_QUERY_KEY } from "@/lib/utils/wall-query";
 import {
   claimPostText,
   dilutionPostText,
+  prefersXApp,
   sharePageUrl,
+  tweetAppIntent,
   tweetIntent,
   wallShareCopy,
+  xShareWebFallback,
 } from "./share-copy";
 
 function useSharePayload() {
@@ -52,9 +55,40 @@ export function ShareWallButton({ compact = false }: { compact?: boolean }) {
     if (empty) return;
     const next = payload();
     if (!next) return;
-    const href = tweetIntent(next.text, next.pageUrl);
-    const popup = window.open(href, "_blank", "noopener,noreferrer");
-    if (popup === null) window.location.assign(href);
+    const web = tweetIntent(next.text, next.pageUrl);
+    const device = {
+      userAgent: navigator.userAgent,
+      maxTouchPoints: navigator.maxTouchPoints,
+    };
+    if (!prefersXApp(device)) {
+      const popup = window.open(web, "_blank", "noopener,noreferrer");
+      if (popup === null) window.location.assign(web);
+      return;
+    }
+    // Straight to X. iPhone Safari stays "visible" after the app opens, so a
+    // timeout fallback also loads x.com — the preview bug. Android can tell
+    // the page backgrounded and only then falls back. See `xShareWebFallback`.
+    const app = tweetAppIntent(next.text, next.pageUrl);
+    if (!xShareWebFallback(device)) {
+      window.location.assign(app);
+      return;
+    }
+    const cancel = () => {
+      window.clearTimeout(fallback);
+      document.removeEventListener("visibilitychange", onHidden);
+      window.removeEventListener("pagehide", cancel);
+      window.removeEventListener("blur", cancel);
+    };
+    const onHidden = () => {
+      if (document.visibilityState === "hidden") cancel();
+    };
+    const fallback = window.setTimeout(() => {
+      if (document.visibilityState === "visible") window.location.assign(web);
+    }, 1_200);
+    document.addEventListener("visibilitychange", onHidden);
+    window.addEventListener("pagehide", cancel);
+    window.addEventListener("blur", cancel);
+    window.location.assign(app);
   }
 
   return (
