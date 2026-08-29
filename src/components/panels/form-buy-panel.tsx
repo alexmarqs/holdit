@@ -268,22 +268,31 @@ export function FormBuyPanel() {
         </Button>
       </form>
 
-      {error ? (
-        <p className="mt-2.5 max-w-md text-[12px] font-bold text-destructive" role="alert">
-          {error}
-        </p>
-      ) : atDisplayCap ? (
-        <p className="mt-2.5 max-w-md text-[13px] leading-snug text-muted-foreground">
-          {holdCapCopy(quotedAmount, share)}.{" "}
-          <a href="/rules#the-cap" className="text-primary hover:text-primary/80">
-            Rules
-          </a>
-        </p>
-      ) : existing ? (
-        <p className="mt-2.5 max-w-md text-[12px] text-muted-foreground">
-          {topUpCopy(existing.holder.handle, existing.share, share)}
-        </p>
-      ) : null}
+      {/*
+       * Same height whether this line is empty, the cap, or a top-up. The map
+       * shares a viewport with this form; growing the form used to shrink the
+       * canvas and re-pack the *live* wall — Preview off, $1 vs $2, three
+       * equal squares flipping from an L to three columns. The copy still
+       * appears; it just does not steal rows from the treemap.
+       */}
+      <div className="mt-2.5 flex min-h-[3lh] w-full max-w-md items-start justify-center text-[13px] leading-snug">
+        {error ? (
+          <p className="text-[12px] font-bold text-destructive" role="alert">
+            {error}
+          </p>
+        ) : atDisplayCap ? (
+          <p className="text-muted-foreground">
+            {holdCapCopy(quotedAmount, share)}.{" "}
+            <a href="/rules#the-cap" className="text-primary hover:text-primary/80">
+              Rules
+            </a>
+          </p>
+        ) : existing ? (
+          <p className="text-[12px] text-muted-foreground">
+            {topUpCopy(existing.holder.handle, existing.share, share)}
+          </p>
+        ) : null}
+      </div>
 
       <a
         href="https://stripe.com"
