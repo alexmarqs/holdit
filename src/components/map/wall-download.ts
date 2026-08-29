@@ -25,8 +25,11 @@ export type FaviconBytes = { bytes: Uint8Array; contentType: string };
 /**
  * html-to-image paints `<img>` into a canvas. Google's favicon host sends
  * CORP but no ACAO, so a hotlinked mark is visible on the live wall and
- * blank in the PNG. Download swaps to `downloadLogoSrc` (same-origin GET the
- * CDN can hold). A data URL is only the monogram when that GET has nothing.
+ * blank in the PNG. Bytes come from `downloadLogoSrc` (same-origin GET the
+ * CDN can hold). The photograph itself must already hold a data URL —
+ * iOS Safari draws the clone through SVG foreignObject, which will not
+ * paint an http(s) `<img>`, same-origin included. Chrome will. A data URL
+ * is also the monogram when that GET has nothing.
  *
  * Never pass `imagePlaceholder`: that was a 1×1 GIF, which is how a
  * download of the wall lost every logo.
@@ -43,12 +46,47 @@ export function wallCaptureOptions(backgroundColor: string) {
 
 /**
  * Same-origin proxy for a real domain; monogram for anything we would not
- * fetch. The `<img>` error path also lands on the monogram if the GET 404s.
+ * fetch. Fetch this, then inline the bytes — do not leave it as `<img src>`
+ * at snapshot time.
  */
 export function downloadLogoSrc(handle: string): string {
   return isFaviconDomain(faviconDomain(handle))
     ? toFaviconProxyUrl(handle)
     : logoDataUrl(handle, null);
+}
+
+/**
+ * Bytes for one mark, already a data URL, so Safari's photograph can paint it.
+ * The GET is still how we fetch; the `<img>` has to hold data by the time we
+ * snapshot. `fetchImpl` is for tests.
+ */
+export async function inlineDownloadLogo(
+  handle: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<string> {
+  const src = downloadLogoSrc(handle);
+  if (src.startsWith("data:")) return src;
+  try {
+    const response = await fetchImpl(src, { signal: AbortSignal.timeout(8_000) });
+    if (!response.ok) return logoDataUrl(handle, null);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const contentType = response.headers.get("content-type") || "image/png";
+    return logoDataUrl(handle, { bytes, contentType });
+  } catch {
+    return logoDataUrl(handle, null);
+  }
+}
+
+/** One GET per distinct handle so a wall of repeats still hits the CDN once. */
+export async function inlineDownloadLogos(
+  handles: readonly string[],
+  fetchImpl: typeof fetch = fetch,
+): Promise<Map<string, string>> {
+  const unique = [...new Set(handles)];
+  const entries = await Promise.all(
+    unique.map(async (handle) => [handle, await inlineDownloadLogo(handle, fetchImpl)] as const),
+  );
+  return new Map(entries);
 }
 
 /** Favicon bytes, or a monogram so the square still has a mark. */
