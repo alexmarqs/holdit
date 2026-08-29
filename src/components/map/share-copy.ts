@@ -72,9 +72,36 @@ export function dilutionPostText(before: number, after: number): string {
   return `Just went ${formatShare(before)} → ${formatShare(after)} on the wall`;
 }
 
-/** Prefills X's composer. The card image is the OG unfurl of `pageUrl`. */
+/**
+ * Prefills X's *web* composer. The card image is the OG unfurl of `pageUrl`.
+ *
+ * This is a page on x.com. `window.open` is a browser popup. On a phone those
+ * two together stay in Safari/Chrome — or, if the OS does hand the https URL
+ * to the X app, inside the app's in-app browser. Neither is the native
+ * compose screen. Phones use `tweetAppIntent` instead.
+ */
 export function tweetIntent(text: string, pageUrl: string): string {
   return `https://x.com/intent/post?text=${encodeURIComponent(`${text}\n${pageUrl}`)}`;
+}
+
+/**
+ * Native compose screen. The X app still claims `twitter://post?message=`
+ * after the rebrand; there is no supported `x://` equivalent. Same caption
+ * as `tweetIntent`, so a fallback to the website posts the same words.
+ */
+export function tweetAppIntent(text: string, pageUrl: string): string {
+  return `twitter://post?message=${encodeURIComponent(`${text}\n${pageUrl}`)}`;
+}
+
+/**
+ * Phones have an X app to hand off to. A desktop window is just a browser.
+ *
+ * iPadOS Safari reports itself as Macintosh; the touch points are how you
+ * tell it from a real Mac.
+ */
+export function prefersNativeXApp(input: { userAgent: string; maxTouchPoints?: number }): boolean {
+  if (/iPhone|iPad|iPod|Android/i.test(input.userAgent)) return true;
+  return (input.maxTouchPoints ?? 0) > 1 && /Macintosh/i.test(input.userAgent);
 }
 
 export function wallTweetIntent(counters: WallCounters, pageUrl: string): string {

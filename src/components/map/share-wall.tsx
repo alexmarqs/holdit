@@ -11,7 +11,9 @@ import { WALL_QUERY_KEY } from "@/lib/utils/wall-query";
 import {
   claimPostText,
   dilutionPostText,
+  prefersNativeXApp,
   sharePageUrl,
+  tweetAppIntent,
   tweetIntent,
   wallShareCopy,
 } from "./share-copy";
@@ -52,9 +54,32 @@ export function ShareWallButton({ compact = false }: { compact?: boolean }) {
     if (empty) return;
     const next = payload();
     if (!next) return;
-    const href = tweetIntent(next.text, next.pageUrl);
-    const popup = window.open(href, "_blank", "noopener,noreferrer");
-    if (popup === null) window.location.assign(href);
+    const web = tweetIntent(next.text, next.pageUrl);
+    if (
+      !prefersNativeXApp({
+        userAgent: navigator.userAgent,
+        maxTouchPoints: navigator.maxTouchPoints,
+      })
+    ) {
+      const popup = window.open(web, "_blank", "noopener,noreferrer");
+      if (popup === null) window.location.assign(web);
+      return;
+    }
+    // The app scheme is what actually opens the X app. If this page is still
+    // visible after a beat, the app is not installed and the website is the
+    // fallback. Leaving the page cancels that, so a successful hand-off does
+    // not also dump the user on x.com when they come back.
+    const app = tweetAppIntent(next.text, next.pageUrl);
+    const fallback = window.setTimeout(() => {
+      if (document.visibilityState === "visible") window.location.assign(web);
+    }, 1_200);
+    const cancel = () => {
+      if (document.visibilityState === "visible") return;
+      window.clearTimeout(fallback);
+      document.removeEventListener("visibilitychange", cancel);
+    };
+    document.addEventListener("visibilitychange", cancel);
+    window.location.assign(app);
   }
 
   return (
