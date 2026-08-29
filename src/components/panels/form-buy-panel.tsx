@@ -268,43 +268,33 @@ export function FormBuyPanel() {
         </Button>
       </form>
 
-      {/*
-       * In flow this is only the Stripe line, so $1 is tight. The cap / top-up
-       * / error sentence is painted under it, not laid out — a reserved slot
-       * here was a hole when the line was empty, and putting the sentence in
-       * flow re-packed the live wall when $2 brought the cap.
-       */}
-      <div className="relative mt-4 flex w-full max-w-md flex-col items-center">
-        <a
-          href="https://stripe.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Payments protected by Stripe"
-        >
-          Payments protected by
-          <StripeWordmark />
-        </a>
-        {error ? (
-          <p
-            className="absolute top-full z-10 mt-2 w-full text-[12px] font-bold text-destructive"
-            role="alert"
-          >
-            {error}
-          </p>
-        ) : atDisplayCap ? (
-          <p className="absolute top-full z-10 mt-2 w-full text-[13px] leading-snug text-muted-foreground">
-            {holdCapCopy(quotedAmount, share)}.{" "}
-            <a href="/rules#the-cap" className="text-primary hover:text-primary/80">
-              Rules
-            </a>
-          </p>
-        ) : existing ? (
-          <p className="absolute top-full z-10 mt-2 w-full text-[12px] text-muted-foreground">
-            {topUpCopy(existing.holder.handle, existing.share, share)}
-          </p>
-        ) : null}
-      </div>
+      {error ? (
+        <p className="mt-2.5 max-w-md text-[12px] font-bold text-destructive" role="alert">
+          {error}
+        </p>
+      ) : atDisplayCap ? (
+        <p className="mt-2.5 max-w-md text-[13px] leading-snug text-muted-foreground">
+          {holdCapCopy(quotedAmount, share)}.{" "}
+          <a href="/rules#the-cap" className="text-primary hover:text-primary/80">
+            Rules
+          </a>
+        </p>
+      ) : existing ? (
+        <p className="mt-2.5 max-w-md text-[12px] text-muted-foreground">
+          {topUpCopy(existing.holder.handle, existing.share, share)}
+        </p>
+      ) : null}
+
+      <a
+        href="https://stripe.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`mt-4 inline-flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground`}
+        aria-label="Payments protected by Stripe"
+      >
+        Payments protected by
+        <StripeWordmark />
+      </a>
     </>
   );
 }

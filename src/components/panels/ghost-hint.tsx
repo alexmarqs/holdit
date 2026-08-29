@@ -42,9 +42,8 @@ function DownArrow({ className }: { className: string }) {
  * Handwritten note that names the dashed preview.
  *
  * `hold` sits in the leftover gutter left of the Hold chip (`lg+`). The
- * arrow points at the note, from the chip. Below `lg`, `map` sits on the
- * canvas — over the tiles, under the toolbar — so it still reads "below
- * is you" and turning Preview on does not grow the form or cover Find.
+ * arrow points at the note, from the chip. Below `lg`, `map` sits under the
+ * form and points down at the wall so the note is never clipped.
  */
 export function GhostHint({ placement }: { placement: "hold" | "map" }) {
   const on = useAtomValue(mapPreviewOnAtom);
@@ -55,7 +54,7 @@ export function GhostHint({ placement }: { placement: "hold" | "map" }) {
     return (
       <aside
         aria-hidden
-        className="pointer-events-none absolute top-2 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-0.5 lg:hidden"
+        className="pointer-events-none mt-3 flex flex-col items-center gap-0.5 lg:hidden"
       >
         <p
           className={`${note.className} rotate-[-3deg] text-center text-[13px] leading-[1.1] text-primary/90`}

@@ -22,11 +22,19 @@ export default async function MapPage() {
         holdit.lol — a wall that forgets: new spend takes a slice sized to what they paid
       </h1>
 
-      <section className="flex min-h-[max(33.75rem,calc(100svh-var(--header-h)))] flex-col">
+      {/*
+       * Map height is viewport-locked, not leftover flex. The buy form can
+       * grow (cap copy, the phone Preview hint) without shrinking the canvas
+       * and re-packing the tiles. Extra form height just scrolls the page.
+       */}
+      <section className="flex flex-col">
         <AwaitingSquare />
-        <div id="claim" className="flex flex-1 flex-col">
+        <div id="claim" className="flex flex-col">
           <BuyPanel />
-          <div id="map" className="flex min-h-50 min-w-0 flex-1 flex-col sm:min-h-70">
+          <div
+            id="map"
+            className="flex h-[max(12.5rem,calc(100svh-var(--header-h)-var(--buy-stack-h)))] min-h-50 min-w-0 shrink-0 flex-col sm:min-h-70"
+          >
             <Treemap />
           </div>
         </div>

@@ -33,6 +33,7 @@ export function BuyPanel() {
         </p>
 
         <FormBuyPanel />
+        <GhostHint placement="map" />
       </div>
     </section>
   );
