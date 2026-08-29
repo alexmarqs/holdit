@@ -73,25 +73,32 @@ export function dilutionPostText(before: number, after: number): string {
 }
 
 /**
- * Prefills X's composer. The card image is the OG unfurl of `pageUrl`.
+ * Prefills X's *web* composer. The card image is the OG unfurl of `pageUrl`.
  *
- * Official Web Intent — the same URL react-share, JetBrains, and Google's
- * web.dev fallback all build. X does not document a custom scheme;
- * `twitter://` is unofficial. On a phone this URL is still a website;
- * the OS share sheet is how the installed app is reached. See `prefersOsShare`.
+ * Official Web Intent. On a desktop this is the right destination. On a phone
+ * it is still a website, so phones use `tweetAppIntent` instead.
  */
 export function tweetIntent(text: string, pageUrl: string): string {
   return `https://x.com/intent/post?text=${encodeURIComponent(`${text}\n${pageUrl}`)}`;
 }
 
 /**
- * Phones should use `navigator.share`, not a custom scheme. A desktop
- * window has no X app to hand off to.
+ * Native X composer. This button is Post on X, not a generic share — the OS
+ * share sheet is the wrong product. X does not document a scheme, but the
+ * app still claims `twitter://post?message=` and there is no `x://` equivalent.
+ * Same caption as `tweetIntent`, so a website fallback posts the same words.
+ */
+export function tweetAppIntent(text: string, pageUrl: string): string {
+  return `twitter://post?message=${encodeURIComponent(`${text}\n${pageUrl}`)}`;
+}
+
+/**
+ * Phones have an X app to hand off to. A desktop window is just a browser.
  *
  * iPadOS Safari reports itself as Macintosh; the touch points are how you
  * tell it from a real Mac.
  */
-export function prefersOsShare(input: { userAgent: string; maxTouchPoints?: number }): boolean {
+export function prefersXApp(input: { userAgent: string; maxTouchPoints?: number }): boolean {
   if (/iPhone|iPad|iPod|Android/i.test(input.userAgent)) return true;
   return (input.maxTouchPoints ?? 0) > 1 && /Macintosh/i.test(input.userAgent);
 }
