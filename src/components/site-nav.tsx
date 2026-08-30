@@ -23,9 +23,9 @@ export function SiteNav() {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "inline-flex min-h-6 items-center transition-colors",
+                  "relative inline-flex min-h-6 items-center transition-colors",
                   active
-                    ? "font-semibold text-foreground"
+                    ? "font-semibold text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary after:content-['']"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
