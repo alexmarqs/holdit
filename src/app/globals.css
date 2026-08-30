@@ -45,20 +45,20 @@
 
   --radius: 0.75rem;
   --header-h: 56px;
-  /* Compact buy column on a phone (stacked amount / URL / Hold). Cap copy
-     and the dashed-square hint may grow past this; the map does not shrink. */
-  --buy-stack-h: 22.25rem;
+  /* First-load buy column (Preview defaults on, so the phone hint is in).
+     Cap copy may grow past this; the map does not shrink. */
+  --buy-stack-h: 28rem;
 }
 
 @media (min-width: 640px) {
   :root {
-    --buy-stack-h: 16.5rem;
+    --buy-stack-h: 23rem;
   }
 }
 
 @media (min-width: 1024px) {
   :root {
-    --buy-stack-h: 15.25rem;
+    --buy-stack-h: 16.125rem;
   }
 }
 
