@@ -19,7 +19,7 @@ describe("tileContent", () => {
     const face = tileContent(240, 180, labels("linear.app"));
     expect(face.name).toBe("linear.app");
     expect(face.nameClipped).toBe(false);
-    expect(face.tagline).toBe(true);
+    expect(face.taglineLines).toBe(3);
   });
 
   it("shrinks the type before dropping to the short form", () => {
@@ -80,7 +80,7 @@ describe("tileContent", () => {
     const flat = tileContent(400, 50, labels("stripe.com"));
     expect(flat.name).toBe("stripe.com");
     expect(flat.stats).toBe(false);
-    expect(flat.tagline).toBe(false);
+    expect(flat.taglineLines).toBe(0);
   });
 
   it("writes the handle down a narrow column", () => {
@@ -109,7 +109,7 @@ describe("the rows under the name", () => {
     const face = tileContent(140, 58, labels("astro.build"));
     expect(face.name).not.toBeNull();
     expect(face.stats).toBe(false);
-    expect(face.tagline).toBe(false);
+    expect(face.taglineLines).toBe(0);
   });
 
   it("keeps the stat line when there is room for it", () => {
@@ -129,11 +129,28 @@ describe("the rows under the name", () => {
   });
 
   it("shows no tagline when there is no tagline to show", () => {
-    expect(tileContent(320, 260, labels("linear.app", null)).tagline).toBe(false);
+    expect(tileContent(320, 260, labels("linear.app", null)).taglineLines).toBe(0);
   });
 
-  it("shows a tagline on a tile with room for two lines of it", () => {
-    expect(tileContent(320, 260, labels("linear.app")).tagline).toBe(true);
+  it("uses all three tagline lines when they fit", () => {
+    expect(tileContent(320, 260, labels("linear.app")).taglineLines).toBe(3);
+  });
+
+  it("shows one tagline line instead of rejecting a tile below the old size gate", () => {
+    const face = tileContent(140, 112, {
+      ...labels("linear.app"),
+      stats: "12.0%",
+    });
+    expect(face.taglineLines).toBe(1);
+  });
+
+  it("does not reserve a blank stats row when preview mode omits it", () => {
+    const face = tileContent(110, 80, {
+      ...labels("linear.app"),
+      stats: undefined,
+    });
+    expect(face.stats).toBe(false);
+    expect(face.taglineLines).toBe(1);
   });
 });
 

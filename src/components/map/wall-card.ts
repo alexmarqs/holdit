@@ -94,6 +94,7 @@ export interface WallCardTile {
   logoUrl: string | null;
   /** Shown on the largest tiles, exactly as the live wall shows it. */
   tagline: string | null;
+  taglineLines: 0 | 1 | 2 | 3;
   /** Purchase print: this is the square the tweet is about. */
   highlight: boolean;
 }
@@ -201,7 +202,8 @@ export function wallCardModel(
            * was the most visible way the download differed from the screen.
            */
           logoUrl: toFaviconUrl(handle, 128),
-          tagline: face.tagline ? standing.holder.tagline : null,
+          tagline: face.taglineLines > 0 ? standing.holder.tagline : null,
+          taglineLines: face.taglineLines,
           highlight: highlightHolderId === standing.holder.id,
         },
       ];

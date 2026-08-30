@@ -291,6 +291,8 @@ export async function wallOgImage(card: WallCard) {
                     color: skin.tileInk,
                     opacity: 0.62,
                     maxWidth: px(tile.w - CARD_TILE_PAD_X * 2),
+                    maxHeight: px(tile.taglineLines * 12 * 1.35),
+                    overflow: "hidden",
                   }}
                 >
                   {tile.tagline}
