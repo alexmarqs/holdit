@@ -1,22 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useSelectedLayoutSegment } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/", label: "The wall", segment: null },
-  { href: "/rules", label: "Rules", segment: "rules" },
+  { href: "/", label: "The wall" },
+  { href: "/rules", label: "Rules" },
 ] as const;
 
+/**
+ * Active item follows the official App Router pattern:
+ * https://nextjs.org/docs/app/api-reference/file-conventions/layout#active-nav-links
+ */
 export function SiteNav() {
-  const segment = useSelectedLayoutSegment();
+  const pathname = usePathname();
 
   return (
     <nav>
       <ul className="flex items-center gap-4 text-sm sm:gap-5">
         {NAV.map((item) => {
-          const active = segment === item.segment;
+          const active = pathname === item.href;
           return (
             <li key={item.href}>
               <Link
