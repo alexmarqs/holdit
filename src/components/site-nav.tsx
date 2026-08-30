@@ -1,31 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useSelectedLayoutSegment } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/", label: "The wall" },
-  { href: "/rules", label: "Rules" },
+  { href: "/", label: "The wall", segment: null },
+  { href: "/rules", label: "Rules", segment: "rules" },
 ] as const;
 
 export function SiteNav() {
-  const path = usePathname();
+  const segment = useSelectedLayoutSegment();
 
   return (
     <nav>
       <ul className="flex items-center gap-4 text-sm sm:gap-5">
         {NAV.map((item) => {
-          const active = path === item.href;
+          const active = segment === item.segment;
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative inline-flex min-h-6 items-center transition-colors",
+                  "inline-flex min-h-6 items-center transition-colors",
                   active
-                    ? "font-semibold text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary after:content-['']"
+                    ? "font-semibold text-foreground"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
