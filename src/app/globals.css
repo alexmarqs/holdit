@@ -45,21 +45,6 @@
 
   --radius: 0.75rem;
   --header-h: 56px;
-  /* First-load buy column (Preview defaults on, so the phone hint is in).
-     Cap copy may grow past this; the map does not shrink. */
-  --buy-stack-h: 28rem;
-}
-
-@media (min-width: 640px) {
-  :root {
-    --buy-stack-h: 23rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  :root {
-    --buy-stack-h: 16.125rem;
-  }
 }
 
 .dark {

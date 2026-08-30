@@ -106,9 +106,8 @@ export function Treemap() {
     else void shell.current?.requestFullscreen().catch(() => {});
   }, []);
 
-  // The canvas is sized by flex layout, never by JS. That means the server
-  // renders the final geometry and the map does not jump on load; JS only ever
-  // reads the result back to lay the tiles out.
+  // The canvas is sized by CSS (width × 4/3), never by JS. Form growth does
+  // not change that box — JS only reads it back to lay the tiles inside.
   const canvasHeight = size.h;
 
   /*
@@ -233,7 +232,15 @@ export function Treemap() {
         </div>
       </div>
 
-      <div ref={frame} className="map-canvas relative min-h-0 w-full flex-1 bg-map-grout">
+      <div
+        ref={frame}
+        className={cn(
+          "map-canvas relative w-full bg-map-grout",
+          isFullscreen
+            ? "min-h-0 flex-1"
+            : "aspect-[4/3] min-h-50 shrink-0 sm:min-h-70 max-h-[min(70svh,36rem)]",
+        )}
+      >
         <SearchedTileLayer
           tiles={tiles}
           byId={byId}
