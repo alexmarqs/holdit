@@ -154,11 +154,13 @@ describe("the card matches the live wall", () => {
       const face = tileContent(tile.w, tile.h, {
         short: shortHandle(tile.handle),
         full: tile.handle,
+        stats: tile.meta,
       });
       expect(tile.name, tile.handle).toBe(face.spine ? tile.handle : face.name);
       expect(tile.nameFontPx, tile.handle).toBe(face.nameFontPx);
       expect(tile.showStats, tile.handle).toBe(face.stats);
       expect(tile.logoPx, tile.handle).toBe(face.logoPx);
+      expect(tile.taglineLines, tile.handle).toBe(face.taglineLines);
     }
   });
 
