@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { Mark } from "@/components/mark";
 import { SiteNav } from "@/components/site-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -16,9 +15,7 @@ export function SiteHeader() {
         </Link>
 
         <div className="flex items-center gap-3 sm:gap-5">
-          <Suspense>
-            <SiteNav />
-          </Suspense>
+          <SiteNav />
           <ThemeToggle />
         </div>
       </div>
