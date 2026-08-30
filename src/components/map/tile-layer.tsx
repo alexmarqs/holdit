@@ -20,9 +20,26 @@ export interface TileLayerProps {
   needle: string;
   flash: string | null;
   now: number;
+  /**
+   * A new-square preview is on the wall. Printed shares would still be
+   * today's — everyone else shrinks when that square lands.
+   */
+  omitShare?: boolean;
   onEnter: (standing: HolderStanding) => void;
   onLeave: () => void;
   onFocusTile: (standing: HolderStanding, element: HTMLElement) => void;
+}
+
+/** The line under the handle. Share is omitted while a new preview is packed. */
+export function tileStatsLine(
+  share: number,
+  clicks: number,
+  omitShare = false,
+): string | undefined {
+  const clicksText = clicks >= MIN_SHOWN_TILE_CLICKS ? `${formatInt(clicks)} clicks` : undefined;
+  if (omitShare) return clicksText;
+  const shareText = formatShare(share);
+  return clicksText ? `${shareText} · ${clicksText}` : shareText;
 }
 
 const TILE_GAP = 1;
@@ -55,6 +72,7 @@ export const TileLayer = memo(function TileLayer({
   needle,
   flash,
   now,
+  omitShare = false,
   onEnter,
   onLeave,
   onFocusTile,
@@ -70,10 +88,7 @@ export const TileLayer = memo(function TileLayer({
         // part of the fit decision rather than an afterthought.
         // All-time clicks, and only once there are enough of them to be worth
         // printing. "2 clicks" on a square reads as nobody goes there.
-        const statsText =
-          standing.clicksAllTime >= MIN_SHOWN_TILE_CLICKS
-            ? `${formatShare(standing.share)} · ${formatInt(standing.clicksAllTime)} clicks`
-            : formatShare(standing.share);
+        const statsText = tileStatsLine(standing.share, standing.clicksAllTime, omitShare);
         const face = tileContent(tile.w, tile.h, {
           short: shortHandle(handle),
           full: handle,

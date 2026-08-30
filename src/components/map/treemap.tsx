@@ -240,6 +240,7 @@ export function Treemap() {
           canvas={size}
           flash={flash}
           now={state.generatedAt}
+          omitShare={previewing && toppingUp === null}
           onEnter={onEnter}
           onLeave={onLeave}
           onFocusTile={onFocusTile}
