@@ -7,7 +7,7 @@ import {
   clampSpend,
   MAX_SPEND_CENTS,
   MIN_SPEND_CENTS,
-  openingQuotedCents,
+  openingQuoteForWall,
   shareAfterSpend,
   stepAmount,
 } from "@holdit/core";
@@ -83,9 +83,7 @@ export function FormBuyPanel() {
       ceilingCents === null ? MIN_SPEND_CENTS : ceilToDollar(ceilingCents),
     );
   }, [rows, ceilingAfter, existing?.holder.id]);
-  const [amount, setAmount] = useState(() =>
-    openingQuotedCents(state.counters.squaresLive, capSpend, state.counters.liveCents),
-  );
+  const [amount, setAmount] = useState(() => openingQuoteForWall(rows));
   const quotedAmount = draft === null ? amount : readAmount(draft, amount, MAX_SPEND_CENTS);
   const share = shareAfterSpend(rows, quotedAmount, existing?.holder.id);
   const atDisplayCap = ceilingAfter < 1 && share >= ceilingAfter - 1e-9;

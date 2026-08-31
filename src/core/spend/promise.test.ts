@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatShare } from "@/lib/utils/format";
 import { ceilingFor } from "../config";
-import { centsForShareOf, shareAfterSpend } from "./project";
+import { centsForShareOf, openingQuoteForWall, shareAfterSpend } from "./project";
 import { computeShares } from "./share";
 
 /*
@@ -50,6 +50,23 @@ describe("the buy panel's promise", () => {
           ?.share ?? 0;
       expect(actual, `$${amount / 100} on 5 squares`).toBeGreaterThanOrEqual(quoted - 1e-9);
     }
+  });
+});
+
+describe("the opening quote", () => {
+  it("uses the wall-sized suggestion before the first paint", () => {
+    expect(
+      openingQuoteForWall([
+        { id: "a", liveCents: 100 },
+        { id: "b", liveCents: 100 },
+        { id: "c", liveCents: 50 },
+      ]),
+    ).toBe(500);
+  });
+
+  it("keeps the usual defaults at the empty and established ends", () => {
+    expect(openingQuoteForWall([])).toBe(100);
+    expect(openingQuoteForWall(wallOf(WALL_SPENDS))).toBe(1_000);
   });
 });
 

@@ -1,10 +1,9 @@
 "use client";
 
-import { DEFAULT_AMOUNT_CENTS } from "@holdit/core";
 import { atom } from "jotai";
 
 export const flashAtom = atom<string | null>(null);
-export const previewAtom = atom<number | null>(DEFAULT_AMOUNT_CENTS);
+export const previewAtom = atom<number | null>(null);
 export const previewHandleAtom = atom<string | null>(null);
 /** In-memory only: a reload puts the dashed square back. */
 export const mapPreviewOnAtom = atom(true);
