@@ -45,16 +45,46 @@ export function Treemap() {
   const frame = useRef<HTMLDivElement>(null);
   const tooltip = useRef<HTMLDivElement>(null);
   const pending = useRef<number | null>(null);
+  const resizeFrame = useRef<number | null>(null);
+  const resizeEnd = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nextSize = useRef({ w: 0, h: 0 });
+  const measured = useRef(false);
   const cursor = useRef({ x: 0, y: 0 });
+  const [isResizing, setResizing] = useState(false);
 
   useEffect(() => {
     const element = frame.current;
     if (!element) return;
     const observer = new ResizeObserver(([entry]) => {
-      if (entry) setSize({ w: entry.contentRect.width, h: entry.contentRect.height });
+      if (!entry) return;
+      nextSize.current = { w: entry.contentRect.width, h: entry.contentRect.height };
+      if (resizeFrame.current !== null) return;
+      resizeFrame.current = requestAnimationFrame(() => {
+        resizeFrame.current = null;
+        setSize((current) => {
+          const next = nextSize.current;
+          return current.w === next.w && current.h === next.h ? current : next;
+        });
+
+        // The first measurement mounts the wall rather than resizing it.
+        if (!measured.current) {
+          measured.current = true;
+          return;
+        }
+        setResizing(true);
+        if (resizeEnd.current !== null) clearTimeout(resizeEnd.current);
+        resizeEnd.current = setTimeout(() => {
+          resizeEnd.current = null;
+          setResizing(false);
+        }, 120);
+      });
     });
     observer.observe(element);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (resizeFrame.current !== null) cancelAnimationFrame(resizeFrame.current);
+      if (resizeEnd.current !== null) clearTimeout(resizeEnd.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -234,6 +264,7 @@ export function Treemap() {
 
       <div
         ref={frame}
+        data-resizing={isResizing || undefined}
         className={cn(
           "map-canvas relative w-full bg-map-grout",
           isFullscreen

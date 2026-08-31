@@ -319,9 +319,9 @@
   );
   color: var(--map-ink);
   transition:
-    transform 0.55s cubic-bezier(0.4, 0, 0.2, 1),
-    width 0.55s cubic-bezier(0.4, 0, 0.2, 1),
-    height 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     background-color 1s linear,
     opacity 0.25s linear;
 }
@@ -393,9 +393,16 @@
   /* Further inside than the 2px stroke so overflow:clip cannot eat the bottom. */
   outline-offset: -3px;
   transition:
-    transform 0.3s ease-out,
-    width 0.3s ease-out,
-    height 0.3s ease-out;
+    transform 0.28s ease-out,
+    width 0.28s ease-out,
+    height 0.28s ease-out;
+}
+
+/* Continuous resize should track the viewport, not chase it through queued
+   transitions. Discrete preview and data changes still animate. */
+.map-canvas[data-resizing="true"] .tile,
+.map-canvas[data-resizing="true"] .tile-preview {
+  transition: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -409,6 +416,13 @@
     50% {
       background-color: color-mix(in srgb, var(--primary) 22%, var(--map-base));
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile-preview {
+    transition: none;
   }
 }
 
