@@ -22,6 +22,15 @@ describe("tileContent", () => {
     expect(face.taglineLines).toBe(3);
   });
 
+  it("sizes equal tiles equally whether or not they have a description", () => {
+    const described = tileContent(320, 260, labels("vercel.com"));
+    const undescribed = tileContent(320, 260, labels("ramp.com", null));
+
+    expect(undescribed.nameFontPx).toBe(described.nameFontPx);
+    expect(undescribed.logoPx).toBe(described.logoPx);
+    expect(undescribed.nameFontPx).toBe(20);
+  });
+
   it("shrinks the type before dropping to the short form", () => {
     // 130px holds "tailwindcss.com" at 13px (=132 > 130 fails) but not at 16px.
     const face = tileContent(150, 70, labels("tailwindcss.com"));
