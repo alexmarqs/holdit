@@ -86,8 +86,8 @@ const NAME_MIN_W = 44;
 const NAME_MIN_H = 30;
 const STATS_MIN_W = 96;
 const STATS_MIN_H = 62;
-/** Narrower copy leaves too few characters per line to read as a sentence. */
-const TAGLINE_MIN_W = 96;
+/** About fifteen characters per line; narrower fragments read as visual noise. */
+const TAGLINE_MIN_W = 128;
 
 export interface TileLabels {
   /** The domain without its suffix — what a cramped tile falls back to. */

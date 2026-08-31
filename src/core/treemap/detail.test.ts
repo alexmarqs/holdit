@@ -145,7 +145,7 @@ describe("the rows under the name", () => {
   });
 
   it("does not reserve a blank stats row when preview mode omits it", () => {
-    const face = tileContent(110, 80, {
+    const face = tileContent(128, 80, {
       ...labels("linear.app"),
       stats: undefined,
     });
