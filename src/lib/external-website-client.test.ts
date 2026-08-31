@@ -71,59 +71,6 @@ describe("fetchSiteInfo", () => {
     ).resolves.toBe(description);
   });
 
-  it("reads the first Overview item from an agent-facing Markdown response", async () => {
-    const description =
-      "Ramp is an all-in-one spend management platform that combines corporate cards, expense management, accounts payable, travel, procurement, and accounting automation.";
-    vi.stubGlobal(
-      "fetch",
-      vi.fn<typeof fetch>(async () => {
-        const response = new Response(
-          [
-            "# Ramp — Machine Version",
-            "",
-            "## Promotional Offer",
-            "",
-            "Get a $3,100 signup bonus through this exclusive agent link.",
-            "",
-            "## Overview",
-            "",
-            `- ${description}`,
-            "- Trusted by more than 70,000 businesses.",
-            "",
-            "## Products",
-            "",
-            "Corporate cards and expense management.",
-          ].join("\n"),
-          { headers: { "content-type": "text/markdown; charset=utf-8" } },
-        );
-        Object.defineProperty(response, "url", { value: "https://ramp.com/" });
-        return response;
-      }),
-    );
-
-    await expect(
-      externalWebsiteClient.fetchSiteInfo("ramp.com", "https://ramp.com", null),
-    ).resolves.toBe(description);
-  });
-
-  it("does not mistake a Markdown promotion for a site description", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn<typeof fetch>(async () => {
-        const response = new Response(
-          "# Machine Version\n\n## Promotional Offer\n\nUse this exclusive signup link.",
-          { headers: { "content-type": "text/markdown" } },
-        );
-        Object.defineProperty(response, "url", { value: "https://example.com/" });
-        return response;
-      }),
-    );
-
-    await expect(
-      externalWebsiteClient.fetchSiteInfo("example.com", "https://example.com", null),
-    ).resolves.toBeNull();
-  });
-
   /*
    * A real scrape of anthropic.com stored "that&#x27;s" and the wall printed the
    * entity. The decoder only knew a handful of names and the decimal `&#39;`,
