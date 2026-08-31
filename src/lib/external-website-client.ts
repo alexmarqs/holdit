@@ -86,6 +86,35 @@ export const decodeEntities = (raw: string): string =>
 const tidy = (raw: string): string | null =>
   clipTagline(decodeEntities(raw).replace(/\s+/g, " ").trim());
 
+/**
+ * Some sites serve an agent-facing Markdown document instead of their browser
+ * HTML. Only an explicitly titled Overview is safe to use: the first paragraph
+ * can be a promotion, navigation, or agent instruction rather than the site's
+ * own description.
+ */
+function markdownOverview(markdown: string): string | null {
+  const lines = markdown.split(/\r?\n/);
+  const start = lines.findIndex((line) => /^#{1,6}\s+overview\s*$/i.test(line.trim()));
+  if (start < 0) return null;
+
+  const section: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    if (/^#{1,6}\s+/.test(line.trim())) break;
+    if (section.length === 0 && line.trim().length === 0) continue;
+    if (section.length > 0 && line.trim().length === 0) break;
+    if (section.length > 0 && /^[-*+]\s+/.test(line.trim())) break;
+    section.push(line);
+  }
+
+  const plain = section
+    .join(" ")
+    .replace(/^\s*(?:[-*+]|\d+\.)\s+/, "")
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/[*_`~]/g, "");
+  return tidy(plain);
+}
+
 export interface FaviconResult {
   bytes: Uint8Array;
   contentType: string;
@@ -156,7 +185,7 @@ async function scrapeDescription(target: string): Promise<string | null> {
   try {
     const response = await fetch(url, {
       headers: {
-        accept: "text/html",
+        accept: "text/html, text/markdown;q=0.9",
         // Without this, sites negotiate on our server's IP rather than the
         // buyer's — stripe.com came back in Portuguese, which is not a line
         // anyone chose to put on their square.
@@ -167,7 +196,10 @@ async function scrapeDescription(target: string): Promise<string | null> {
       redirect: "follow",
     });
     if (!response.ok) return null;
-    if (!(response.headers.get("content-type") ?? "").includes("text/html")) return null;
+    const contentType = response.headers.get("content-type") ?? "";
+    const htmlResponse = contentType.includes("text/html");
+    const markdownResponse = contentType.includes("text/markdown");
+    if (!htmlResponse && !markdownResponse) return null;
     // A redirect chain can land somewhere the first check would have refused.
     if (!isUrlReadable(new URL(response.url))) return null;
 
@@ -175,17 +207,19 @@ async function scrapeDescription(target: string): Promise<string | null> {
     if (!reader) return null;
 
     const decoder = new TextDecoder();
-    let html = "";
-    while (html.length < SITE_MAX_BYTES) {
+    let content = "";
+    while (content.length < SITE_MAX_BYTES) {
       const { done, value } = await reader.read();
       if (done) break;
-      html += decoder.decode(value, { stream: true });
-      if (/<\/head>/i.test(html)) break;
+      content += decoder.decode(value, { stream: true });
+      if (htmlResponse && /<\/head>/i.test(content)) break;
     }
     await reader.cancel().catch(() => {});
 
+    if (markdownResponse) return markdownOverview(content);
+
     for (const pattern of META) {
-      const found = pattern.exec(html)?.[1];
+      const found = pattern.exec(content)?.[1];
       const line = found ? tidy(found) : null;
       if (line) return line;
     }
