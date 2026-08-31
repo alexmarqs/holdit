@@ -1,5 +1,6 @@
 import { Big } from "../big";
-import { clampSpend, MIN_SPEND_CENTS } from "./amounts";
+import { ceilingFor } from "../config";
+import { ceilToDollar, clampSpend, MIN_SPEND_CENTS, openingQuotedCents } from "./amounts";
 import { computeShares, type ShareResult } from "./share";
 
 /**
@@ -87,4 +88,21 @@ export function centsForShareOf(
     else top = mid;
   }
   return clampSpend(Math.ceil(top));
+}
+
+/**
+ * The amount a new square shows on first paint.
+ *
+ * Shared by the form field and the preview store so server HTML and hydration
+ * cannot briefly disagree about the opening quote.
+ */
+export function openingQuoteForWall(standings: readonly ProjectionRow[]): number {
+  const ceiling = ceilingFor(standings.length + 1);
+  const ceilingCents = centsForShareOf(standings, ceiling);
+  const capSpend = Math.max(
+    MIN_SPEND_CENTS,
+    ceilingCents === null ? MIN_SPEND_CENTS : ceilToDollar(ceilingCents),
+  );
+  const liveCents = standings.reduce((sum, row) => sum + row.liveCents, 0);
+  return openingQuotedCents(standings.length, capSpend, liveCents);
 }

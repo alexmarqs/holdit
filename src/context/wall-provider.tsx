@@ -1,11 +1,18 @@
 "use client";
 
-import type { MapState } from "@holdit/core";
+import { type MapState, openingQuoteForWall } from "@holdit/core";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { createStore, Provider, useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { dilutionDrop, recallHandle, rememberHandle } from "@/components/panels/dilution";
-import { awaitingAtom, claimedAtom, dilutedAtom, flashAtom, heldAtom } from "@/context/wall-atoms";
+import {
+  awaitingAtom,
+  claimedAtom,
+  dilutedAtom,
+  flashAtom,
+  heldAtom,
+  previewAtom,
+} from "@/context/wall-atoms";
 import { useWall } from "@/hooks/use-wall";
 import { apiClient } from "@/lib/api-client";
 import { createWallQueryClient, writeWallCache } from "@/lib/utils/wall-query";
@@ -162,7 +169,19 @@ export function WallProvider({
    * The query client is seeded with the page's wall. Nothing is prefetched on
    * the server, so there is no cache to dehydrate; the prop is the first copy.
    */
-  const [store] = useState(() => createStore());
+  const [store] = useState(() => {
+    const store = createStore();
+    store.set(
+      previewAtom,
+      openingQuoteForWall(
+        initialState.standings.map((standing) => ({
+          id: standing.holder.id,
+          liveCents: standing.liveCents,
+        })),
+      ),
+    );
+    return store;
+  });
   const [queryClient] = useState(() => createWallQueryClient(initialState));
 
   return (

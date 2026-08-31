@@ -139,8 +139,15 @@ export const TileLayer = memo(function TileLayer({
                   </p>
                 ) : null}
                 {face.stats ? <p className="num mt-0.5 text-xs opacity-70">{statsText}</p> : null}
-                {face.tagline && standing.holder.tagline ? (
-                  <p className="mt-2 line-clamp-3 text-xs leading-snug opacity-70">
+                {face.taglineLines > 0 && standing.holder.tagline ? (
+                  <p
+                    className="mt-2 overflow-hidden text-xs leading-snug opacity-70"
+                    style={{
+                      display: "-webkit-box",
+                      WebkitBoxOrient: "vertical",
+                      WebkitLineClamp: face.taglineLines,
+                    }}
+                  >
                     {standing.holder.tagline}
                   </p>
                 ) : null}

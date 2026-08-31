@@ -76,8 +76,6 @@ const STATS_FONT_PX = 12;
 const STATS_GAP = 2;
 const TAGLINE_FONT_PX = 12;
 const TAGLINE_GAP = 8;
-/** A tagline is worth showing only if at least this much of it is readable. */
-const TAGLINE_MIN_LINES = 2;
 
 /** Every gate is a plain "does this element physically fit" question. */
 const LOGO_MIN_AREA = 460;
@@ -88,8 +86,8 @@ const NAME_MIN_W = 44;
 const NAME_MIN_H = 30;
 const STATS_MIN_W = 96;
 const STATS_MIN_H = 62;
-const TAGLINE_MIN_W = 150;
-const TAGLINE_MIN_H = 146;
+/** About fifteen characters per line; narrower fragments read as visual noise. */
+const TAGLINE_MIN_W = 128;
 
 export interface TileLabels {
   /** The domain without its suffix — what a cramped tile falls back to. */
@@ -112,7 +110,8 @@ export interface TileContent {
   /** True when the chosen name still overflows and CSS has to clip it. */
   nameClipped: boolean;
   stats: boolean;
-  tagline: boolean;
+  /** The number of description lines that physically fit, from none to three. */
+  taglineLines: 0 | 1 | 2 | 3;
 }
 
 export function widthForLabel(text: string, fontPx: number): number {
@@ -137,16 +136,19 @@ export function tileContent(w: number, h: number, labels: TileLabels): TileConte
       nameFontPx: 11,
       nameClipped: false,
       stats: false,
-      tagline: false,
+      taglineLines: 0,
     };
   }
 
   const showName = w >= NAME_MIN_W && h >= NAME_MIN_H;
-  const stats = showName && w >= STATS_MIN_W && h >= STATS_MIN_H;
-  const tagline = stats && w >= TAGLINE_MIN_W && h >= TAGLINE_MIN_H;
-  const cap = tagline ? 20 : stats ? 16 : 13;
+  const stats = showName && w >= STATS_MIN_W && h >= STATS_MIN_H && Boolean(labels.stats);
+  const tagline = showName && w >= TAGLINE_MIN_W && Boolean(labels.tagline);
+  // Keep the established large-tile typography, but do not use its old
+  // 150×146 threshold to decide whether smaller tiles may show copy.
+  const roomyTagline = tagline && w >= 150 && h >= 146;
+  const cap = roomyTagline ? 20 : stats ? 16 : 13;
 
-  let logoPx = logoSize(w, h, tagline, stats);
+  let logoPx = logoSize(w, h, roomyTagline, stats);
   let name: string | null = null;
   let nameFontPx = cap;
   let nameClipped = false;
@@ -203,14 +205,11 @@ export function tileContent(w: number, h: number, labels: TileLabels): TileConte
     else usedH = need;
   }
 
-  let showTagline = tagline && name !== null && showStats && Boolean(labels.tagline);
-  if (showTagline) {
-    const lines = Math.min(
-      3,
-      Math.max(TAGLINE_MIN_LINES, linesFor(labels.tagline, TAGLINE_FONT_PX)),
-    );
-    if (usedH + TAGLINE_GAP + lines * lineBox(TAGLINE_FONT_PX) > h) showTagline = false;
-  }
+  const taglineRoom = tagline && name !== null ? h - usedH - TAGLINE_GAP : 0;
+  const taglineLines = Math.max(
+    0,
+    Math.min(3, Math.floor(taglineRoom / lineBox(TAGLINE_FONT_PX))),
+  ) as 0 | 1 | 2 | 3;
 
   return {
     logoPx,
@@ -219,7 +218,7 @@ export function tileContent(w: number, h: number, labels: TileLabels): TileConte
     nameFontPx,
     nameClipped,
     stats: showStats,
-    tagline: showTagline,
+    taglineLines,
   };
 }
 
