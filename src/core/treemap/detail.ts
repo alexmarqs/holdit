@@ -143,12 +143,13 @@ export function tileContent(w: number, h: number, labels: TileLabels): TileConte
   const showName = w >= NAME_MIN_W && h >= NAME_MIN_H;
   const stats = showName && w >= STATS_MIN_W && h >= STATS_MIN_H && Boolean(labels.stats);
   const tagline = showName && w >= TAGLINE_MIN_W && Boolean(labels.tagline);
-  // Keep the established large-tile typography, but do not use its old
-  // 150×146 threshold to decide whether smaller tiles may show copy.
-  const roomyTagline = tagline && w >= 150 && h >= 146;
-  const cap = roomyTagline ? 20 : stats ? 16 : 13;
+  // Typography belongs to the tile's geometry, not its metadata. A holder
+  // without a stored description must not receive a smaller name or logo than
+  // an equally sized neighbor that has one.
+  const roomyTile = showName && w >= 150 && h >= 146;
+  const cap = roomyTile ? 20 : stats ? 16 : 13;
 
-  let logoPx = logoSize(w, h, roomyTagline, stats);
+  let logoPx = logoSize(w, h, roomyTile, stats);
   let name: string | null = null;
   let nameFontPx = cap;
   let nameClipped = false;
