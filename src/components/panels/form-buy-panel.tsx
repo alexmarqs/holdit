@@ -2,8 +2,6 @@
 
 import {
   ceilingFor,
-  ceilToDollar,
-  centsForShareOf,
   clampSpend,
   MAX_SPEND_CENTS,
   MIN_SPEND_CENTS,
@@ -69,20 +67,6 @@ export function FormBuyPanel() {
 
   const ceilingAfter = ceilingFor(state.counters.squaresLive + (existing ? 0 : 1));
 
-  /*
-   * The bisection behind the ceiling price is the most expensive thing on this
-   * panel — forty passes of the whole share model, ~6ms on this wall and ~19ms
-   * on twenty-five squares — and it does not depend on the amount being typed.
-   * Unmemoised it ran on every keystroke, which is where the field's input lag
-   * came from. What a keystroke actually needs is one `shareAfterSpend`.
-   */
-  const capSpend = useMemo(() => {
-    const ceilingCents = centsForShareOf(rows, ceilingAfter, existing?.holder.id);
-    return Math.max(
-      MIN_SPEND_CENTS,
-      ceilingCents === null ? MIN_SPEND_CENTS : ceilToDollar(ceilingCents),
-    );
-  }, [rows, ceilingAfter, existing?.holder.id]);
   const [amount, setAmount] = useState(() => openingQuoteForWall(rows));
   const quotedAmount = draft === null ? amount : readAmount(draft, amount, MAX_SPEND_CENTS);
   const share = shareAfterSpend(rows, quotedAmount, existing?.holder.id);

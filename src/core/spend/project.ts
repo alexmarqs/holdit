@@ -1,11 +1,6 @@
 import { Big } from "../big";
 import { ceilingFor } from "../config";
-import {
-  ceilToDollar,
-  clampSpend,
-  MIN_SPEND_CENTS,
-  openingQuotedCents,
-} from "./amounts";
+import { ceilToDollar, clampSpend, MIN_SPEND_CENTS, openingQuotedCents } from "./amounts";
 import { computeShares, type ShareResult } from "./share";
 
 /**
