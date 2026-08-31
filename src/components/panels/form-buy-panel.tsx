@@ -256,10 +256,7 @@ export function FormBuyPanel() {
         </p>
       ) : atDisplayCap ? (
         <p className="mt-2.5 max-w-md text-[13px] leading-snug text-muted-foreground">
-          {holdCapCopy(quotedAmount, share)}.{" "}
-          <a href="/rules#the-cap" className="text-primary hover:text-primary/80">
-            Rules
-          </a>
+          {holdCapCopy(quotedAmount, share)}.
         </p>
       ) : existing ? (
         <p className="mt-2.5 max-w-md text-[12px] text-muted-foreground">
