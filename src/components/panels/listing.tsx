@@ -1,7 +1,6 @@
 "use client";
 
 import { MIN_SHOWN_TILE_CLICKS } from "@holdit/core";
-import { useAtomValue } from "jotai";
 import { ExternalLink, LocateFixed } from "lucide-react";
 import { useState } from "react";
 import { LiveWord } from "@/components/live-word";
@@ -9,9 +8,7 @@ import { emitSquareFocus } from "@/components/map/focus-square";
 import { SquareLink } from "@/components/map/square-link";
 import { SiteLogo } from "@/components/site-logo";
 import { Button } from "@/components/ui/button";
-import { heldAtom } from "@/context/wall-atoms";
 import { useWall } from "@/hooks/use-wall";
-import { cn } from "@/lib/utils";
 import { formatAgo, formatInt, formatMoney, formatShare } from "@/lib/utils/format";
 
 const PAGE = 20;
@@ -26,7 +23,6 @@ const action =
  */
 export function Listing() {
   const state = useWall();
-  const held = useAtomValue(heldAtom);
   const [shown, setShown] = useState(PAGE);
   const rows = state.standings.slice(0, shown);
 
@@ -37,13 +33,7 @@ export function Listing() {
       <h2 className="border-b border-border px-4 pt-3.5 pb-2 text-sm font-bold">Every square</h2>
       <ul>
         {rows.map((standing) => (
-          <li
-            key={standing.holder.id}
-            className={cn(
-              "border-b border-border last:border-0",
-              held === standing.holder.handle && "bg-primary/6",
-            )}
-          >
+          <li key={standing.holder.id} className="border-b border-border last:border-0">
             <div className="group/row flex items-start gap-3 px-4 py-3 text-sm transition-colors hover:bg-muted/30">
               <SiteLogo handle={standing.holder.handle} size={36} className="mt-0.5 rounded-lg" />
               <div className="min-w-0 flex-1">
