@@ -243,7 +243,7 @@ export function Treemap() {
         isFullscreen && "h-screen rounded-none p-3",
       )}
     >
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 px-3 py-1.5 md:px-4 bg-card">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 px-2.5 py-1.5 bg-background/90">
         <MapSearch />
         <div className="ml-auto flex shrink-0 items-center gap-x-2">
           {empty || isFullscreen ? null : <PreviewSwitch />}
