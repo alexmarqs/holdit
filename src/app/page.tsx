@@ -7,6 +7,7 @@ import { Listing } from "@/components/panels/listing";
 import { ActivityCard, TrendingCard } from "@/components/panels/side-cards";
 import { VisitBeacon } from "@/components/visit-beacon";
 import { WallProvider } from "@/context/wall-provider";
+import { WALL_HEADING } from "@/lib/seo/copy";
 import { JsonLdStructuredData } from "@/lib/seo/structured-data";
 
 export const revalidate = 30; // 30 seconds is the maximum time between revalidations for this page
@@ -18,9 +19,7 @@ export default async function MapPage() {
     <WallProvider initialState={state}>
       <JsonLdStructuredData state={state} />
       <VisitBeacon />
-      <h1 className="sr-only">
-        holdit.lol — a wall that forgets: new spend takes a slice sized to what they paid
-      </h1>
+      <h1 className="sr-only">{WALL_HEADING}</h1>
 
       <section className="flex flex-col">
         <AwaitingSquare />

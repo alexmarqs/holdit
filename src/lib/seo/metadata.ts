@@ -1,37 +1,45 @@
 import type { Metadata, Viewport } from "next";
 import { WALL_CARD_SIZE } from "@/components/map/wall-card";
 import { siteUrl } from "@/lib/utils/env";
-import { LEGAL_SLUGS, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_TITLE } from "./copy";
+import {
+  LEGAL_LAST_MODIFIED,
+  LEGAL_SLUGS,
+  SEARCH_DESCRIPTION,
+  SEARCH_TITLE,
+  SHARE_DESCRIPTION,
+  SHARE_TITLE,
+  SITE_NAME,
+} from "./copy";
 
 /** The marketing poster. Inner pages must repeat it: Next replaces `openGraph` wholesale. */
 export const OG_IMAGE = {
   url: "/api/og",
   width: WALL_CARD_SIZE.width,
   height: WALL_CARD_SIZE.height,
-  alt: SITE_TITLE,
+  alt: SHARE_TITLE,
 } as const;
 
 export const homeMetadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: SITE_TITLE,
+    default: SEARCH_TITLE,
     template: `%s · ${SITE_NAME}`,
   },
-  description: SITE_DESCRIPTION,
+  description: SEARCH_DESCRIPTION,
   applicationName: SITE_NAME,
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     url: "/",
     siteName: SITE_NAME,
-    title: SITE_TITLE,
-    description: SITE_TAGLINE,
+    title: SHARE_TITLE,
+    description: SHARE_DESCRIPTION,
     images: [OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
-    title: SITE_TITLE,
-    description: SITE_TAGLINE,
+    title: SHARE_TITLE,
+    description: SHARE_DESCRIPTION,
     images: [OG_IMAGE],
   },
   robots: { index: true, follow: true },
@@ -81,13 +89,19 @@ export function leafPage({
   };
 }
 
-export function sitemapEntries(
-  origin: string,
-): { url: string; changeFrequency: "hourly" | "monthly"; priority: number }[] {
+type SitemapEntry = {
+  url: string;
+  lastModified?: string;
+  changeFrequency: "hourly" | "monthly";
+  priority: number;
+};
+
+export function sitemapEntries(origin: string): SitemapEntry[] {
   return [
     { url: origin, changeFrequency: "hourly", priority: 1 },
     ...LEGAL_SLUGS.map((path) => ({
       url: `${origin}/${path}`,
+      lastModified: LEGAL_LAST_MODIFIED[path],
       changeFrequency: "monthly" as const,
       priority: 0.5,
     })),
