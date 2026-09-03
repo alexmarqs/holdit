@@ -34,15 +34,10 @@ export function wallGraph(state: WallListing, base = siteUrl) {
       image: [`${base}/opengraph-image`],
       brand: { "@type": "Brand", name: SITE_NAME },
       offers: {
-        "@type": "Offer",
+        "@type": "AggregateOffer",
         url: base,
+        lowPrice: (MIN_SPEND_CENTS / 100).toFixed(2),
         priceCurrency: "USD",
-        priceSpecification: {
-          "@type": "PriceSpecification",
-          price: (MIN_SPEND_CENTS / 100).toFixed(2),
-          minPrice: (MIN_SPEND_CENTS / 100).toFixed(2),
-          priceCurrency: "USD",
-        },
         availability: "https://schema.org/InStock",
       },
     },

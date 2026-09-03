@@ -27,6 +27,12 @@ describe("wallGraph", () => {
   /*
    * Search Console rejects the Product node without both of these, and it is
    * the one consumer that decides whether the square gets a rich result.
+   *
+   * The price has to sit on the offer itself. A nested
+   * `priceSpecification.price` renders as populated in the Rich Results Test
+   * and still fails it — the field it looks for is one level up. Asserting the
+   * nested shape is what let that pass here while Search Console reported
+   * `price` missing.
    */
   it("gives the square an absolute image and a price Google will read", () => {
     const product = wallGraph(state, "https://holdit.lol").find(
@@ -36,8 +42,25 @@ describe("wallGraph", () => {
     expect(product).toMatchObject({
       image: ["https://holdit.lol/opengraph-image"],
       offers: {
-        priceSpecification: { price: "1.00", minPrice: "1.00", priceCurrency: "USD" },
+        "@type": "AggregateOffer",
+        lowPrice: "1.00",
+        priceCurrency: "USD",
       },
     });
+  });
+
+  /*
+   * A dollar is the floor, not the price: a square is sized by its share of
+   * live spend, so any amount above the minimum buys one. `lowPrice` says
+   * "from a dollar"; a bare `price` would claim a dollar is what it costs.
+   */
+  it("prices the square as a floor rather than a fixed amount", () => {
+    const product = wallGraph(state, "https://holdit.lol").find(
+      (node) => node["@type"] === "Product",
+    );
+    const offers = (product as { offers: Record<string, unknown> }).offers;
+
+    expect(offers).not.toHaveProperty("price");
+    expect(offers).not.toHaveProperty("priceSpecification");
   });
 });
