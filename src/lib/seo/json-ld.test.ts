@@ -23,4 +23,21 @@ describe("wallGraph", () => {
     const site = wallGraph(state, "https://holdit.lol").find((node) => node["@type"] === "WebSite");
     expect(site).toMatchObject({ name: SITE_NAME, description: SITE_DESCRIPTION });
   });
+
+  /*
+   * Search Console rejects the Product node without both of these, and it is
+   * the one consumer that decides whether the square gets a rich result.
+   */
+  it("gives the square an absolute image and a price Google will read", () => {
+    const product = wallGraph(state, "https://holdit.lol").find(
+      (node) => node["@type"] === "Product",
+    );
+
+    expect(product).toMatchObject({
+      image: ["https://holdit.lol/opengraph-image"],
+      offers: {
+        priceSpecification: { price: "1.00", minPrice: "1.00", priceCurrency: "USD" },
+      },
+    });
+  });
 });

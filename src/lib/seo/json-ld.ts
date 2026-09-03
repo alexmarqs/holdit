@@ -31,14 +31,15 @@ export function wallGraph(state: WallListing, base = siteUrl) {
       name: "A square on the wall",
       description:
         "Display space sized by your share of all live spend. No auction, no bidding, no ranking.",
+      image: [`${base}/opengraph-image`],
+      brand: { "@type": "Brand", name: SITE_NAME },
       offers: {
         "@type": "Offer",
         url: base,
         priceCurrency: "USD",
-        // Pay-what-you-want above a floor, which is what PriceSpecification's
-        // minPrice is for — a single `price` would misstate it.
         priceSpecification: {
           "@type": "PriceSpecification",
+          price: (MIN_SPEND_CENTS / 100).toFixed(2),
           minPrice: (MIN_SPEND_CENTS / 100).toFixed(2),
           priceCurrency: "USD",
         },
