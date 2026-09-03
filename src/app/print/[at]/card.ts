@@ -1,7 +1,7 @@
 import { claimShareCopy } from "@/components/map/share-copy";
 import { siteUrl } from "@/lib/utils/env";
 import { formatShare } from "@/lib/utils/format";
-import { OG_SIZE } from "../../../components/map/og-fonts";
+import { OG_SIZE } from "../../../components/map/wall-card";
 
 const TITLE = "holdit.lol — hold your square of the wall";
 const DESCRIPTION = "Everyone paying for attention, sized by how much they're paying right now.";

@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
-import { loadOgFonts, OG_SCALE, OG_SIZE, px } from "./og-fonts";
+import { loadOgFonts } from "./og-fonts";
+import { OG_SCALE, OG_SIZE, px } from "./wall-card";
 
 function Mark({ size }: { size: number }) {
   const s = size / 24;

@@ -5,14 +5,12 @@ import { PRINT_BUCKET_MS } from "@/lib/utils/print-at";
 const getMapState = vi.fn();
 const purchasePrintAnchor = vi.fn();
 const wallCardModel = vi.fn(() => ({ tiles: [] }));
-const marketingOgImage = vi.fn();
 const wallOgImage = vi.fn();
 const rateLimit = vi.fn();
 
 vi.mock("@holdit/db/client", () => ({ db: {} }));
 vi.mock("@holdit/db/queries/map", () => ({ getMapState }));
 vi.mock("@holdit/db/queries/purchases", () => ({ purchasePrintAnchor }));
-vi.mock("@/components/map/marketing-og", () => ({ marketingOgImage }));
 vi.mock("@/components/map/wall-og", () => ({
   resolveCardLogos: vi.fn(async (card: unknown) => card),
   wallOgImage,
@@ -40,18 +38,26 @@ describe("GET /api/og", () => {
     purchasePrintAnchor.mockResolvedValue(null);
     wallCardModel.mockReset();
     wallCardModel.mockReturnValue({ tiles: [] });
-    marketingOgImage.mockReset();
-    marketingOgImage.mockResolvedValue(png());
     wallOgImage.mockReset();
     wallOgImage.mockResolvedValue(png());
     rateLimit.mockReset();
     rateLimit.mockResolvedValue({ ok: true, enforced: false });
   });
 
-  it("does not freeze the marketing poster — that card can change", async () => {
-    const response = await GET(new Request("https://holdit.lol/api/og"));
-    expect(response.headers.get("cache-control")).toBe(CACHE.marketingOg);
+  /*
+   * The poster moved to `app/opengraph-image.tsx`. Answering an unstamped
+   * request with an image again is what this guards: it was a render a day for
+   * identical bytes, and a fresh CDN key for every unread parameter.
+   */
+  it.each([
+    ["nothing", ""],
+    ["an unread parameter", "?x=1"],
+  ])("has no image for a request stamped with %s", async (_name, query) => {
+    const response = await GET(new Request(`https://holdit.lol/api/og${query}`));
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe(CACHE.noStore);
     expect(wallOgImage).not.toHaveBeenCalled();
+    expect(rateLimit).not.toHaveBeenCalled();
   });
 
   it("freezes a print image forever — one stamp, same pixels", async () => {
@@ -59,14 +65,28 @@ describe("GET /api/og", () => {
     expect(response.headers.get("cache-control")).toBe(CACHE.printImage);
     expect(getMapState).toHaveBeenCalledWith(expect.anything(), { now: AT + PRINT_BUCKET_MS - 1 });
     expect(wallCardModel).toHaveBeenCalledWith(expect.anything());
-    expect(marketingOgImage).not.toHaveBeenCalled();
+  });
+
+  /*
+   * The counterpart to the test above. `AT` is long past, so its wall can no
+   * longer change and the year is earned; a bucket still open renders at `now`,
+   * so the same URL would not mean the same pixels and must not be frozen.
+   *
+   * The stamp is nudged a minute ahead rather than using the current bucket:
+   * `parsePrintAt` accepts it inside the two-minute skew, and it cannot close
+   * mid-test the way the live bucket can in its final millisecond.
+   */
+  it("does not freeze a print whose bucket is still open", async () => {
+    const open = Math.floor((Date.now() + 60_000) / PRINT_BUCKET_MS) * PRINT_BUCKET_MS;
+    const response = await GET(new Request(`https://holdit.lol/api/og?at=${open}`));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe(CACHE.printImagePending);
   });
 
   it("does not cache the marketing poster under a junk stamp", async () => {
     const response = await GET(new Request("https://holdit.lol/api/og?at=nope"));
     expect(response.status).toBe(404);
     expect(response.headers.get("cache-control")).toBe(CACHE.noStore);
-    expect(marketingOgImage).not.toHaveBeenCalled();
     expect(wallOgImage).not.toHaveBeenCalled();
   });
 
@@ -75,7 +95,6 @@ describe("GET /api/og", () => {
     const response = await GET(new Request(`https://holdit.lol/api/og?at=${future}`));
     expect(response.status).toBe(404);
     expect(response.headers.get("cache-control")).toBe(CACHE.noStore);
-    expect(marketingOgImage).not.toHaveBeenCalled();
   });
 
   it("freezes a purchase print at that buy, not the 30s bucket", async () => {
@@ -86,13 +105,28 @@ describe("GET /api/og", () => {
     expect(response.headers.get("cache-control")).toBe(CACHE.printImage);
     expect(getMapState).toHaveBeenCalledWith(expect.anything(), { now: bought });
     expect(wallCardModel).toHaveBeenCalledWith(expect.anything(), "light", "holder-1");
-    expect(marketingOgImage).not.toHaveBeenCalled();
   });
 
   it("does not cache a miss for an unknown purchase", async () => {
     const id = "11111111-1111-4111-8111-111111111111";
     const response = await GET(new Request(`https://holdit.lol/api/og?p=${id}`));
     expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe(CACHE.noStore);
+    expect(getMapState).not.toHaveBeenCalled();
+  });
+
+  /*
+   * Both stamps are enumerable and each distinct value is a guaranteed CDN
+   * miss. A real share is not caught by this: `printImage` is immutable, so a
+   * stamp misses once and hits forever after.
+   */
+  it.each([
+    ["at", `at=${AT}`],
+    ["p", "p=11111111-1111-4111-8111-111111111111"],
+  ])("limits ?%s, where every distinct value is a fresh key past the CDN", async (_name, query) => {
+    rateLimit.mockResolvedValue({ ok: false, enforced: true });
+    const response = await GET(new Request(`https://holdit.lol/api/og?${query}`));
+    expect(response.status).toBe(429);
     expect(response.headers.get("cache-control")).toBe(CACHE.noStore);
     expect(getMapState).not.toHaveBeenCalled();
   });

@@ -1,8 +1,15 @@
 import { ImageResponse } from "next/og";
 import { externalWebsiteClient } from "@/lib/external-website-client";
 import { monogram } from "@/lib/utils/domain";
-import { loadOgFonts, OG_SCALE, px } from "./og-fonts";
-import { CARD_TILE_PAD_X, CARD_TILE_PAD_Y, cardPalette, type WallCard } from "./wall-card";
+import { loadOgFonts } from "./og-fonts";
+import {
+  CARD_TILE_PAD_X,
+  CARD_TILE_PAD_Y,
+  cardPalette,
+  OG_SCALE,
+  px,
+  type WallCard,
+} from "./wall-card";
 
 const MAX_LOGO_FETCHES = 160;
 

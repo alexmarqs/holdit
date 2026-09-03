@@ -43,3 +43,10 @@ export function parsePrintAt(
 export function printWallAt(bucketStart: number, now = Date.now()): number {
   return Math.min(bucketStart + PRINT_BUCKET_MS - 1, now);
 }
+
+/**
+ * Whether the bucket has closed, so its wall can no longer change.
+ */
+export function printBucketClosed(bucketStart: number, now = Date.now()): boolean {
+  return bucketStart + PRINT_BUCKET_MS - 1 <= now;
+}

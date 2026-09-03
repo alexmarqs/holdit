@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { OG_SIZE } from "@/components/map/og-fonts";
+import { OG_SIZE } from "@/components/map/wall-card";
 import { siteUrl } from "@/lib/utils/env";
 import { printCardHtml, printPurchaseCardHtml } from "./card";
 

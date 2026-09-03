@@ -27,6 +27,23 @@ describe("leafPage", () => {
   });
 });
 
+describe("the share image", () => {
+  /*
+   * `app/opengraph-image.tsx` and `app/twitter-image.tsx` supply it, and an
+   * explicit `images` here would take precedence over both — sending every
+   * unfurler to `/api/og`, which answers 404 without a stamp. So the invariant
+   * is an absence, and absences rot silently.
+   */
+  it("is left to the file conventions on every page", () => {
+    expect(homeMetadata.openGraph?.images).toBeUndefined();
+    expect(homeMetadata.twitter?.images).toBeUndefined();
+
+    const leaf = leafPage({ title: "Rules", description: "How.", path: "/rules" });
+    expect(leaf.openGraph?.images).toBeUndefined();
+    expect(leaf.twitter?.images).toBeUndefined();
+  });
+});
+
 describe("homeMetadata", () => {
   it("gives the tab and the search result the search voice", () => {
     expect(homeMetadata.title).toEqual({ default: SEARCH_TITLE, template: `%s · ${SITE_NAME}` });

@@ -13,7 +13,35 @@ import { shortHandle } from "@/lib/utils/domain";
 import { toFaviconUrl } from "@/lib/utils/favicon";
 import { formatInt, formatMoney, formatPrintDate, formatShare } from "@/lib/utils/format";
 
+/**
+ * Raster scale for the server-rendered cards. 1, and it should stay there.
+ *
+ * 2 cost 6× the render — measured at 5.1s against 0.8s for a 45-square wall,
+ * with Satori 99% of it — on the path a crawler waits on. A crawler that gives
+ * up leaves an imageless card, and `printImage` is `immutable`, so that card is
+ * frozen with no validator left to force a re-crawl.
+ *
+ * It bought nothing for that. X, Facebook and LinkedIn all re-encode a card
+ * into their own variants around 1200px wide, so 1200×630 — the size those
+ * platforms document — is the last size that survives. Downloads are not a
+ * reason either: they never went through here. `wall-download.ts` rasterises
+ * client-side at its own `pixelRatio: 3`.
+ */
+export const OG_SCALE = 1;
+export const px = (n: number) => n * OG_SCALE;
+
+/** The coordinate space the card is composed in. */
 export const WALL_CARD_SIZE = { width: 1200, height: 630 };
+
+/**
+ * The pixel dimensions of the PNG, which is what `og:image:width`/`height`
+ * state — those tags describe the file, not the space it was laid out in.
+ *
+ * Derived, not restated. These were two independent literals in two files, so
+ * reshaping the card would have left the raster at the old aspect and the
+ * declared size describing neither.
+ */
+export const OG_SIZE = { width: px(WALL_CARD_SIZE.width), height: px(WALL_CARD_SIZE.height) };
 export const WALL_CARD_HEADER_H = 82;
 export const WALL_CARD_MAP = {
   x: 0,

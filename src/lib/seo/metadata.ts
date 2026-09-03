@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { WALL_CARD_SIZE } from "@/components/map/wall-card";
 import { siteUrl } from "@/lib/utils/env";
 import {
   LEGAL_LAST_MODIFIED,
@@ -11,14 +10,12 @@ import {
   SITE_NAME,
 } from "./copy";
 
-/** The marketing poster. Inner pages must repeat it: Next replaces `openGraph` wholesale. */
-export const OG_IMAGE = {
-  url: "/api/og",
-  width: WALL_CARD_SIZE.width,
-  height: WALL_CARD_SIZE.height,
-  alt: SHARE_TITLE,
-} as const;
-
+/*
+ * No `images` anywhere below, on purpose. `app/opengraph-image.tsx` and
+ * `app/twitter-image.tsx` supply the card, and an explicit `images` here would
+ * take precedence over them — pointing every unfurler at `/api/og`, which now
+ * answers 404 without a stamp.
+ */
 export const homeMetadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
@@ -34,13 +31,11 @@ export const homeMetadata: Metadata = {
     siteName: SITE_NAME,
     title: SHARE_TITLE,
     description: SHARE_DESCRIPTION,
-    images: [OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: SHARE_TITLE,
     description: SHARE_DESCRIPTION,
-    images: [OG_IMAGE],
   },
   robots: { index: true, follow: true },
 };
@@ -78,13 +73,11 @@ export function leafPage({
       siteName: SITE_NAME,
       title: shareTitle,
       description,
-      images: [OG_IMAGE],
     },
     twitter: {
       card: "summary_large_image",
       title: shareTitle,
       description,
-      images: [OG_IMAGE],
     },
   };
 }
