@@ -28,8 +28,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:local": "docker compose -f scripts/docker-compose.yaml up -d --wait",
-    "db:seed": "docker compose -f scripts/docker-compose.yaml exec -T postgres psql -q -v ON_ERROR_STOP=1 -U holdit -d holdit -f /seed/seed.sql",
+    "db:local": "docker compose up -d --wait",
+    "db:seed": "docker compose exec -T postgres psql -q -v ON_ERROR_STOP=1 -U holdit -d holdit -f /seed/seed.sql",
     "stripe:listen": "stripe listen --forward-to localhost:3001/api/webhooks/stripe"
   },
   "dependencies": {

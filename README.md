@@ -45,17 +45,17 @@ Use `.env.local` for local development. It is gitignored. Next.js reads it, and
 sets the same variables on the host. Do not commit them.
 
 `db:seed` applies [`scripts/seed.sql`](./scripts/seed.sql) to the running
-container: the founding wall is development data, so it is SQL mounted beside
-the compose file rather than TypeScript the app could import. It puts the
-founding squares up, and the buy → map-resize loop works end to end from there.
-The database is required: there is no in-memory fallback, because a deployment
+container: the founding wall is development data, so it is SQL mounted by
+[`docker-compose.yaml`](./docker-compose.yaml) rather than TypeScript the app
+could import. It puts the founding squares up, and the buy → map-resize loop
+works end to end from there. The database is required: there is no in-memory
+fallback, because a deployment
 that lost its `DATABASE_URL` would otherwise present a demo wall as a real one
 — a failure that looks exactly like success.
 
 Postgres data lives in a Docker volume, so `pnpm db:local` followed by `pnpm
 dev` is enough on later sessions. `pnpm db:migrate && pnpm db:seed` is only
-needed on a fresh volume (first checkout, or after `docker compose -f
-scripts/docker-compose.yaml down -v`).
+needed on a fresh volume (first checkout, or after `docker compose down -v`).
 
 ```bash
 pnpm test              # unit tests; no database
@@ -65,9 +65,10 @@ pnpm lint              # biome; `pnpm lint:fix` writes fixes
 pnpm build             # prerenders the wall, so it needs the database too
 ```
 
-`pnpm test:integration` points itself at `scripts/docker-compose.yaml`'s
-database and truncates between tests, ignoring `DATABASE_URL` so a real one can
-never be emptied. Override with `TEST_DATABASE_URL` if you need somewhere else.
+`pnpm test:integration` points itself at the database from
+`docker-compose.yaml` and truncates between tests, ignoring `DATABASE_URL` so
+a real one can never be emptied. Override with `TEST_DATABASE_URL` if you need
+somewhere else.
 
 ## Testing payments
 
@@ -116,7 +117,8 @@ src/core/         @holdit/core   pure domain: decay, share, squarify, thresholds
 src/db/           @holdit/db     Drizzle schema and per-domain queries
 src/lib/          API and site clients; SEO copy and JSON-LD; helpers under utils/
 drizzle/          generated SQL migrations and schema snapshots
-scripts/          local Postgres: the compose file, and the founding wall as SQL
+docker-compose.yaml   local Postgres
+scripts/          founding wall and the test database, mounted by Compose
 ```
 
 Production code under `src/core/` imports nothing from the other folders and

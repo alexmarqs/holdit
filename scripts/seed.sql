@@ -5,10 +5,9 @@
 -- curve as a paid one — nothing here is permanent either.
 --
 -- Data, not app code: production never runs this file, so it does not belong in
--- `src/`. It lives beside the compose file that serves it and is applied with
--- `pnpm db:seed`.
+-- `src/`. `docker-compose.yaml` mounts it and `pnpm db:seed` applies it.
 --
--- Not an initdb script, though it is mounted from the same compose file. The
+-- Not an initdb script, though the compose file mounts it. The
 -- tables do not exist when initdb runs — `pnpm db:migrate` creates them — so
 -- this has to be applied after migration rather than at first start.
 --

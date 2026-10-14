@@ -15,7 +15,7 @@ fix will land on `main` before any public write-up.
 
 ## What to leave alone
 
-The local database in `scripts/docker-compose.yaml` uses the password `holdit`
+The local database in `docker-compose.yaml` uses the password `holdit`
 on purpose. It is a development container bound to `localhost:55432`, not a
 production credential.
 

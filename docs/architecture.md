@@ -83,7 +83,7 @@ their first argument. Import the client from `@holdit/db/client`.
 connection pool in by accident.
 
 Local development is the Postgres 17 container in
-`scripts/docker-compose.yaml`. In production the client disables prepared
+`docker-compose.yaml`. In production the client disables prepared
 statements, which is what a transaction-mode pooler requires. The purchase
 transaction still runs as one unit, so the advisory lock holds.
 
