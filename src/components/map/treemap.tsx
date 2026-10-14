@@ -3,7 +3,7 @@
 import { computeShares, type HolderStanding, previewContent, shareAfterSpend } from "@holdit/core";
 import { useAtomValue } from "jotai";
 import { Maximize2, Minimize2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { RefreshButton } from "@/components/panels/refresh-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,7 @@ import { useWall } from "@/hooks/use-wall";
 import { cn } from "@/lib/utils";
 import { formatMoney, formatShare } from "@/lib/utils/format";
 import { DownloadWallButton } from "./download-wall";
+import { MAP_CANVAS_FALLBACKS, mapFallbackCss } from "./map-fallback";
 import { MapSearch } from "./map-search";
 import { type HoverTarget, MapTooltip } from "./map-tooltip";
 import { placeWall } from "./place-wall";
@@ -45,44 +46,53 @@ export function Treemap() {
   const frame = useRef<HTMLDivElement>(null);
   const tooltip = useRef<HTMLDivElement>(null);
   const pending = useRef<number | null>(null);
-  const resizeFrame = useRef<number | null>(null);
   const resizeEnd = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nextSize = useRef({ w: 0, h: 0 });
   const measured = useRef(false);
   const cursor = useRef({ x: 0, y: 0 });
   const [isResizing, setResizing] = useState(false);
 
-  useEffect(() => {
+  /*
+   * Read the box before paint. A resize observer started from useEffect only
+   * fires after the empty canvas has already been shown.
+   */
+  useLayoutEffect(() => {
     const element = frame.current;
     if (!element) return;
+
+    const commit = (w: number, h: number, resize: boolean) => {
+      if (w <= 0 || h <= 0) return;
+      nextSize.current = { w, h };
+      setSize((current) => (current.w === w && current.h === h ? current : { w, h }));
+      if (!resize || !measured.current) {
+        measured.current = true;
+        return;
+      }
+      setResizing(true);
+      if (resizeEnd.current !== null) clearTimeout(resizeEnd.current);
+      resizeEnd.current = setTimeout(() => {
+        resizeEnd.current = null;
+        setResizing(false);
+      }, 120);
+    };
+
+    const rect = element.getBoundingClientRect();
+    commit(rect.width, rect.height, false);
+
     const observer = new ResizeObserver(([entry]) => {
       if (!entry) return;
-      nextSize.current = { w: entry.contentRect.width, h: entry.contentRect.height };
-      if (resizeFrame.current !== null) return;
-      resizeFrame.current = requestAnimationFrame(() => {
-        resizeFrame.current = null;
-        setSize((current) => {
-          const next = nextSize.current;
-          return current.w === next.w && current.h === next.h ? current : next;
-        });
-
-        // The first measurement mounts the wall rather than resizing it.
-        if (!measured.current) {
-          measured.current = true;
-          return;
-        }
-        setResizing(true);
-        if (resizeEnd.current !== null) clearTimeout(resizeEnd.current);
-        resizeEnd.current = setTimeout(() => {
-          resizeEnd.current = null;
-          setResizing(false);
-        }, 120);
-      });
+      const { width, height } = entry.contentRect;
+      if (
+        Math.abs(width - nextSize.current.w) < 0.5 &&
+        Math.abs(height - nextSize.current.h) < 0.5
+      ) {
+        return;
+      }
+      commit(width, height, true);
     });
     observer.observe(element);
     return () => {
       observer.disconnect();
-      if (resizeFrame.current !== null) cancelAnimationFrame(resizeFrame.current);
       if (resizeEnd.current !== null) clearTimeout(resizeEnd.current);
     };
   }, []);
@@ -136,9 +146,10 @@ export function Treemap() {
     else void shell.current?.requestFullscreen().catch(() => {});
   }, []);
 
-  // The canvas is sized by CSS (width × 4/3), never by JS. Form growth does
-  // not change that box — JS only reads it back to lay the tiles inside.
-  const canvasHeight = size.h;
+  // The canvas is sized by CSS, never by JS. Form growth does not change that
+  // box — JS only reads it back to lay the tiles inside. Until that read lands,
+  // a fallback close to the CSS aspect is already in the HTML.
+  const hasSize = size.w > 0 && size.h > 0;
 
   /*
    * The preview tile answers "what would this buy" for the form above the
@@ -191,16 +202,6 @@ export function Treemap() {
     }));
   }, [state.standings, previewing, toppingUp, preview]);
 
-  const { tiles, byId, previewRect } = useMemo(() => {
-    const byId = new Map(shown.map((s) => [s.holder.id, s]));
-    const packed = placeWall(
-      shown.map((s) => ({ id: s.holder.id, share: s.share })),
-      { w: size.w, h: canvasHeight },
-      previewShare,
-    );
-    return { tiles: packed.tiles, byId, previewRect: packed.previewRect };
-  }, [shown, size.w, canvasHeight, previewShare]);
-
   const onEnter = useCallback((standing: HolderStanding) => setHover({ standing }), []);
 
   const onLeave = useCallback(() => setHover(null), []);
@@ -214,26 +215,20 @@ export function Treemap() {
     [place],
   );
 
-  const previewBox = previewRect ? tileBox(previewRect, size) : null;
-  /*
-   * What the dashed square can say at the size it got. The share is the whole
-   * point of it, so `previewContent` shrinks that line rather than dropping it —
-   * the flat pixel gates this replaced drew an empty box at the default amount.
-   */
-  const previewShareLabel = formatShare(previewShare);
-  const previewCaption =
-    toppingUp === null && previewHandle ? previewHandle : empty ? "Yours" : "your square";
-  const captionIsHandle = toppingUp === null && previewHandle !== null;
-  const previewPriceLabel = empty ? "until the next square" : `for ${formatMoney(preview ?? 0)}`;
-  const previewText = previewRect
-    ? previewContent(
-        previewRect.w,
-        previewRect.h,
-        previewShareLabel,
-        previewPriceLabel,
-        previewCaption,
-      )
-    : null;
+  const paint = {
+    shown,
+    previewShare,
+    preview,
+    previewHandle,
+    empty,
+    toppingUp,
+    flash,
+    now: state.generatedAt,
+    omitShare: previewing && toppingUp === null,
+    onEnter,
+    onLeave,
+    onFocusTile,
+  };
 
   return (
     <div
@@ -272,55 +267,26 @@ export function Treemap() {
             : "aspect-[4/3] min-h-50 shrink-0 sm:min-h-70 max-h-[min(70svh,36rem)]",
         )}
       >
-        <SearchedTileLayer
-          tiles={tiles}
-          byId={byId}
-          canvas={size}
-          flash={flash}
-          now={state.generatedAt}
-          omitShare={previewing && toppingUp === null}
-          onEnter={onEnter}
-          onLeave={onLeave}
-          onFocusTile={onFocusTile}
-        />
-
-        {previewBox && previewRect ? (
-          <div
-            aria-hidden
-            className="tile-preview pointer-events-none flex flex-col justify-center gap-0.5 px-2 text-center"
-            style={{
-              transform: `translate(${previewBox.x}px, ${previewBox.y}px)`,
-              width: previewBox.w,
-              height: previewBox.h,
-            }}
-          >
-            {previewText?.sharePx ? (
-              <>
-                {previewText.caption ? (
-                  <p
-                    className={cn(
-                      "text-[10px] font-bold text-primary/70",
-                      captionIsHandle ? "truncate" : "tracking-[0.14em] uppercase",
-                    )}
-                  >
-                    {previewCaption}
-                  </p>
-                ) : null}
-                <p
-                  className="num leading-none font-bold text-primary"
-                  style={{ fontSize: previewText.sharePx }}
-                >
-                  {previewShareLabel}
-                </p>
-                {previewText.price ? (
-                  <p className="num text-[12px] leading-tight font-medium text-primary/90">
-                    {previewPriceLabel}
-                  </p>
-                ) : null}
-              </>
-            ) : null}
-          </div>
-        ) : null}
+        {hasSize ? (
+          <CanvasPaint canvas={size} {...paint} />
+        ) : (
+          <>
+            <style>{mapFallbackCss()}</style>
+            {MAP_CANVAS_FALLBACKS.map((fallback) => (
+              <div
+                key={fallback.id}
+                className={`map-fit map-fit-${fallback.id}`}
+                style={{
+                  width: fallback.w,
+                  height: fallback.h,
+                  zoom: `calc(100cqw / ${fallback.w}px)`,
+                }}
+              >
+                <CanvasPaint canvas={fallback} {...paint} />
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       <MapTooltip target={hover} now={state.generatedAt} elementRef={tooltip} />
@@ -332,4 +298,118 @@ export function Treemap() {
 function SearchedTileLayer(props: Omit<TileLayerProps, "needle">) {
   const query = useAtomValue(mapSearchAtom);
   return <TileLayer {...props} needle={query.trim().toLowerCase()} />;
+}
+
+function CanvasPaint({
+  canvas,
+  shown,
+  previewShare,
+  preview,
+  previewHandle,
+  empty,
+  toppingUp,
+  flash,
+  now,
+  omitShare,
+  onEnter,
+  onLeave,
+  onFocusTile,
+}: {
+  canvas: { w: number; h: number };
+  shown: HolderStanding[];
+  previewShare: number;
+  preview: number | null;
+  previewHandle: string | null;
+  empty: boolean;
+  toppingUp: HolderStanding | null;
+  flash: string | null;
+  now: number;
+  omitShare: boolean;
+  onEnter: (standing: HolderStanding) => void;
+  onLeave: () => void;
+  onFocusTile: (standing: HolderStanding, element: HTMLElement) => void;
+}) {
+  const { tiles, byId, previewRect } = useMemo(() => {
+    const byId = new Map(shown.map((s) => [s.holder.id, s]));
+    const packed = placeWall(
+      shown.map((s) => ({ id: s.holder.id, share: s.share })),
+      canvas,
+      previewShare,
+    );
+    return { tiles: packed.tiles, byId, previewRect: packed.previewRect };
+  }, [shown, canvas, previewShare]);
+
+  const previewBox = previewRect ? tileBox(previewRect, canvas) : null;
+  /*
+   * What the dashed square can say at the size it got. The share is the whole
+   * point of it, so `previewContent` shrinks that line rather than dropping it —
+   * the flat pixel gates this replaced drew an empty box at the default amount.
+   */
+  const previewShareLabel = formatShare(previewShare);
+  const previewCaption =
+    toppingUp === null && previewHandle ? previewHandle : empty ? "Yours" : "your square";
+  const captionIsHandle = toppingUp === null && previewHandle !== null;
+  const previewPriceLabel = empty ? "until the next square" : `for ${formatMoney(preview ?? 0)}`;
+  const previewText = previewRect
+    ? previewContent(
+        previewRect.w,
+        previewRect.h,
+        previewShareLabel,
+        previewPriceLabel,
+        previewCaption,
+      )
+    : null;
+
+  return (
+    <>
+      <SearchedTileLayer
+        tiles={tiles}
+        byId={byId}
+        canvas={canvas}
+        flash={flash}
+        now={now}
+        omitShare={omitShare}
+        onEnter={onEnter}
+        onLeave={onLeave}
+        onFocusTile={onFocusTile}
+      />
+      {previewBox && previewRect ? (
+        <div
+          aria-hidden
+          className="tile-preview pointer-events-none flex flex-col justify-center gap-0.5 px-2 text-center"
+          style={{
+            transform: `translate(${previewBox.x}px, ${previewBox.y}px)`,
+            width: previewBox.w,
+            height: previewBox.h,
+          }}
+        >
+          {previewText?.sharePx ? (
+            <>
+              {previewText.caption ? (
+                <p
+                  className={cn(
+                    "text-[10px] font-bold text-primary/70",
+                    captionIsHandle ? "truncate" : "tracking-[0.14em] uppercase",
+                  )}
+                >
+                  {previewCaption}
+                </p>
+              ) : null}
+              <p
+                className="num leading-none font-bold text-primary"
+                style={{ fontSize: previewText.sharePx }}
+              >
+                {previewShareLabel}
+              </p>
+              {previewText.price ? (
+                <p className="num text-[12px] leading-tight font-medium text-primary/90">
+                  {previewPriceLabel}
+                </p>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+      ) : null}
+    </>
+  );
 }
