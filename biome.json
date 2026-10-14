@@ -6,14 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": [
-      "**",
-      "!.next",
-      "!node_modules",
-      "!holdit-map.html",
-      "!src/app/globals.css",
-      "!**/*.svg"
-    ]
+    "includes": ["**", "!.next", "!node_modules", "!src/app/globals.css", "!**/*.svg"]
   },
   "formatter": {
     "enabled": true,

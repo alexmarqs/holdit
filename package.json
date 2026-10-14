@@ -2,6 +2,17 @@
   "name": "holdit-lol",
   "version": "0.1.0",
   "private": true,
+  "description": "A wall of everyone paying for attention, sized by live spend.",
+  "license": "MIT",
+  "author": "Alexandre Marques",
+  "homepage": "https://holdit.lol",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexmarqs/holdit.lol.git"
+  },
+  "bugs": {
+    "url": "https://github.com/alexmarqs/holdit.lol/issues"
+  },
   "packageManager": "pnpm@11.15.1",
   "scripts": {
     "dev": "next dev --port 3001",

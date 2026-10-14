@@ -12,11 +12,7 @@ export function createWallQueryClient(initialState: MapState): QueryClient {
   return client;
 }
 
-/** Write the wall to the query cache.
- *
- * TODO: Alternative: use useQuery with initialData or hydration.
- *
- */
+/** Write one wall into the query cache. */
 export function writeWallCache(client: QueryClient, wall: MapState): void {
   client.setQueryData(WALL_QUERY_KEY, wall);
 }
