@@ -1,0 +1,18 @@
+name: Feature
+description: A behaviour the wall should have.
+title: "Change: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong or missing
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would change
+      description: Include how a buyer, or the wall, would behave afterwards.
+    validations:
+      required: true

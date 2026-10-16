@@ -5,9 +5,8 @@
 # fresh volume, follow with `pnpm db:migrate` and `pnpm db:seed`. After that
 # the named volume keeps the wall across container restarts.
 
-# Compose names the project after the directory holding this file, which is
-# `scripts/` now — pinned so the containers keep the name they had when this
-# file sat at the root (`holdit.lol` with the dot stripped).
+# Pinned so the volume stays `holditlol_postgres_data` even when the checkout
+# directory is not named `holdit.lol`.
 name: holditlol
 
 services:
@@ -24,10 +23,10 @@ services:
       - postgres_data:/var/lib/postgresql/data
       # Creates the separate `holdit_test` database. Runs only when the volume is
       # empty (first start, or after `docker compose down -v`).
-      - ./init-test-db.sql:/docker-entrypoint-initdb.d/00-test-db.sql:ro
+      - ./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/00-test-db.sql:ro
       # The founding wall. Not an initdb script: the tables only exist once
       # `pnpm db:migrate` has run, so `pnpm db:seed` applies this afterwards.
-      - ./seed.sql:/seed/seed.sql:ro
+      - ./scripts/seed.sql:/seed/seed.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U holdit -d holdit"]
       interval: 2s

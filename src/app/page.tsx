@@ -10,7 +10,8 @@ import { WallProvider } from "@/context/wall-provider";
 import { WALL_HEADING } from "@/lib/seo/copy";
 import { JsonLdStructuredData } from "@/lib/seo/structured-data";
 
-export const revalidate = 30; // 30 seconds is the maximum time between revalidations for this page
+/** Homepage cache lifetime. A paid purchase revalidates `/` from the Stripe webhook. */
+export const revalidate = 30;
 
 export default async function MapPage() {
   const state = await getMapState(db);

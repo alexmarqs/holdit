@@ -296,6 +296,18 @@
   overflow: clip;
   /* Outline sits on the padding edge; without this Safari clips the bottom dash. */
   overflow-clip-margin: 2px;
+  /* Size containment so a fallback laid out at a fixed pixel size cannot
+     stretch the box, and so its aspect can pick which fallback is shown. */
+  container-type: size;
+  container-name: map;
+}
+
+/* Unmeasured fallbacks. One is revealed by the container queries in the map. */
+.map-fit {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 /* Outer glow has to paint onto the grout. Clip except while a square is
