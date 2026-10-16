@@ -2,6 +2,11 @@
 
 **A wall of everyone paying for attention, sized by live spend.**
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
+  <img alt="The holdit.lol wall: a treemap of squares sized by live spend" src="docs/screenshot-light.png">
+</picture>
+
 Your share follows your live spend against everyone else's. New spend takes a
 slice sized to what they paid. Displayed spend is half every 14 days — one rate
 for every dollar. Extra spend past the cap does not fade slower; it holds the

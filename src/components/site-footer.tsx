@@ -46,6 +46,15 @@ export function SiteFooter() {
                 </Link>
               </span>
             ))}
+            <span className="px-1.5">•</span>
+            <a
+              href="https://github.com/alexmarqs/holdit.lol"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-6 items-center text-primary transition-colors hover:text-primary/80"
+            >
+              GitHub
+            </a>
           </p>
         </div>
       </div>
