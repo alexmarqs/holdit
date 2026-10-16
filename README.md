@@ -30,11 +30,14 @@ No auction. Nobody outbid. Nobody pushed off. From $1.
 
 ```bash
 pnpm install
-pnpm db:local                 # Postgres on :55432
-cp .env.example .env.local
-pnpm db:migrate && pnpm db:seed   # first run, or after wiping the volume
+pnpm bootstrap                # .env.local, Postgres on :55432, tables, sample wall
 pnpm dev                      # http://localhost:3001
 ```
+
+[`pnpm bootstrap`](./scripts/bootstrap.ts) is safe to re-run: it creates
+`.env.local` with a random `CLICK_HASH_SALT` only when there is none, and
+migrating and seeding skip what is already there. It always migrates the local
+container, whatever `DATABASE_URL` in `.env.local` says.
 
 Use `.env.local` for local development. It is gitignored. Next.js reads it, and
 `drizzle.config.ts` loads it because drizzle-kit runs outside Next. Production
@@ -50,8 +53,8 @@ that lost its `DATABASE_URL` would otherwise present a demo wall as a real one
 — a failure that looks exactly like success.
 
 Postgres data lives in a Docker volume, so `pnpm db:local` followed by `pnpm
-dev` is enough on later sessions. `pnpm db:migrate && pnpm db:seed` is only
-needed on a fresh volume (first checkout, or after `docker compose down -v`).
+dev` is enough on later sessions. Run `pnpm bootstrap` again after wiping the
+volume with `docker compose down -v`.
 
 ```bash
 pnpm test              # unit tests; no database

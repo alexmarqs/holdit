@@ -23,7 +23,31 @@ export function SiteFooter() {
             bidding, no leaderboard to climb.
           </p>
         </div>
-        <div>
+        <div className="flex flex-col gap-2">
+          <nav aria-label="Footer">
+            <ul className="flex flex-wrap items-center [&>li]:flex [&>li]:items-center [&>li:not(:first-child)]:before:px-1.5 [&>li:not(:first-child)]:before:content-['•']">
+              {FOOTER_LINKS.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="inline-flex min-h-6 items-center text-primary transition-colors hover:text-primary/80"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <a
+                  href="https://github.com/alexmarqs/holdit.lol"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-6 items-center text-primary transition-colors hover:text-primary/80"
+                >
+                  GitHub
+                </a>
+              </li>
+            </ul>
+          </nav>
           <p className="text-sm text-muted-foreground">
             Built by{" "}
             <a
@@ -33,27 +57,6 @@ export function SiteFooter() {
               className="text-primary hover:text-primary/80"
             >
               @alexlmarques
-            </a>
-            {" // "}
-            {FOOTER_LINKS.map((item, idx) => (
-              <span key={item.href}>
-                {idx > 0 && <span className="px-1.5">•</span>}
-                <Link
-                  href={item.href}
-                  className="inline-flex min-h-6 items-center text-primary transition-colors hover:text-primary/80"
-                >
-                  {item.label}
-                </Link>
-              </span>
-            ))}
-            <span className="px-1.5">•</span>
-            <a
-              href="https://github.com/alexmarqs/holdit.lol"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-6 items-center text-primary transition-colors hover:text-primary/80"
-            >
-              GitHub
             </a>
           </p>
         </div>
