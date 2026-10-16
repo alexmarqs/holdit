@@ -1,0 +1,25 @@
+-- Row Level Security: deliberately not used.
+--
+-- This migration originally enabled RLS and revoked everything from `anon`,
+-- because a Supabase project used to expose every table in `public` through
+-- PostgREST, reachable with the anon key.
+--
+-- That is no longer the arrangement. The Data API is off, so nothing but a
+-- direct Postgres connection reaches these tables — and since new projects
+-- stopped auto-exposing tables (2026-05-30), off is also the default.
+--
+-- With no REST layer in front of it, RLS with no policies guards nothing, and
+-- it carries a real hazard: add FORCE and every SELECT returns zero rows for
+-- any connection that is not the owner or BYPASSRLS, so the wall renders empty
+-- with no error at all. Measured against this schema, not assumed.
+--
+-- Access control is therefore the connection string. Nothing but the app holds
+-- it, and nothing but the app reaches the database.
+--
+-- Prerequisite, and the only one: the Data API must stay disabled. If it is
+-- ever switched on, this file is where the protection has to come back —
+-- REVOKE from anon and authenticated, and ENABLE (never FORCE) RLS.
+--
+-- Left as an empty migration rather than deleted so the journal stays intact.
+
+SELECT 1;
