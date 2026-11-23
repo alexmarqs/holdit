@@ -1,32 +1,17 @@
-const parseEnvVar = (value: string | undefined): string | null => {
-  const trimmed = value?.trim();
-  return trimmed && trimmed.length > 0 ? trimmed : null;
-};
+import { env } from "@/env";
 
-export const serverEnv = {
-  databaseUrl: parseEnvVar(process.env.DATABASE_URL),
-  stripeSecretKey: parseEnvVar(process.env.STRIPE_SECRET_KEY),
-  stripeWebhookSecret: parseEnvVar(process.env.STRIPE_WEBHOOK_SECRET),
-  upstashUrl: parseEnvVar(process.env.UPSTASH_REDIS_REST_URL),
-  upstashToken: parseEnvVar(process.env.UPSTASH_REDIS_REST_TOKEN),
-  clickHashSalt: parseEnvVar(process.env.CLICK_HASH_SALT) ?? "holdit-dev-salt",
-} as const;
-
-export const publicEnv = {
-  contactEmail:
-    parseEnvVar(process.env.NEXT_PUBLIC_CONTACT_EMAIL) ?? "holdit-lol@alexandremarques.io",
-} as const;
+/**
+ * Values derived from the validated environment. Raw variables come from
+ * `@/env` directly. Server-only: `siteUrl` reads server variables, so client
+ * components get what they need as props.
+ */
 
 function resolveSiteUrl(): string {
-  const explicit = parseEnvVar(process.env.NEXT_PUBLIC_APP_URL);
-  if (explicit) return explicit.replace(/\/$/, "");
-
-  const vercel = parseEnvVar(process.env.VERCEL_PROJECT_PRODUCTION_URL);
-  if (vercel) return `https://${vercel}`;
-
-  return `http://localhost:${parseEnvVar(process.env.PORT) ?? "3000"}`;
+  if (env.NEXT_PUBLIC_APP_URL) return env.NEXT_PUBLIC_APP_URL;
+  if (env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  return `http://localhost:${env.PORT ?? "3000"}`;
 }
 
 export const siteUrl = resolveSiteUrl();
 
-export const isProduction = process.env.NODE_ENV === "production";
+export const isProduction = env.NODE_ENV === "production";

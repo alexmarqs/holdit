@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withZodConfigEnv } from "zod-config/nextjs/config";
 
 const config: NextConfig = {
   reactStrictMode: true,
@@ -19,4 +20,4 @@ const config: NextConfig = {
   },
 };
 
-export default config;
+export default withZodConfigEnv(config);

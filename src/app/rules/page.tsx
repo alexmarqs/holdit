@@ -8,8 +8,8 @@ import {
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { PageHead, Section } from "@/components/prose";
+import { env } from "@/env";
 import { leafPage } from "@/lib/seo/metadata";
-import { publicEnv } from "@/lib/utils/env";
 import { formatMoney } from "@/lib/utils/format";
 
 const CAP_YOUNG = Math.round(YOUNG_WALL_MAX_SHARE * 100);
@@ -25,8 +25,11 @@ export const metadata: Metadata = leafPage({
 });
 
 const CONTACT = (
-  <a className="text-primary hover:text-primary/80" href={`mailto:${publicEnv.contactEmail}`}>
-    {publicEnv.contactEmail}
+  <a
+    className="text-primary hover:text-primary/80"
+    href={`mailto:${env.NEXT_PUBLIC_CONTACT_EMAIL}`}
+  >
+    {env.NEXT_PUBLIC_CONTACT_EMAIL}
   </a>
 );
 

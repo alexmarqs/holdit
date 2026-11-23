@@ -23,6 +23,7 @@ No auction. Nobody outbid. Nobody pushed off. From $1.
 | Database | Postgres 17, [Drizzle](https://orm.drizzle.team) |
 | Payments | [Stripe](https://stripe.com) Checkout |
 | Rate limiting | [Upstash](https://upstash.com) Redis, skipped when unset |
+| Environment | [zod-config](https://github.com/alexmarqs/zod-config), validated in [`src/env.ts`](./src/env.ts) when Next.js starts |
 | Lint / format | [Biome](https://biomejs.dev) |
 | Tests | [Vitest](https://vitest.dev) |
 

@@ -2,15 +2,15 @@ import { db } from "@holdit/db/client";
 import { buy } from "@holdit/db/queries/purchases";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
+import { env } from "@/env";
 import { externalWebsiteClient } from "@/lib/external-website-client";
 import { type StripeEvent, stripeClient } from "@/lib/stripe-client";
-import { serverEnv } from "@/lib/utils/env";
 
 /**
  * Stripe webhook. The only path by which a paid square comes into existence.
  */
 export async function POST(request: Request) {
-  const secret = serverEnv.stripeWebhookSecret;
+  const secret = env.STRIPE_WEBHOOK_SECRET;
 
   if (!stripeClient || !secret) {
     return NextResponse.json({ error: "Webhook not configured" }, { status: 503 });

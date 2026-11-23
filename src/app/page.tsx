@@ -7,6 +7,7 @@ import { Listing } from "@/components/panels/listing";
 import { ActivityCard, TrendingCard } from "@/components/panels/side-cards";
 import { VisitBeacon } from "@/components/visit-beacon";
 import { WallProvider } from "@/context/wall-provider";
+import { env } from "@/env";
 import { WALL_HEADING } from "@/lib/seo/copy";
 import { JsonLdStructuredData } from "@/lib/seo/structured-data";
 
@@ -23,7 +24,7 @@ export default async function MapPage() {
       <h1 className="sr-only">{WALL_HEADING}</h1>
 
       <section className="flex flex-col">
-        <AwaitingSquare />
+        <AwaitingSquare contactEmail={env.NEXT_PUBLIC_CONTACT_EMAIL} />
         <div id="claim" className="flex flex-col">
           <BuyPanel />
           <div id="map" className="flex min-w-0 flex-col">

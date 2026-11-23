@@ -1,13 +1,10 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { isProduction, serverEnv } from "@/lib/utils/env";
+import { env } from "@/env";
+import { isProduction } from "@/lib/utils/env";
 import { schema } from "./schema";
 
-if (!serverEnv.databaseUrl) {
-  throw new Error("DATABASE_URL is not set. Start the database with `pnpm db:local`.");
-}
-
-const sql = postgres(serverEnv.databaseUrl, {
+const sql = postgres(env.DATABASE_URL, {
   /*
    * Production uses Supabase's transaction pooler. Prepared statements are
    * session-scoped and break there; the purchase transaction still runs as one

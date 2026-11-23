@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { serverEnv } from "./env";
+import { env } from "@/env";
 
 /**
  * Click logs keep a salted hash rather than an address. Enough to dedupe one
@@ -7,7 +7,7 @@ import { serverEnv } from "./env";
  * identify anyone.
  */
 export function hashIp(ip: string): string {
-  return createHash("sha256").update(`${serverEnv.clickHashSalt}:${ip}`).digest("hex").slice(0, 32);
+  return createHash("sha256").update(`${env.CLICK_HASH_SALT}:${ip}`).digest("hex").slice(0, 32);
 }
 
 /** Coarse UA buckets. Bots are logged and excluded, never silently dropped. */
