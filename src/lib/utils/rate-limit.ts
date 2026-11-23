@@ -1,14 +1,14 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { serverEnv } from "./env";
+import { env } from "@/env";
 
 /**
  * Rate limiting, when Upstash is configured. When it is not, every request is
  * allowed — a missing limiter must never take the map down.
  */
 const redis =
-  serverEnv.upstashUrl && serverEnv.upstashToken
-    ? new Redis({ url: serverEnv.upstashUrl, token: serverEnv.upstashToken })
+  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({ url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN })
     : null;
 
 const limiters = new Map<string, Ratelimit>();

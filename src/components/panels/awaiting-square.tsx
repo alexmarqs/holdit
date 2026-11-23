@@ -7,7 +7,6 @@ import { ShareWallButton } from "@/components/map/share-wall";
 import { SiteLogo } from "@/components/site-logo";
 import { awaitingAtom, claimedAtom, dilutedAtom } from "@/context/wall-atoms";
 import { useForgetHeld } from "@/hooks/use-forget-held";
-import { publicEnv } from "@/lib/utils/env";
 import { formatShare } from "@/lib/utils/format";
 
 function Banner({
@@ -50,7 +49,7 @@ function Banner({
  * Waiting for the square, the post-buy screenshot, then "you just shrank".
  * Quiet ownership ("you hold X") lives on the square itself, not as a banner.
  */
-export function AwaitingSquare() {
+export function AwaitingSquare({ contactEmail }: { contactEmail: string }) {
   const awaiting = useAtomValue(awaitingAtom);
   const claimed = useAtomValue(claimedAtom);
   const diluted = useAtomValue(dilutedAtom);
@@ -83,9 +82,9 @@ export function AwaitingSquare() {
             or write to{" "}
             <a
               className="text-primary underline underline-offset-2"
-              href={`mailto:${publicEnv.contactEmail}?subject=${encodeURIComponent(`Square not showing: ${awaiting.handle}`)}`}
+              href={`mailto:${contactEmail}?subject=${encodeURIComponent(`Square not showing: ${awaiting.handle}`)}`}
             >
-              {publicEnv.contactEmail}
+              {contactEmail}
             </a>
             . Nothing is lost.
           </p>

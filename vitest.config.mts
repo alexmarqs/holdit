@@ -10,10 +10,18 @@ import { defineConfig } from "vitest/config";
  * seeded wall, and pointed at a deployed one they would delete the real thing.
  *
  * Unit tests never see this. They do not import the client, and this URL is
- * only applied to the `integration` project.
+ * only applied to the `integration` project; unit tests get the unreachable
+ * placeholder below.
  */
 const TEST_DATABASE_URL =
   process.env.TEST_DATABASE_URL ?? "postgres://holdit:holdit@localhost:55432/holdit_test";
+
+/*
+ * `src/env.ts` requires a `DATABASE_URL`, and unit tests import modules that
+ * load it (site URL, Stripe client). They never connect, so they get an address
+ * that cannot be reached rather than whatever the shell has.
+ */
+const UNIT_DATABASE_URL = "postgres://unit-tests-never-connect@127.0.0.1:9/none";
 
 export default defineConfig({
   resolve: {
@@ -41,6 +49,7 @@ export default defineConfig({
           name: "unit",
           include: ["src/**/*.test.ts"],
           exclude: ["src/**/*.integration.test.ts"],
+          env: { DATABASE_URL: UNIT_DATABASE_URL },
         },
       },
       {
